@@ -1,0 +1,41 @@
+{
+  "name": "postfast-mcp",
+  "version": "0.1.0",
+  "description": "MCP server for the PostFast API — schedule and manage social media posts via AI tools",
+  "type": "module",
+  "bin": {
+    "postfast-mcp": "./dist/index.js"
+  },
+  "main": "./dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "start": "node dist/index.js",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "mcp",
+    "postfast",
+    "social-media",
+    "scheduling",
+    "model-context-protocol",
+    "claude",
+    "ai"
+  ],
+  "author": "PostFast",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/peturgeorgievv-factory/postfast-mcp"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.0",
+    "@types/node": "^22.0.0"
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "postfast": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["postfast-mcp"],
+      "env": {
+        "POSTFAST_API_KEY": "your-api-key-here"
+      }
+    }
+  }
+}
