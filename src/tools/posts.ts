@@ -13,6 +13,7 @@ const PLATFORMS = [
   'BLUESKY',
   'THREADS',
   'PINTEREST',
+  'TELEGRAM',
 ] as const;
 
 const STATUSES = ['DRAFT', 'SCHEDULED', 'PUBLISHED', 'FAILED'] as const;

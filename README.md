@@ -1,6 +1,6 @@
 # PostFast MCP Server
 
-MCP server for the [PostFast](https://postfast.io) API — schedule and manage social media posts via AI tools like Claude.
+MCP server for the [PostFast](https://postfa.st) API — schedule and manage social media posts via AI tools like Claude.
 
 ## Setup
 
@@ -34,7 +34,7 @@ Ask Claude things like:
 - "List my connected social accounts"
 - "Schedule a post to Instagram for tomorrow at 9am"
 - "Show me all scheduled posts for this week"
-- "Create a LinkedIn post with this content: ..."
+- "Upload this image and create a LinkedIn post with it"
 
 ## Available Tools
 
@@ -48,23 +48,35 @@ Ask Claude things like:
 | `list_youtube_playlists` | Get YouTube playlists for an account |
 | `generate_connect_link` | Generate a link for clients to connect accounts |
 | `get_upload_urls` | Get signed URLs to upload media files |
+| `upload_media` | Upload a local file and get a media key (handles the full flow) |
 
 ## Supported Platforms
 
-Facebook, Instagram, X (Twitter), TikTok, LinkedIn, YouTube, BlueSky, Threads, Pinterest
+Facebook, Instagram, X (Twitter), TikTok, LinkedIn, YouTube, BlueSky, Threads, Pinterest, Telegram
 
-## Media Upload Flow
+## Media Upload
 
-1. Call `get_upload_urls` with the file's MIME type
-2. Upload the file to the returned `signedUrl` via HTTP PUT
-3. Use the returned `key` in the `mediaItems` array when calling `create_posts`
+The `upload_media` tool handles the full flow in a single call:
+
+1. Detects content type from file extension
+2. Gets a signed upload URL from PostFast
+3. Uploads the file
+4. Returns a `key` and `mediaType` ready to use in `create_posts`
+
+Supported formats: JPEG, PNG, GIF, WebP, MP4, WebM, MOV
+
+You can also use `get_upload_urls` directly if you need more control over the upload process.
 
 ## Environment Variables
 
 | Variable | Required | Description |
 |----------|----------|-------------|
 | `POSTFAST_API_KEY` | Yes | Your workspace API key |
-| `POSTFAST_API_URL` | No | API base URL (default: `https://api.postfast.io`) |
+| `POSTFAST_API_URL` | No | API base URL (default: `https://api.postfa.st`) |
+
+## API Docs
+
+Full REST API documentation: [postfa.st/docs](https://postfa.st/docs)
 
 ## Development
 

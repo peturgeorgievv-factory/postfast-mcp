@@ -7,7 +7,8 @@ export type Platform =
   | 'YOUTUBE'
   | 'BLUESKY'
   | 'THREADS'
-  | 'PINTEREST';
+  | 'PINTEREST'
+  | 'TELEGRAM';
 
 export type PostStatus = 'DRAFT' | 'SCHEDULED' | 'PUBLISHED' | 'FAILED';
 

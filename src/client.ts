@@ -1,4 +1,4 @@
-const DEFAULT_BASE_URL = 'https://api.postfast.io';
+const DEFAULT_BASE_URL = 'https://api.postfa.st';
 
 export class PostFastClient {
   private baseUrl: string;
