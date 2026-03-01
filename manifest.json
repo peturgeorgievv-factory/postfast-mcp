@@ -1,0 +1,57 @@
+{
+  "manifest_version": "0.3",
+  "name": "postfast",
+  "display_name": "PostFast",
+  "version": "0.1.1",
+  "description": "Schedule and manage social media posts via PostFast",
+  "long_description": "Connect Claude to PostFast to schedule and manage social media posts across 10 platforms using natural language. Create, schedule, and delete posts on Instagram, TikTok, LinkedIn, X, Facebook, YouTube, Threads, BlueSky, Pinterest, and Telegram. Supports batch scheduling (up to 15 posts), media uploads, and platform-specific controls.",
+  "author": {
+    "name": "PostFast",
+    "email": "me@peturgeorgievv.com",
+    "url": "https://postfa.st"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/peturgeorgievv-factory/postfast-mcp"
+  },
+  "homepage": "https://postfa.st/api-integrations/mcp",
+  "keywords": ["social-media", "scheduling", "postfast", "mcp"],
+  "server": {
+    "type": "node",
+    "entry_point": "dist/index.js",
+    "mcp_config": {
+      "command": "node",
+      "args": ["${__dirname}/dist/index.js"],
+      "env": {
+        "POSTFAST_API_KEY": "${user_config.api_key}"
+      }
+    }
+  },
+  "user_config": {
+    "api_key": {
+      "type": "string",
+      "title": "PostFast API Key",
+      "description": "Your workspace API key from PostFast → Settings → API Key",
+      "sensitive": true,
+      "required": true
+    }
+  },
+  "tools": [
+    { "name": "list_accounts", "description": "List connected social media accounts" },
+    { "name": "list_posts", "description": "List posts with filters (platform, status, date range)" },
+    { "name": "create_posts", "description": "Create and schedule posts (batch up to 15)" },
+    { "name": "delete_post", "description": "Delete a post by ID" },
+    { "name": "upload_media", "description": "Upload a local file and get a media key" },
+    { "name": "get_upload_urls", "description": "Get signed URLs to upload media files" },
+    { "name": "list_pinterest_boards", "description": "Get Pinterest boards for an account" },
+    { "name": "list_youtube_playlists", "description": "Get YouTube playlists for an account" },
+    { "name": "generate_connect_link", "description": "Generate a link for clients to connect accounts" }
+  ],
+  "compatibility": {
+    "platforms": ["darwin", "win32"],
+    "runtimes": {
+      "node": ">=18.0.0"
+    }
+  }
+}
