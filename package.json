@@ -1,6 +1,6 @@
 {
   "name": "postfast-mcp",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "MCP server for the PostFast API — schedule and manage social media posts via AI tools",
   "type": "module",
   "bin": {
