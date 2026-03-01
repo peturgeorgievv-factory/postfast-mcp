@@ -77,8 +77,9 @@ export function registerPostTools(server: McpServer, client: PostFastClient) {
               .array(
                 z.object({
                   key: z.string().describe('S3 media key from get_upload_urls'),
-                  mediaType: z.enum(['IMAGE', 'VIDEO']),
-                  order: z.number().int().min(0),
+                  type: z.enum(['IMAGE', 'VIDEO']),
+                  sortOrder: z.number().int().min(0),
+                  coverTimestamp: z.string().optional().describe('Video cover timestamp'),
                 }),
               )
               .optional()
@@ -113,7 +114,7 @@ export function registerPostTools(server: McpServer, client: PostFastClient) {
           xQuoteTweetUrl: z.string().optional(),
           xRetweetUrl: z.string().optional(),
           // TikTok
-          tiktokPrivacy: z.enum(['PUBLIC', 'FRIENDS', 'PRIVATE']).optional(),
+          tiktokPrivacy: z.enum(['PUBLIC', 'MUTUAL_FRIENDS', 'ONLY_ME']).optional(),
           tiktokIsDraft: z.boolean().optional(),
           tiktokAllowComments: z.boolean().optional(),
           tiktokAllowDuet: z.boolean().optional(),
@@ -123,7 +124,7 @@ export function registerPostTools(server: McpServer, client: PostFastClient) {
           tiktokAutoAddMusic: z.boolean().optional(),
           // Instagram
           instagramPostToGrid: z.boolean().optional(),
-          instagramPublishType: z.enum(['TIMELINE', 'STORY']).optional(),
+          instagramPublishType: z.enum(['TIMELINE', 'STORY', 'REEL']).optional(),
           instagramCollaborators: z.array(z.string()).optional(),
           // YouTube
           youtubePrivacy: z.enum(['PUBLIC', 'PRIVATE', 'UNLISTED']).optional(),

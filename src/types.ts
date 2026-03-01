@@ -12,7 +12,12 @@ export type Platform =
 
 export type PostStatus = 'DRAFT' | 'SCHEDULED' | 'PUBLISHED' | 'FAILED';
 
-export type ApprovalStatus = 'PENDING_APPROVAL' | 'APPROVED';
+export type ApprovalStatus =
+  | 'PENDING_APPROVAL'
+  | 'IN_PROGRESS'
+  | 'APPROVED'
+  | 'REJECTED'
+  | 'NEEDS_WORK';
 
 export interface SocialPost {
   id: string;
@@ -28,42 +33,44 @@ export interface SocialPost {
   groupId: string | null;
   firstComment: string | null;
   firstCommentError: string | null;
-  lastError: { message: string; code: string } | null;
+  lastError: { message: string; code: string | null } | null;
 }
 
 export interface MediaItem {
   key: string;
-  mediaType: 'IMAGE' | 'VIDEO';
-  order: number;
+  type: 'IMAGE' | 'VIDEO';
+  sortOrder: number;
+  url?: string;
+  coverTimestamp?: string;
 }
 
 export interface PaginatedPosts {
   data: SocialPost[];
   totalCount: number;
-  pageInfo: { hasNextPage: boolean };
+  pageInfo: { page: number; hasNextPage: boolean; perPage: number };
 }
 
 export interface SocialAccount {
   id: string;
   platform: Platform;
-  platformUsername: string;
-  displayName: string;
+  platformUsername: string | null;
+  displayName: string | null;
 }
 
 export interface PinterestBoard {
   id: string;
   boardId: string;
   name: string;
-  description: string;
-  imageUrl: string;
+  description: string | null;
+  imageUrl: string | null;
 }
 
 export interface YouTubePlaylist {
   id: string;
   playlistId: string;
   title: string;
-  description: string;
-  thumbnailUrl: string;
+  description: string | null;
+  thumbnailUrl: string | null;
 }
 
 export interface SignedUploadUrl {
@@ -85,7 +92,7 @@ export interface PostControls {
   xQuoteTweetUrl?: string;
   xRetweetUrl?: string;
   // TikTok
-  tiktokPrivacy?: 'PUBLIC' | 'FRIENDS' | 'PRIVATE';
+  tiktokPrivacy?: 'PUBLIC' | 'MUTUAL_FRIENDS' | 'ONLY_ME';
   tiktokIsDraft?: boolean;
   tiktokAllowComments?: boolean;
   tiktokAllowDuet?: boolean;
@@ -95,7 +102,7 @@ export interface PostControls {
   tiktokAutoAddMusic?: boolean;
   // Instagram
   instagramPostToGrid?: boolean;
-  instagramPublishType?: 'TIMELINE' | 'STORY';
+  instagramPublishType?: 'TIMELINE' | 'STORY' | 'REEL';
   instagramCollaborators?: string[];
   // YouTube
   youtubePrivacy?: 'PUBLIC' | 'PRIVATE' | 'UNLISTED';

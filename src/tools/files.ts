@@ -72,7 +72,7 @@ export function registerFileTools(server: McpServer, client: PostFastClient) {
 
   server.tool(
     'upload_media',
-    'Upload a local file to PostFast and get back a media key for use in create_posts. Handles the full flow: detects content type, gets a signed URL, uploads the file, and returns the key and mediaType.',
+    'Upload a local file to PostFast and get back a media key for use in create_posts. Handles the full flow: detects content type, gets a signed URL, uploads the file, and returns the key and type.',
     {
       filePath: z
         .string()
@@ -105,7 +105,7 @@ export function registerFileTools(server: McpServer, client: PostFastClient) {
 
       const result = {
         key: uploadUrl.key,
-        mediaType: isVideo ? 'VIDEO' : 'IMAGE',
+        type: isVideo ? 'VIDEO' : 'IMAGE',
         contentType,
       };
 
