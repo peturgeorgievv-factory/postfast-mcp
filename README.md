@@ -1,29 +1,60 @@
 # PostFast MCP Server
 
-MCP server for the [PostFast](https://postfa.st) API — schedule and manage social media posts via AI tools like Claude.
+MCP server for the [PostFast](https://postfa.st) API — schedule and manage social media posts via AI tools like Claude, Cursor, VS Code, and more.
 
 ## Quick Start
 
 ### 1. Get your API key
 
-Go to **PostFast → Workspace Settings → API Key** and generate a key.
+Log in to [PostFast](https://app.postfa.st/dashboard), go to **API** in the sidebar, and generate a key.
 
 ### 2. Install
 
-**Option A — Claude Code Plugin (recommended):**
+Choose your preferred method:
+
+#### Claude Desktop (recommended)
+
+Download the extension from the [Claude Desktop extension directory](https://claude.ai/extensions) or install manually:
+
+1. Add to `claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "postfast": {
+      "command": "npx",
+      "args": ["-y", "postfast-mcp"],
+      "env": {
+        "POSTFAST_API_KEY": "your-api-key-here"
+      }
+    }
+  }
+}
+```
+
+2. Restart Claude Desktop.
+
+#### Claude Code
+
+**Via plugin (pending marketplace approval):**
 
 ```shell
-/plugin marketplace add peturgeorgievv-factory/postfast-mcp
-/plugin install postfast@postfast-mcp
+/plugin install postfast@claude-plugins-official
 ```
 
-Then set your API key as an environment variable:
+After installing, set your API key — pick one of these:
 
 ```bash
+# Option A: Add to your shell profile (~/.zshrc or ~/.bashrc)
 export POSTFAST_API_KEY="your-api-key-here"
+
+# Option B: Add to ~/.claude/settings.local.json
+# { "env": { "POSTFAST_API_KEY": "your-api-key-here" } }
 ```
 
-**Option B — Manual `.mcp.json` config:**
+Then restart Claude Code.
+
+**Via manual config:**
 
 Add to your project's `.mcp.json` or `~/.claude/.mcp.json` (global):
 
@@ -42,9 +73,28 @@ Add to your project's `.mcp.json` or `~/.claude/.mcp.json` (global):
 }
 ```
 
+#### Cursor / VS Code / Windsurf / Other MCP clients
+
+Add to your MCP config (`.mcp.json`, `mcp.json`, or the tool's settings UI):
+
+```json
+{
+  "mcpServers": {
+    "postfast": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "postfast-mcp"],
+      "env": {
+        "POSTFAST_API_KEY": "your-api-key-here"
+      }
+    }
+  }
+}
+```
+
 ### 3. Use it
 
-Ask Claude things like:
+Ask your AI assistant things like:
 
 - "List my connected social accounts"
 - "Schedule a post to Instagram for tomorrow at 9am"
@@ -103,6 +153,14 @@ You can also use `get_upload_urls` directly if you need more control over the up
 |----------|----------|-------------|
 | `POSTFAST_API_KEY` | Yes | Your workspace API key |
 | `POSTFAST_API_URL` | No | API base URL (default: `https://api.postfa.st`) |
+
+## Testing
+
+Verify everything works with the MCP Inspector:
+
+```bash
+POSTFAST_API_KEY=your-key npx @modelcontextprotocol/inspector npx postfast-mcp
+```
 
 ## API Docs
 
