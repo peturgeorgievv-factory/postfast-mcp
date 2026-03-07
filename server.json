@@ -6,18 +6,18 @@
     "url": "https://github.com/peturgeorgievv-factory/postfast-mcp",
     "source": "github"
   },
-  "version": "0.1.3",
+  "version": "0.1.4",
   "packages": [
     {
       "registryType": "npm",
       "identifier": "postfast-mcp",
-      "version": "0.1.3",
+      "version": "0.1.4",
       "transport": {
         "type": "stdio"
       },
       "environmentVariables": [
         {
-          "description": "Your PostFast workspace API key",
+          "description": "Your PostFast workspace API key. Get it from https://app.postfa.st/dashboard → API in the sidebar.",
           "isRequired": true,
           "format": "string",
           "isSecret": true,
