@@ -88,6 +88,7 @@ If any PostFast tool call fails with an authentication/401 error, tell the user:
 ## Other Actions
 
 - **View posts**: `list_posts` — filter by `platforms` (comma-separated), `statuses` (DRAFT, SCHEDULED, PUBLISHED, FAILED), `from`/`to` dates, with pagination (`page`, `limit` up to 50)
+- **Post analytics**: `get_post_analytics` — fetch published posts with performance metrics. Requires `startDate` and `endDate` (ISO 8601). Optional filters: `platforms`, `socialMediaIds`. Returns impressions, reach, likes, comments, shares, totalInteractions. Note: LinkedIn personal accounts are excluded; `latestMetric` is null if metrics haven't been fetched yet; metric values are strings (bigint). Keep date ranges reasonable as there's no pagination.
 - **Delete a post**: `delete_post` with the post ID
 - **Connect new accounts**: `generate_connect_link` — creates a secure URL to share with clients/collaborators to connect their accounts. Set `expiryDays` (1-30) and optionally `sendEmail` with an `email` address
 - **Pinterest boards**: `list_pinterest_boards` — get board IDs before creating Pinterest posts

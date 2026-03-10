@@ -101,6 +101,7 @@ Ask your AI assistant things like:
 - "Show me all scheduled posts for this week"
 - "Upload this image and create a LinkedIn post with it"
 - "Create a Facebook reel with this video"
+- "Show me analytics for my Instagram posts this month"
 
 ## Available Tools
 
@@ -115,6 +116,7 @@ Ask your AI assistant things like:
 | `list_pinterest_boards` | Get Pinterest boards for an account |
 | `list_youtube_playlists` | Get YouTube playlists for an account |
 | `generate_connect_link` | Generate a link for clients to connect accounts |
+| `get_post_analytics` | Fetch published posts with performance metrics (impressions, reach, likes, comments, shares) |
 
 ## Supported Platforms
 

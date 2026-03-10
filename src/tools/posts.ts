@@ -1,7 +1,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { PostFastClient } from '../client.js';
-import type { PaginatedPosts } from '../types.js';
+import type { PaginatedPosts, AnalyticsResponse } from '../types.js';
 
 const PLATFORMS = [
   'FACEBOOK',
@@ -178,6 +178,39 @@ export function registerPostTools(server: McpServer, client: PostFastClient) {
       const data = await client.delete<{ deleted: boolean }>(
         `/social-posts/${input.id}`,
       );
+
+      return {
+        content: [{ type: 'text' as const, text: JSON.stringify(data, null, 2) }],
+      };
+    },
+  );
+
+  server.tool(
+    'get_post_analytics',
+    'Fetch published posts with their latest performance metrics (impressions, reach, likes, comments, shares). Only returns published posts that have a platform post ID. LinkedIn personal accounts are excluded.',
+    {
+      startDate: z
+        .string()
+        .describe('Start of date range (ISO 8601, e.g. 2026-01-01T00:00:00.000Z)'),
+      endDate: z
+        .string()
+        .describe('End of date range (ISO 8601, e.g. 2026-01-31T23:59:59.999Z)'),
+      platforms: z
+        .array(z.enum(PLATFORMS))
+        .optional()
+        .describe('Filter by platforms'),
+      socialMediaIds: z
+        .array(z.string().uuid())
+        .optional()
+        .describe('Filter by specific social media account IDs'),
+    },
+    async (input) => {
+      const data = await client.get<AnalyticsResponse>('/social-posts/analytics', {
+        startDate: input.startDate,
+        endDate: input.endDate,
+        platforms: input.platforms?.join(','),
+        socialMediaIds: input.socialMediaIds?.join(','),
+      });
 
       return {
         content: [{ type: 'text' as const, text: JSON.stringify(data, null, 2) }],

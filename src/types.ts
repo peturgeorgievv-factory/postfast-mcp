@@ -78,6 +78,30 @@ export interface SignedUploadUrl {
   signedUrl: string;
 }
 
+export interface PostMetric {
+  impressions: string;
+  reach: string;
+  likes: string;
+  comments: string;
+  shares: string;
+  totalInteractions: string;
+  fetchedAt: string;
+  extras: Record<string, unknown>;
+}
+
+export interface AnalyticsPost {
+  id: string;
+  content: string;
+  socialMediaId: string;
+  platformPostId: string;
+  publishedAt: string;
+  latestMetric: PostMetric | null;
+}
+
+export interface AnalyticsResponse {
+  data: AnalyticsPost[];
+}
+
 export interface CreatePostInput {
   content: string;
   firstComment?: string;
