@@ -18,6 +18,20 @@ const PLATFORMS = [
 
 const STATUSES = ['DRAFT', 'SCHEDULED', 'PUBLISHED', 'FAILED'] as const;
 
+/** Some MCP clients stringify complex params — parse them back before validation. */
+function jsonParse<T extends z.ZodTypeAny>(schema: T) {
+  return z.preprocess((val) => {
+    if (typeof val === 'string') {
+      try {
+        return JSON.parse(val);
+      } catch {
+        return val;
+      }
+    }
+    return val;
+  }, schema);
+}
+
 export function registerPostTools(server: McpServer, client: PostFastClient) {
   server.tool(
     'list_posts',
@@ -68,37 +82,39 @@ export function registerPostTools(server: McpServer, client: PostFastClient) {
     'create_posts',
     'Create and schedule social media posts. Supports batch creation (up to 15 posts). Each post targets a specific social account.',
     {
-      posts: z
-        .array(
-          z.object({
-            content: z.string().describe('Post text content'),
-            firstComment: z.string().optional().describe('First comment to add after publishing'),
-            mediaItems: z
-              .array(
-                z.object({
-                  key: z.string().describe('S3 media key from get_upload_urls'),
-                  type: z.enum(['IMAGE', 'VIDEO']),
-                  sortOrder: z.number().int().min(0),
-                  coverTimestamp: z.string().optional().describe('Video cover timestamp'),
-                }),
-              )
-              .optional()
-              .describe('Media attachments'),
-            scheduledAt: z
-              .string()
-              .optional()
-              .describe(
-                'Schedule time (ISO 8601). Required when status is SCHEDULED.',
-              ),
-            socialMediaId: z
-              .string()
-              .uuid()
-              .describe('Target social account ID (from list_accounts)'),
-          }),
-        )
-        .min(1)
-        .max(15)
-        .describe('Array of posts to create'),
+      posts: jsonParse(
+        z
+          .array(
+            z.object({
+              content: z.string().describe('Post text content'),
+              firstComment: z.string().optional().describe('First comment to add after publishing'),
+              mediaItems: z
+                .array(
+                  z.object({
+                    key: z.string().describe('S3 media key from get_upload_urls'),
+                    type: z.enum(['IMAGE', 'VIDEO']),
+                    sortOrder: z.number().int().min(0),
+                    coverTimestamp: z.string().optional().describe('Video cover timestamp'),
+                  }),
+                )
+                .optional()
+                .describe('Media attachments'),
+              scheduledAt: z
+                .string()
+                .optional()
+                .describe(
+                  'Schedule time (ISO 8601). Required when status is SCHEDULED.',
+                ),
+              socialMediaId: z
+                .string()
+                .uuid()
+                .describe('Target social account ID (from list_accounts)'),
+            }),
+          )
+          .min(1)
+          .max(15)
+          .describe('Array of posts to create'),
+      ),
       status: z
         .enum(['DRAFT', 'SCHEDULED'])
         .default('SCHEDULED')
@@ -107,8 +123,8 @@ export function registerPostTools(server: McpServer, client: PostFastClient) {
         .enum(['PENDING_APPROVAL', 'APPROVED'])
         .default('APPROVED')
         .describe('Approval workflow status'),
-      controls: z
-        .object({
+      controls: jsonParse(
+        z.object({
           // X/Twitter
           xCommunityId: z.string().optional(),
           xQuoteTweetUrl: z.string().optional(),
@@ -153,6 +169,7 @@ export function registerPostTools(server: McpServer, client: PostFastClient) {
         })
         .optional()
         .describe('Platform-specific controls (shared across all posts in the batch)'),
+      ),
     },
     async (input) => {
       const data = await client.post<{ postIds: string[] }>('/social-posts', {

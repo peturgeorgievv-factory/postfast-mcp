@@ -116,7 +116,7 @@ Ask your AI assistant things like:
 | `list_pinterest_boards` | Get Pinterest boards for an account |
 | `list_youtube_playlists` | Get YouTube playlists for an account |
 | `generate_connect_link` | Generate a link for clients to connect accounts |
-| `get_post_analytics` | Fetch published posts with performance metrics (impressions, reach, likes, comments, shares) |
+| `get_post_analytics` | Fetch published posts with performance metrics — Instagram, Facebook, TikTok, Threads, LinkedIn (company pages) |
 
 ## Supported Platforms
 
