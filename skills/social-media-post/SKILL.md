@@ -72,6 +72,7 @@ If any PostFast tool call fails with an authentication/401 error, tell the user:
 - `youtubeIsShort`: boolean, default true
 - `youtubeMadeForKids`: boolean, default false (COPPA compliance)
 - `youtubePlaylistId`: playlist ID (use `list_youtube_playlists` to find it)
+- `youtubeThumbnailKey`: S3 media key for custom video thumbnail (upload via `upload_media` or `get_upload_urls`; JPEG/PNG recommended, max 2MB, min 640px wide, 1280x720 ideal; requires phone-verified YouTube channel)
 
 ### Pinterest
 - `pinterestBoardId`: **required** — use `list_pinterest_boards` to get the `boardId`

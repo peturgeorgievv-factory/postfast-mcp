@@ -150,6 +150,7 @@ export function registerPostTools(server: McpServer, client: PostFastClient) {
           youtubeMadeForKids: z.boolean().optional(),
           youtubeTitle: z.string().optional(),
           youtubePlaylistId: z.string().optional(),
+          youtubeThumbnailKey: z.string().optional().describe('S3 media key for custom YouTube video thumbnail (image, max 2MB, min 640px wide, 1280x720 recommended)'),
           // Facebook
           facebookContentType: z.enum(['POST', 'REEL', 'STORY']).optional(),
           facebookAllowComments: z.boolean().optional(),

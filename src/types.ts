@@ -136,6 +136,7 @@ export interface PostControls {
   youtubeMadeForKids?: boolean;
   youtubeTitle?: string;
   youtubePlaylistId?: string;
+  youtubeThumbnailKey?: string;
   // Facebook
   facebookContentType?: 'POST' | 'REEL' | 'STORY';
   facebookAllowComments?: boolean;
