@@ -130,7 +130,7 @@ export function registerPostTools(server: McpServer, client: PostFastClient) {
           xQuoteTweetUrl: z.string().optional(),
           xRetweetUrl: z.string().optional(),
           // TikTok
-          tiktokPrivacy: z.enum(['PUBLIC', 'MUTUAL_FRIENDS', 'ONLY_ME']).optional(),
+          tiktokPrivacy: z.enum(['PUBLIC', 'MUTUAL_FRIENDS', 'FOLLOWER_OF_CREATOR', 'ONLY_ME']).optional(),
           tiktokIsDraft: z.boolean().optional(),
           tiktokAllowComments: z.boolean().optional(),
           tiktokAllowDuet: z.boolean().optional(),
@@ -138,6 +138,7 @@ export function registerPostTools(server: McpServer, client: PostFastClient) {
           tiktokBrandOrganic: z.boolean().optional(),
           tiktokBrandContent: z.boolean().optional(),
           tiktokAutoAddMusic: z.boolean().optional(),
+          tiktokIsAigc: z.boolean().optional().describe('Declare video as AI-generated content'),
           // Instagram
           instagramPostToGrid: z.boolean().optional(),
           instagramPublishType: z.enum(['TIMELINE', 'STORY', 'REEL']).optional(),

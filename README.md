@@ -131,7 +131,7 @@ When creating posts, you can pass platform-specific settings via the `controls` 
 | **X (Twitter)** | `xCommunityId`, `xQuoteTweetUrl`, `xRetweetUrl` |
 | **Instagram** | `instagramPublishType` (TIMELINE/STORY/REEL), `instagramPostToGrid`, `instagramCollaborators` |
 | **Facebook** | `facebookContentType` (POST/REEL/STORY), `facebookAllowComments`, `facebookPrivacy`, `facebookReelsCollaborators` |
-| **TikTok** | `tiktokPrivacy` (PUBLIC/MUTUAL_FRIENDS/ONLY_ME), `tiktokIsDraft`, `tiktokAllowComments`, `tiktokAllowDuet`, `tiktokAllowStitch`, `tiktokBrandOrganic`, `tiktokBrandContent`, `tiktokAutoAddMusic` |
+| **TikTok** | `tiktokPrivacy` (PUBLIC/MUTUAL_FRIENDS/FOLLOWER_OF_CREATOR/ONLY_ME), `tiktokIsDraft`, `tiktokAllowComments`, `tiktokAllowDuet`, `tiktokAllowStitch`, `tiktokBrandOrganic`, `tiktokBrandContent`, `tiktokAutoAddMusic`, `tiktokIsAigc` |
 | **YouTube** | `youtubeTitle`, `youtubePrivacy` (PUBLIC/PRIVATE/UNLISTED), `youtubeTags`, `youtubeCategoryId`, `youtubeIsShort`, `youtubeMadeForKids`, `youtubePlaylistId`, `youtubeThumbnailKey` |
 | **Pinterest** | `pinterestBoardId` (required), `pinterestLink` |
 | **LinkedIn** | `linkedinAttachmentKey`, `linkedinAttachmentTitle` |

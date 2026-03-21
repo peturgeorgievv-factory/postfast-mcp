@@ -116,7 +116,7 @@ export interface PostControls {
   xQuoteTweetUrl?: string;
   xRetweetUrl?: string;
   // TikTok
-  tiktokPrivacy?: 'PUBLIC' | 'MUTUAL_FRIENDS' | 'ONLY_ME';
+  tiktokPrivacy?: 'PUBLIC' | 'MUTUAL_FRIENDS' | 'FOLLOWER_OF_CREATOR' | 'ONLY_ME';
   tiktokIsDraft?: boolean;
   tiktokAllowComments?: boolean;
   tiktokAllowDuet?: boolean;
@@ -124,6 +124,7 @@ export interface PostControls {
   tiktokBrandOrganic?: boolean;
   tiktokBrandContent?: boolean;
   tiktokAutoAddMusic?: boolean;
+  tiktokIsAigc?: boolean;
   // Instagram
   instagramPostToGrid?: boolean;
   instagramPublishType?: 'TIMELINE' | 'STORY' | 'REEL';

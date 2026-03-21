@@ -55,7 +55,7 @@ If any PostFast tool call fails with an authentication/401 error, tell the user:
 - `facebookReelsCollaborators`: array of usernames (for Reels)
 
 ### TikTok
-- `tiktokPrivacy`: PUBLIC (default), MUTUAL_FRIENDS, or ONLY_ME
+- `tiktokPrivacy`: PUBLIC (default), MUTUAL_FRIENDS, FOLLOWER_OF_CREATOR, or ONLY_ME
 - `tiktokIsDraft`: boolean, default false
 - `tiktokAllowComments`: boolean, default true
 - `tiktokAllowDuet`: boolean, default true
@@ -63,6 +63,7 @@ If any PostFast tool call fails with an authentication/401 error, tell the user:
 - `tiktokBrandOrganic`: boolean, default false
 - `tiktokBrandContent`: boolean, default false
 - `tiktokAutoAddMusic`: boolean, default false
+- `tiktokIsAigc`: boolean, default false (declare video as AI-generated content)
 
 ### YouTube
 - `youtubeTitle`: defaults to first 100 chars of content
