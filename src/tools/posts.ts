@@ -206,7 +206,7 @@ export function registerPostTools(server: McpServer, client: PostFastClient) {
 
   server.tool(
     'get_post_analytics',
-    'Fetch published posts with their latest performance metrics (impressions, reach, likes, comments, shares). Only returns published posts that have a platform post ID. LinkedIn personal accounts are excluded.',
+    'Fetch published posts with their latest performance metrics (impressions, reach, likes, comments, shares). Only returns published posts that have a platform post ID. LinkedIn personal accounts are excluded. Supported: Instagram, Facebook, TikTok, Threads, YouTube, LinkedIn (company pages).',
     {
       startDate: z
         .string()
