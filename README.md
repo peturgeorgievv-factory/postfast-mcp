@@ -176,6 +176,10 @@ npm run build
 node dist/index.js
 ```
 
+## Badges
+
+[![peturgeorgievv-factory/postfast-mcp MCP server](https://glama.ai/mcp/servers/peturgeorgievv-factory/postfast-mcp/badges/score.svg)](https://glama.ai/mcp/servers/peturgeorgievv-factory/postfast-mcp)
+
 ## License
 
 MIT
