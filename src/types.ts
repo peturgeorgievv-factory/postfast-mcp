@@ -8,7 +8,8 @@ export type Platform =
   | 'BLUESKY'
   | 'THREADS'
   | 'PINTEREST'
-  | 'TELEGRAM';
+  | 'TELEGRAM'
+  | 'GOOGLE_BUSINESS_PROFILE';
 
 export type PostStatus = 'DRAFT' | 'SCHEDULED' | 'PUBLISHED' | 'FAILED';
 
@@ -71,6 +72,14 @@ export interface YouTubePlaylist {
   title: string;
   description: string | null;
   thumbnailUrl: string | null;
+}
+
+export interface GbpLocation {
+  id: string;
+  locationId: string;
+  title: string;
+  address: string | null;
+  mapsUri: string | null;
 }
 
 export interface SignedUploadUrl {
@@ -146,6 +155,17 @@ export interface PostControls {
   facebookCarouselShowEndCard?: boolean;
   facebookReelsCoverImageKey?: string;
   facebookReelsCollaborators?: string[];
+  // Google Business Profile
+  gbpLocationId?: string;
+  gbpTopicType?: 'STANDARD' | 'EVENT' | 'OFFER';
+  gbpCallToActionType?: 'BOOK' | 'ORDER' | 'LEARN_MORE' | 'SIGN_UP' | 'CALL' | 'SHOP';
+  gbpCallToActionUrl?: string;
+  gbpEventTitle?: string;
+  gbpEventStartDate?: string;
+  gbpEventEndDate?: string;
+  gbpOfferCouponCode?: string;
+  gbpOfferRedeemUrl?: string;
+  gbpOfferTerms?: string;
   // Pinterest
   pinterestBoardId?: string;
   pinterestLink?: string;

@@ -14,6 +14,7 @@ const PLATFORMS = [
   'THREADS',
   'PINTEREST',
   'TELEGRAM',
+  'GOOGLE_BUSINESS_PROFILE',
 ] as const;
 
 const STATUSES = ['DRAFT', 'SCHEDULED', 'PUBLISHED', 'FAILED'] as const;
@@ -162,6 +163,17 @@ export function registerPostTools(server: McpServer, client: PostFastClient) {
           facebookCarouselShowEndCard: z.boolean().optional(),
           facebookReelsCoverImageKey: z.string().optional(),
           facebookReelsCollaborators: z.array(z.string()).optional(),
+          // Google Business Profile
+          gbpLocationId: z.string().optional().describe('GBP location resource name (from list_gbp_locations)'),
+          gbpTopicType: z.enum(['STANDARD', 'EVENT', 'OFFER']).optional().describe('Post type'),
+          gbpCallToActionType: z.enum(['BOOK', 'ORDER', 'LEARN_MORE', 'SIGN_UP', 'CALL', 'SHOP']).optional(),
+          gbpCallToActionUrl: z.string().optional().describe('CTA button URL (not needed for CALL, ignored for OFFER)'),
+          gbpEventTitle: z.string().optional().describe('Title for EVENT/OFFER posts (max 58 chars)'),
+          gbpEventStartDate: z.string().optional().describe('Start date for EVENT/OFFER (ISO 8601)'),
+          gbpEventEndDate: z.string().optional().describe('End date for EVENT/OFFER (ISO 8601)'),
+          gbpOfferCouponCode: z.string().optional().describe('Coupon code (OFFER only)'),
+          gbpOfferRedeemUrl: z.string().optional().describe('Redemption URL (OFFER only)'),
+          gbpOfferTerms: z.string().optional().describe('Terms and conditions (OFFER only)'),
           // Pinterest
           pinterestBoardId: z.string().optional(),
           pinterestLink: z.string().optional(),

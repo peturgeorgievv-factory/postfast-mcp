@@ -5,6 +5,7 @@ import type {
   SocialAccount,
   PinterestBoard,
   YouTubePlaylist,
+  GbpLocation,
 } from '../types.js';
 
 export function registerAccountTools(
@@ -58,6 +59,26 @@ export function registerAccountTools(
     async (input) => {
       const data = await client.get<YouTubePlaylist[]>(
         `/social-media/${input.socialMediaId}/youtube-playlists`,
+      );
+
+      return {
+        content: [{ type: 'text' as const, text: JSON.stringify(data, null, 2) }],
+      };
+    },
+  );
+
+  server.tool(
+    'list_gbp_locations',
+    'List Google Business Profile locations for a connected GBP account',
+    {
+      socialMediaId: z
+        .string()
+        .uuid()
+        .describe('GBP account ID (from list_accounts)'),
+    },
+    async (input) => {
+      const data = await client.get<GbpLocation[]>(
+        `/social-media/${input.socialMediaId}/gbp-locations`,
       );
 
       return {

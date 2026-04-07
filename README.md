@@ -115,12 +115,13 @@ Ask your AI assistant things like:
 | `get_upload_urls` | Get signed URLs to upload media files |
 | `list_pinterest_boards` | Get Pinterest boards for an account |
 | `list_youtube_playlists` | Get YouTube playlists for an account |
+| `list_gbp_locations` | Get Google Business Profile locations for an account |
 | `generate_connect_link` | Generate a link for clients to connect accounts |
 | `get_post_analytics` | Fetch published posts with performance metrics — Instagram, Facebook, TikTok, Threads, YouTube, LinkedIn (company pages) |
 
 ## Supported Platforms
 
-Facebook, Instagram, X (Twitter), TikTok, LinkedIn, YouTube, BlueSky, Threads, Pinterest, Telegram
+Facebook, Instagram, X (Twitter), TikTok, LinkedIn, YouTube, BlueSky, Threads, Pinterest, Telegram, Google Business Profile
 
 ## Platform-Specific Controls
 
@@ -135,6 +136,7 @@ When creating posts, you can pass platform-specific settings via the `controls` 
 | **YouTube** | `youtubeTitle`, `youtubePrivacy` (PUBLIC/PRIVATE/UNLISTED), `youtubeTags`, `youtubeCategoryId`, `youtubeIsShort`, `youtubeMadeForKids`, `youtubePlaylistId`, `youtubeThumbnailKey` |
 | **Pinterest** | `pinterestBoardId` (required), `pinterestLink` |
 | **LinkedIn** | `linkedinAttachmentKey`, `linkedinAttachmentTitle` |
+| **Google Business Profile** | `gbpLocationId` (required), `gbpTopicType` (STANDARD/EVENT/OFFER), `gbpCallToActionType`, `gbpCallToActionUrl`, `gbpEventTitle`, `gbpEventStartDate`, `gbpEventEndDate`, `gbpOfferCouponCode`, `gbpOfferRedeemUrl`, `gbpOfferTerms` |
 
 ## Media Upload
 

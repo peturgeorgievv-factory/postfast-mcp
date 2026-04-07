@@ -1,6 +1,6 @@
 ---
 name: social-media-post
-description: Create, schedule, and manage social media posts using PostFast. Use when the user wants to publish, schedule, or manage posts on Facebook, Instagram, X (Twitter), TikTok, LinkedIn, YouTube, BlueSky, Threads, Pinterest, or Telegram.
+description: Create, schedule, and manage social media posts using PostFast. Use when the user wants to publish, schedule, or manage posts on Facebook, Instagram, X (Twitter), TikTok, LinkedIn, YouTube, BlueSky, Threads, Pinterest, Telegram, or Google Business Profile.
 ---
 
 # Social Media Post via PostFast
@@ -81,6 +81,19 @@ If any PostFast tool call fails with an authentication/401 error, tell the user:
 - Content is parsed as: first line = pin title (max 100 chars), remaining lines = description (max 800 chars)
 - Carousel: 2-5 static images (no videos)
 
+### Google Business Profile
+- `gbpLocationId`: **required** — use `list_gbp_locations` to get the `locationId`
+- `gbpTopicType`: STANDARD (default), EVENT, or OFFER
+- `gbpCallToActionType`: BOOK, ORDER, LEARN_MORE, SIGN_UP, CALL, or SHOP
+- `gbpCallToActionUrl`: URL for the CTA button (not needed for CALL, ignored for OFFER)
+- `gbpEventTitle`: title for EVENT/OFFER posts (max 58 chars)
+- `gbpEventStartDate`: start date (ISO 8601, required for EVENT/OFFER)
+- `gbpEventEndDate`: end date (ISO 8601, required for EVENT/OFFER)
+- `gbpOfferCouponCode`: coupon code (OFFER only)
+- `gbpOfferRedeemUrl`: redemption URL (OFFER only)
+- `gbpOfferTerms`: terms and conditions (OFFER only)
+- Content max: 1,500 chars. Media: up to 5 images or 1 video. Standard posts expire after 6 months; EVENT/OFFER posts expire at end date.
+
 ### LinkedIn
 - `linkedinAttachmentKey`: S3 key for document attachment (for document posts)
 - `linkedinAttachmentTitle`: display title for the document (default "Document")
@@ -95,11 +108,13 @@ If any PostFast tool call fails with an authentication/401 error, tell the user:
 - **Connect new accounts**: `generate_connect_link` — creates a secure URL to share with clients/collaborators to connect their accounts. Set `expiryDays` (1-30) and optionally `sendEmail` with an `email` address
 - **Pinterest boards**: `list_pinterest_boards` — get board IDs before creating Pinterest posts
 - **YouTube playlists**: `list_youtube_playlists` — get playlist IDs for adding videos to playlists
+- **GBP locations**: `list_gbp_locations` — get location IDs before creating Google Business Profile posts
 
 ## Tips
 
 - Always confirm schedule time and target accounts with the user before creating posts.
 - For content calendars, batch multiple posts in one `create_posts` call (up to 15).
 - When posting to Pinterest, always fetch boards first — `pinterestBoardId` is required.
+- When posting to Google Business Profile, always fetch locations first — `gbpLocationId` is required.
 - Use DRAFT status if the user wants to review posts in the PostFast dashboard before they go live.
 - The `firstComment` feature is useful for adding hashtags on Instagram without cluttering the caption.

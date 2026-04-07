@@ -4,7 +4,7 @@
   "display_name": "PostFast",
   "version": "0.1.9",
   "description": "Schedule and manage social media posts via PostFast",
-  "long_description": "Connect Claude to PostFast to schedule and manage social media posts across 10 platforms using natural language. Create, schedule, and delete posts on Instagram, TikTok, LinkedIn, X, Facebook, YouTube, Threads, BlueSky, Pinterest, and Telegram. Supports batch scheduling (up to 15 posts), media uploads, platform-specific controls, and post analytics (impressions, reach, likes, comments, shares).",
+  "long_description": "Connect Claude to PostFast to schedule and manage social media posts across 11 platforms using natural language. Create, schedule, and delete posts on Instagram, TikTok, LinkedIn, X, Facebook, YouTube, Threads, BlueSky, Pinterest, Telegram, and Google Business Profile. Supports batch scheduling (up to 15 posts), media uploads, platform-specific controls, and post analytics (impressions, reach, likes, comments, shares).",
   "author": {
     "name": "PostFast",
     "email": "me@peturgeorgievv.com",
@@ -46,6 +46,7 @@
     { "name": "get_upload_urls", "description": "Get signed URLs to upload media files" },
     { "name": "list_pinterest_boards", "description": "Get Pinterest boards for an account" },
     { "name": "list_youtube_playlists", "description": "Get YouTube playlists for an account" },
+    { "name": "list_gbp_locations", "description": "Get Google Business Profile locations for an account" },
     { "name": "generate_connect_link", "description": "Generate a link for clients to connect accounts" },
     { "name": "get_post_analytics", "description": "Fetch published posts with performance metrics (impressions, reach, likes, etc.)" }
   ],
