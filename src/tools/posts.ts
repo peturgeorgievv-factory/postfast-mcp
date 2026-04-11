@@ -95,7 +95,8 @@ export function registerPostTools(server: McpServer, client: PostFastClient) {
                     key: z.string().describe('S3 media key from get_upload_urls'),
                     type: z.enum(['IMAGE', 'VIDEO']),
                     sortOrder: z.number().int().min(0),
-                    coverTimestamp: z.string().optional().describe('Video cover timestamp'),
+                    coverImageKey: z.string().optional().describe('S3 key of a custom cover/thumbnail image for video posts (upload via get_upload_urls first). Supported on Instagram Reels, Facebook Reels, Pinterest video pins.'),
+                    coverTimestamp: z.string().optional().describe('Video cover timestamp in milliseconds (e.g. "5000" = 5s). Fallback when coverImageKey is also provided.'),
                   }),
                 )
                 .optional()

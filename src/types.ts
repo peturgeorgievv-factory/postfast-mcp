@@ -42,6 +42,7 @@ export interface MediaItem {
   type: 'IMAGE' | 'VIDEO';
   sortOrder: number;
   url?: string;
+  coverImageKey?: string;
   coverTimestamp?: string;
 }
 
