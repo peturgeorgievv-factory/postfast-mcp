@@ -129,7 +129,6 @@ export function registerPostTools(server: McpServer, client: PostFastClient) {
         z.object({
           // X/Twitter
           xCommunityId: z.string().optional(),
-          xQuoteTweetUrl: z.string().optional(),
           xRetweetUrl: z.string().optional(),
           // TikTok
           tiktokPrivacy: z.enum(['PUBLIC', 'MUTUAL_FRIENDS', 'FOLLOWER_OF_CREATOR', 'ONLY_ME']).optional(),

@@ -123,7 +123,6 @@ export interface CreatePostInput {
 export interface PostControls {
   // X/Twitter
   xCommunityId?: string;
-  xQuoteTweetUrl?: string;
   xRetweetUrl?: string;
   // TikTok
   tiktokPrivacy?: 'PUBLIC' | 'MUTUAL_FRIENDS' | 'FOLLOWER_OF_CREATOR' | 'ONLY_ME';
