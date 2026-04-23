@@ -11,8 +11,16 @@
     {
       "name": "postfast",
       "description": "Schedule, manage, and analyze social media posts via PostFast. Supports Facebook, Instagram, X, TikTok, LinkedIn, YouTube, BlueSky, Threads, Pinterest, Telegram, and Google Business Profile.",
-      "category": "productivity",
+      "version": "0.1.13",
+      "author": {
+        "name": "PostFast",
+        "email": "me@peturgeorgievv.com"
+      },
       "homepage": "https://postfa.st",
+      "repository": "https://github.com/peturgeorgievv-factory/postfast-mcp",
+      "license": "MIT",
+      "keywords": ["social-media", "scheduling", "mcp", "postfast"],
+      "category": "productivity",
       "source": {
         "source": "npm",
         "package": "postfast-mcp"
