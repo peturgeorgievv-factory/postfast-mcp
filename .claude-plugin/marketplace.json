@@ -1,15 +1,16 @@
 {
-  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
   "name": "postfast-mcp",
-  "description": "PostFast social media scheduling and management tools for Claude Code",
   "owner": {
     "name": "PostFast",
     "email": "me@peturgeorgievv.com"
   },
+  "metadata": {
+    "description": "PostFast social media scheduling and management tools for Claude Code"
+  },
   "plugins": [
     {
       "name": "postfast",
-      "description": "Schedule, manage, and analyze social media posts via PostFast. Supports Facebook, Instagram, X, TikTok, LinkedIn, YouTube, BlueSky, Threads, Pinterest, and Telegram.",
+      "description": "Schedule, manage, and analyze social media posts via PostFast. Supports Facebook, Instagram, X, TikTok, LinkedIn, YouTube, BlueSky, Threads, Pinterest, Telegram, and Google Business Profile.",
       "category": "productivity",
       "homepage": "https://postfa.st",
       "source": {

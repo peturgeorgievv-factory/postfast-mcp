@@ -1,6 +1,6 @@
 {
   "name": "postfast-mcp",
-  "version": "0.1.12",
+  "version": "0.1.13",
   "mcpName": "io.github.peturgeorgievv-factory/postfast-mcp",
   "description": "MCP server for the PostFast API — schedule and manage social media posts via AI tools",
   "type": "module",
