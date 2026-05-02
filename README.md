@@ -117,7 +117,7 @@ Ask your AI assistant things like:
 | `list_youtube_playlists` | Get YouTube playlists for an account |
 | `list_gbp_locations` | Get Google Business Profile locations for an account |
 | `generate_connect_link` | Generate a link for clients to connect accounts |
-| `get_post_analytics` | Fetch published posts with performance metrics — Instagram, Facebook, TikTok, Threads, YouTube, LinkedIn (company pages) |
+| `get_post_analytics` | Fetch published posts with performance metrics — Instagram, Facebook, TikTok, Threads, YouTube, LinkedIn (company pages), Pinterest (Business accounts) |
 
 ## Supported Platforms
 

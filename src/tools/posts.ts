@@ -218,7 +218,7 @@ export function registerPostTools(server: McpServer, client: PostFastClient) {
 
   server.tool(
     'get_post_analytics',
-    'Fetch published posts with their latest performance metrics (impressions, reach, likes, comments, shares). Only returns published posts that have a platform post ID. LinkedIn personal accounts are excluded. Supported: Instagram, Facebook, TikTok, Threads, YouTube, LinkedIn (company pages).',
+    'Fetch published posts with their latest performance metrics (impressions, reach, likes, comments, shares). Only returns published posts that have a platform post ID. LinkedIn personal accounts are excluded. Supported: Instagram, Facebook, TikTok, Threads, YouTube, LinkedIn (company pages), Pinterest (Business accounts). Pinterest extras include pin_clicks, outbound_clicks, saves_90d, save_rate_90d (saves are 90-day rolling because Pinterest API does not expose lifetime totals); video pins additionally surface mrc_views, views_10s, avg_watch_time, v50_watch_time, video_starts, quartile_95_views.',
     {
       startDate: z
         .string()
