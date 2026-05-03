@@ -37,7 +37,6 @@ If any PostFast tool call fails with an authentication/401 error, tell the user:
 ## Platform-Specific Controls
 
 ### X (Twitter)
-- `xCommunityId`: post to a specific Community
 - `xRetweetUrl`: URL of tweet to retweet (ignores content/media)
 
 ### Instagram
