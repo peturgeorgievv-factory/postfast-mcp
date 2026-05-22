@@ -15,7 +15,7 @@ If any PostFast tool call fails with an authentication/401 error, tell the user:
 
 ## Posting Workflow
 
-1. **List accounts** — Call `list_accounts` to see connected social media accounts. Each account has an `id`, `platform`, `platformUsername`, and `displayName`.
+1. **List accounts** — Call `list_accounts` to see connected social media accounts. Each account has an `id`, `platform`, `platformUsername`, `displayName`, and a `connectionStatus` (`CONNECTED` or `DISABLED`) with an optional `disabledReason`. If `connectionStatus` is `DISABLED`, the account won't publish until the user reconnects it — warn the user and don't schedule to it.
 
 2. **Prepare media** (if needed) — If the user has images or videos to attach:
    - Use `upload_media` with the local file path — it handles getting a signed URL, uploading, and returning a `key` and `type` (IMAGE or VIDEO)
@@ -31,6 +31,7 @@ If any PostFast tool call fails with an authentication/401 error, tell the user:
    - `firstComment`: optional first comment text (supported on X, Instagram, Facebook, YouTube, Threads)
    - `controls`: platform-specific settings (see below)
    - You can batch up to 15 posts in a single call — great for content calendars
+   - Don't schedule to a `DISABLED` account — the API rejects it with HTTP 400 `socialMediaDisconnected`. Saving as DRAFT is still allowed. Check `connectionStatus` from step 1 first.
 
 4. **Confirm** — Show the user a summary: which accounts, what content, when scheduled.
 
@@ -99,7 +100,7 @@ If any PostFast tool call fails with an authentication/401 error, tell the user:
 
 ## Other Actions
 
-- **View posts**: `list_posts` — filter by `platforms` (comma-separated), `statuses` (DRAFT, SCHEDULED, PUBLISHED, FAILED), `from`/`to` dates, with pagination (`page`, `limit` up to 50)
+- **View posts**: `list_posts` — filter by `platforms` (comma-separated), `statuses` (DRAFT, SCHEDULED, PUBLISHED, FAILED), `from`/`to` dates, with pagination (`page`, `limit` up to 50). Failed or missed posts include a `lastError` with a `code` — e.g. `MISSED_DISCONNECTED` (the account was disconnected when the post was due) or `MISSED_NOT_PUBLISHED` (missed its slot by more than the 2h grace window)
 - **Post analytics**: `get_post_analytics` — fetch published posts with performance metrics. Requires `startDate` and `endDate` (ISO 8601). Optional filters: `platforms`, `socialMediaIds`. Returns impressions, reach, likes, comments, shares, totalInteractions, plus an `extras` object with platform-specific metrics. Supported: Instagram, Facebook, TikTok, Threads, YouTube, LinkedIn (company pages), Pinterest (Business accounts). Pinterest `extras` include `pin_clicks`, `outbound_clicks`, `saves_90d`, `save_rate_90d`; video pins also surface `mrc_views`, `views_10s`, `avg_watch_time`, `v50_watch_time`, `video_starts`, `quartile_95_views`. Note: LinkedIn personal accounts are excluded; Pinterest saves are reported as a rolling 90-day window because Pinterest's API does not expose lifetime save totals (all other Pinterest metrics are lifetime); `latestMetric` is null if metrics haven't been fetched yet; metric values are strings (bigint). Keep date ranges reasonable as there's no pagination.
 - **Delete a post**: `delete_post` with the post ID
 - **Connect new accounts**: `generate_connect_link` — creates a secure URL to share with clients/collaborators to connect their accounts. Set `expiryDays` (1-30) and optionally `sendEmail` with an `email` address
@@ -110,6 +111,7 @@ If any PostFast tool call fails with an authentication/401 error, tell the user:
 ## Tips
 
 - Always confirm schedule time and target accounts with the user before creating posts.
+- If `list_accounts` shows an account as `DISABLED`, tell the user to reconnect it before scheduling — scheduled posts to disconnected accounts are rejected, and posts already due get marked missed.
 - For content calendars, batch multiple posts in one `create_posts` call (up to 15).
 - When posting to Pinterest, always fetch boards first — `pinterestBoardId` is required.
 - When posting to Google Business Profile, always fetch locations first — `gbpLocationId` is required.

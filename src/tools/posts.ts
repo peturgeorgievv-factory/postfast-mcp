@@ -36,7 +36,7 @@ function jsonParse<T extends z.ZodTypeAny>(schema: T) {
 export function registerPostTools(server: McpServer, client: PostFastClient) {
   server.tool(
     'list_posts',
-    'List social media posts with optional filters for platform, status, and date range',
+    'List social media posts with optional filters for platform, status, and date range. Failed or missed posts carry a lastError { message, code }; codes include MISSED_DISCONNECTED (the account was disconnected when the post was due — reconnect, then retry) and MISSED_NOT_PUBLISHED (passed its scheduled time plus a 2h grace window without publishing).',
     {
       page: z.number().int().min(0).default(0).describe('Page number (0-based)'),
       limit: z
@@ -81,7 +81,7 @@ export function registerPostTools(server: McpServer, client: PostFastClient) {
 
   server.tool(
     'create_posts',
-    'Create and schedule social media posts. Supports batch creation (up to 15 posts). Each post targets a specific social account.',
+    'Create and schedule social media posts. Supports batch creation (up to 15 posts). Each post targets a specific social account. Scheduling to a disconnected account (connectionStatus DISABLED in list_accounts) is rejected with HTTP 400 "socialMediaDisconnected" — pre-check connectionStatus before calling. Saving as DRAFT to a disconnected account is allowed.',
     {
       posts: jsonParse(
         z

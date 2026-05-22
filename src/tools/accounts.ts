@@ -14,7 +14,7 @@ export function registerAccountTools(
 ) {
   server.tool(
     'list_accounts',
-    'List all social media accounts connected to the workspace',
+    'List all social media accounts connected to the workspace. Each account includes connectionStatus (CONNECTED or DISABLED) and disabledReason (null unless DISABLED). If connectionStatus is DISABLED, the account will not publish until the user reconnects it.',
     {},
     async () => {
       const data = await client.get<SocialAccount[]>(

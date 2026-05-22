@@ -20,6 +20,20 @@ export type ApprovalStatus =
   | 'REJECTED'
   | 'NEEDS_WORK';
 
+/** Health of a connected social account. CONNECTED = healthy; DISABLED = paused, needs reconnect. */
+export type ConnectionStatus = 'CONNECTED' | 'DISABLED';
+
+/**
+ * Why an account is DISABLED. Only TOKEN_REVOKED and ACCOUNT_SUSPENDED are emitted
+ * today; PERMISSION_REVOKED and MANUAL are reserved so the schema stays stable when
+ * they are wired up later.
+ */
+export type DisabledReason =
+  | 'TOKEN_REVOKED'
+  | 'ACCOUNT_SUSPENDED'
+  | 'PERMISSION_REVOKED'
+  | 'MANUAL';
+
 export interface SocialPost {
   id: string;
   content: string;
@@ -34,6 +48,11 @@ export interface SocialPost {
   groupId: string | null;
   firstComment: string | null;
   firstCommentError: string | null;
+  /**
+   * Present on FAILED (and missed) posts. `code` carries platform-specific error codes
+   * plus two scheduling codes: MISSED_DISCONNECTED (account was disconnected when the
+   * post was due) and MISSED_NOT_PUBLISHED (passed scheduled time + 2h grace unpublished).
+   */
   lastError: { message: string; code: string | null } | null;
 }
 
@@ -57,6 +76,10 @@ export interface SocialAccount {
   platform: Platform;
   platformUsername: string | null;
   displayName: string | null;
+  /** Always present. If DISABLED, the account won't publish until the user reconnects. */
+  connectionStatus: ConnectionStatus;
+  /** Non-null only when connectionStatus is DISABLED. */
+  disabledReason: DisabledReason | null;
 }
 
 export interface PinterestBoard {
