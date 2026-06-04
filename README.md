@@ -108,7 +108,7 @@ Ask your AI assistant things like:
 | Tool | Description |
 |------|-------------|
 | `list_accounts` | List connected social media accounts (each with `connectionStatus` — `CONNECTED`/`DISABLED` — and `disabledReason`) |
-| `list_posts` | List posts with filters (platform, status, date range) |
+| `list_posts` | List posts with filters (specific IDs, platform, status, date range) |
 | `create_posts` | Create and schedule posts (batch, up to 15) |
 | `delete_post` | Delete a post by ID |
 | `upload_media` | Upload a local file and get a media key (handles the full flow) |

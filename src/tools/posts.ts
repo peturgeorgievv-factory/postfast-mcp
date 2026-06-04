@@ -36,7 +36,7 @@ function jsonParse<T extends z.ZodTypeAny>(schema: T) {
 export function registerPostTools(server: McpServer, client: PostFastClient) {
   server.tool(
     'list_posts',
-    'List social media posts with optional filters for platform, status, and date range. Failed or missed posts carry a lastError { message, code }; codes include MISSED_DISCONNECTED (the account was disconnected when the post was due — reconnect, then retry) and MISSED_NOT_PUBLISHED (passed its scheduled time plus a 2h grace window without publishing).',
+    'List social media posts with optional filters for specific IDs, platform, status, and date range. Failed or missed posts carry a lastError { message, code }; codes include MISSED_DISCONNECTED (the account was disconnected when the post was due — reconnect, then retry) and MISSED_NOT_PUBLISHED (passed its scheduled time plus a 2h grace window without publishing).',
     {
       page: z.number().int().min(0).default(0).describe('Page number (0-based)'),
       limit: z
@@ -46,6 +46,11 @@ export function registerPostTools(server: McpServer, client: PostFastClient) {
         .max(50)
         .default(20)
         .describe('Posts per page (max 50)'),
+      ids: z
+        .array(z.string().uuid())
+        .max(100)
+        .optional()
+        .describe('Fetch only these post IDs (workspace-scoped; max 100)'),
       platforms: z
         .array(z.enum(PLATFORMS))
         .optional()
@@ -67,6 +72,7 @@ export function registerPostTools(server: McpServer, client: PostFastClient) {
       const data = await client.get<PaginatedPosts>('/social-posts', {
         page: String(input.page),
         limit: String(input.limit),
+        ids: input.ids?.join(','),
         platforms: input.platforms?.join(','),
         statuses: input.statuses?.join(','),
         from: input.from,
