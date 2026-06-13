@@ -110,6 +110,8 @@ export interface GbpLocation {
 export interface Place {
   id: string;
   name: string;
+  /** The place's Facebook Page URL. Usually present, but treat as optional. */
+  link: string | null;
   city: string | null;
   country: string | null;
   street: string | null;

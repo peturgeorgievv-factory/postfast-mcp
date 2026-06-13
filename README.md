@@ -116,6 +116,7 @@ Ask your AI assistant things like:
 | `list_pinterest_boards` | Get Pinterest boards for an account |
 | `list_youtube_playlists` | Get YouTube playlists for an account |
 | `list_gbp_locations` | Get Google Business Profile locations for an account |
+| `search_places` | Find a place to tag posts (the `id` works for both `facebookPlaceId` and `instagramLocationId`) |
 | `generate_connect_link` | Generate a link for clients to connect accounts |
 | `get_post_analytics` | Fetch published posts with performance metrics — Instagram, Facebook, TikTok, Threads, YouTube, LinkedIn (company pages), Pinterest (Business accounts) |
 
@@ -130,8 +131,8 @@ When creating posts, you can pass platform-specific settings via the `controls` 
 | Platform | Controls |
 |----------|----------|
 | **X (Twitter)** | `xRetweetUrl` |
-| **Instagram** | `instagramPublishType` (TIMELINE/STORY/REEL), `instagramPostToGrid`, `instagramCollaborators` |
-| **Facebook** | `facebookContentType` (POST/REEL/STORY), `facebookAllowComments`, `facebookPrivacy`, `facebookReelsCollaborators` |
+| **Instagram** | `instagramPublishType` (TIMELINE/STORY/REEL), `instagramPostToGrid`, `instagramCollaborators`, `instagramLocationId`/`instagramLocationName` (geotag from `search_places`) |
+| **Facebook** | `facebookContentType` (POST/REEL/STORY), `facebookAllowComments`, `facebookPrivacy`, `facebookReelsCollaborators`, `facebookTargetCountries` (ISO alpha-2, max 25), `facebookPlaceId`/`facebookPlaceName` (geotag from `search_places`) |
 | **TikTok** | `tiktokPrivacy` (PUBLIC/MUTUAL_FRIENDS/FOLLOWER_OF_CREATOR/ONLY_ME), `tiktokIsDraft`, `tiktokAllowComments`, `tiktokAllowDuet`, `tiktokAllowStitch`, `tiktokBrandOrganic`, `tiktokBrandContent`, `tiktokAutoAddMusic`, `tiktokIsAigc` |
 | **YouTube** | `youtubeTitle`, `youtubePrivacy` (PUBLIC/PRIVATE/UNLISTED), `youtubeTags`, `youtubeCategoryId`, `youtubeIsShort`, `youtubeMadeForKids`, `youtubePlaylistId`, `youtubeThumbnailKey` |
 | **Pinterest** | `pinterestBoardId` (required), `pinterestLink` |
