@@ -1,6 +1,6 @@
 {
   "name": "postfast-mcp",
-  "version": "0.1.17",
+  "version": "0.1.18",
   "mcpName": "io.github.peturgeorgievv-factory/postfast-mcp",
   "description": "MCP server for the PostFast API — schedule and manage social media posts via AI tools",
   "type": "module",
@@ -39,10 +39,10 @@
     "node": ">=18"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.12.0"
+    "@modelcontextprotocol/sdk": "^1.29.0"
   },
   "devDependencies": {
-    "typescript": "^5.7.0",
-    "@types/node": "^22.0.0"
+    "typescript": "^5.9.3",
+    "@types/node": "^22.19.21"
   }
 }

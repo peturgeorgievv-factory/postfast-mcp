@@ -106,6 +106,17 @@ export interface GbpLocation {
   mapsUri: string | null;
 }
 
+/** A taggable place from search_places. The id works for both facebookPlaceId and instagramLocationId. */
+export interface Place {
+  id: string;
+  name: string;
+  city: string | null;
+  country: string | null;
+  street: string | null;
+  zip: string | null;
+  pictureUrl: string | null;
+}
+
 export interface SignedUploadUrl {
   key: string;
   signedUrl: string;
@@ -160,6 +171,8 @@ export interface PostControls {
   instagramPostToGrid?: boolean;
   instagramPublishType?: 'TIMELINE' | 'STORY' | 'REEL';
   instagramCollaborators?: string[];
+  instagramLocationId?: string;
+  instagramLocationName?: string;
   // YouTube
   youtubePrivacy?: 'PUBLIC' | 'PRIVATE' | 'UNLISTED';
   youtubeTags?: string[];
@@ -177,6 +190,9 @@ export interface PostControls {
   facebookCarouselShowEndCard?: boolean;
   facebookReelsCoverImageKey?: string;
   facebookReelsCollaborators?: string[];
+  facebookTargetCountries?: string[];
+  facebookPlaceId?: string;
+  facebookPlaceName?: string;
   // Google Business Profile
   gbpLocationId?: string;
   gbpTopicType?: 'STANDARD' | 'EVENT' | 'OFFER';

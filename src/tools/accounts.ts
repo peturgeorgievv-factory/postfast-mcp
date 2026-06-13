@@ -6,6 +6,7 @@ import type {
   PinterestBoard,
   YouTubePlaylist,
   GbpLocation,
+  Place,
 } from '../types.js';
 
 export function registerAccountTools(
@@ -80,6 +81,26 @@ export function registerAccountTools(
       const data = await client.get<GbpLocation[]>(
         `/social-media/${input.socialMediaId}/gbp-locations`,
       );
+
+      return {
+        content: [{ type: 'text' as const, text: JSON.stringify(data, null, 2) }],
+      };
+    },
+  );
+
+  server.tool(
+    'search_places',
+    'Find a place to tag. The returned id works for both facebookPlaceId and instagramLocationId.',
+    {
+      query: z
+        .string()
+        .min(2)
+        .describe('Place name to search, e.g. "Eiffel Tower"'),
+    },
+    async (input) => {
+      const data = await client.get<Place[]>('/social-media/search-places', {
+        q: input.query,
+      });
 
       return {
         content: [{ type: 'text' as const, text: JSON.stringify(data, null, 2) }],

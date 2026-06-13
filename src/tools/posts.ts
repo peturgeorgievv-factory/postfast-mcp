@@ -149,6 +149,8 @@ export function registerPostTools(server: McpServer, client: PostFastClient) {
           instagramPostToGrid: z.boolean().optional(),
           instagramPublishType: z.enum(['TIMELINE', 'STORY', 'REEL']).optional(),
           instagramCollaborators: z.array(z.string()).optional(),
+          instagramLocationId: z.string().optional().describe('Geotag: same FB Page id from search_places. Single media only, not carousels.'),
+          instagramLocationName: z.string().optional().describe('Display-only location name (not sent to Meta).'),
           // YouTube
           youtubePrivacy: z.enum(['PUBLIC', 'PRIVATE', 'UNLISTED']).optional(),
           youtubeTags: z.array(z.string()).optional(),
@@ -168,6 +170,9 @@ export function registerPostTools(server: McpServer, client: PostFastClient) {
           facebookCarouselShowEndCard: z.boolean().optional(),
           facebookReelsCoverImageKey: z.string().optional(),
           facebookReelsCollaborators: z.array(z.string()).optional(),
+          facebookTargetCountries: z.array(z.string()).optional().describe('Facebook only: ISO 3166-1 alpha-2 codes (max 25). Limits who can see the post; also hidden from logged-out viewers. Feed posts only, not Reels/Stories.'),
+          facebookPlaceId: z.string().optional().describe('Geotag: FB Page id (with location) from search_places. Feed posts only.'),
+          facebookPlaceName: z.string().optional().describe('Display-only place name (not sent to Meta).'),
           // Google Business Profile
           gbpLocationId: z.string().optional().describe('GBP location resource name (from list_gbp_locations)'),
           gbpTopicType: z.enum(['STANDARD', 'EVENT', 'OFFER']).optional().describe('Post type'),
