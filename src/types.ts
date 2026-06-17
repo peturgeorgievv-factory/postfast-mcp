@@ -133,6 +133,10 @@ export interface PostMetric {
   totalInteractions: string;
   fetchedAt: string;
   extras: Record<string, unknown>;
+  // Normalized video watch-time in seconds (video posts only, where the platform reports it).
+  avgWatchTimeSeconds?: number;
+  totalWatchTimeSeconds?: number;
+  videoViews?: number;
 }
 
 export interface AnalyticsPost {
@@ -146,6 +150,26 @@ export interface AnalyticsPost {
 
 export interface AnalyticsResponse {
   data: AnalyticsPost[];
+}
+
+export interface FollowerSnapshot {
+  /** Day of the snapshot (ISO 8601). */
+  capturedAt: string;
+  /** Follower count on that day (string bigint); absent for a gap day. */
+  followerCount?: string;
+}
+
+/** Daily follower-count history for one social account, from get_follower_history. */
+export interface FollowerHistory {
+  socialMediaId: string;
+  /** Daily snapshots, oldest first (may be empty). */
+  series: FollowerSnapshot[];
+  /** Most recent follower count (string bigint); absent until the first snapshot exists. */
+  currentFollowerCount?: string;
+  /** Net change across the returned series, signed, e.g. "+57" or "-12"; absent with no baseline. */
+  delta?: string;
+  /** When follower tracking began for this account (ISO 8601); absent until tracking starts. */
+  trackingStartedAt?: string;
 }
 
 export interface CreatePostInput {

@@ -119,6 +119,7 @@ Ask your AI assistant things like:
 | `search_places` | Find a place to tag posts (the `id` works for both `facebookPlaceId` and `instagramLocationId`) |
 | `generate_connect_link` | Generate a link for clients to connect accounts |
 | `get_post_analytics` | Fetch published posts with performance metrics — Instagram, Facebook, TikTok, Threads, YouTube, LinkedIn (company pages), Pinterest (Business accounts) |
+| `get_follower_history` | Daily follower-count history for an account (current count + `delta` over a date range) — Facebook Pages, Instagram, YouTube, Pinterest, Threads, Bluesky, Telegram, LinkedIn (company pages) |
 
 ## Supported Platforms
 

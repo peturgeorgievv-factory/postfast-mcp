@@ -36,22 +36,25 @@ function detectContentType(filePath: string): string {
 }
 
 export function registerFileTools(server: McpServer, client: PostFastClient) {
-  server.tool(
+  server.registerTool(
     'get_upload_urls',
-    'Get signed upload URLs for media files. Upload your file to the returned URL via PUT, then use the key in create_posts mediaItems.',
     {
-      contentType: z
-        .string()
-        .describe(
-          `MIME type of the file. Supported: ${[...IMAGE_TYPES, ...VIDEO_TYPES].join(', ')}`,
-        ),
-      count: z
-        .number()
-        .int()
-        .min(1)
-        .max(8)
-        .default(1)
-        .describe('Number of upload URLs (1-8 for images, 1 for videos)'),
+      description:
+        'Get signed upload URLs for media files. Upload your file to the returned URL via PUT, then use the key in create_posts mediaItems.',
+      inputSchema: {
+        contentType: z
+          .string()
+          .describe(
+            `MIME type of the file. Supported: ${[...IMAGE_TYPES, ...VIDEO_TYPES].join(', ')}`,
+          ),
+        count: z
+          .number()
+          .int()
+          .min(1)
+          .max(8)
+          .default(1)
+          .describe('Number of upload URLs (1-8 for images, 1 for videos)'),
+      },
     },
     async (input) => {
       const data = await client.post<SignedUploadUrl[]>(
@@ -70,15 +73,18 @@ export function registerFileTools(server: McpServer, client: PostFastClient) {
     },
   );
 
-  server.tool(
+  server.registerTool(
     'upload_media',
-    'Upload a local file to PostFast and get back a media key for use in create_posts. Handles the full flow: detects content type, gets a signed URL, uploads the file, and returns the key and type.',
     {
-      filePath: z
-        .string()
-        .describe(
-          'Absolute path to the local file (e.g. /Users/me/photo.jpg)',
-        ),
+      description:
+        'Upload a local file to PostFast and get back a media key for use in create_posts. Handles the full flow: detects content type, gets a signed URL, uploads the file, and returns the key and type.',
+      inputSchema: {
+        filePath: z
+          .string()
+          .describe(
+            'Absolute path to the local file (e.g. /Users/me/photo.jpg)',
+          ),
+      },
     },
     async (input) => {
       const contentType = detectContentType(input.filePath);
