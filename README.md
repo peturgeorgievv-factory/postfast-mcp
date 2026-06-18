@@ -2,6 +2,18 @@
 
 MCP server for the [PostFast](https://postfa.st) API — schedule and manage social media posts via AI tools like Claude, Cursor, VS Code, and more.
 
+## Hosted connector (no install)
+
+Prefer not to run anything locally? Connect to the hosted endpoint and authenticate with OAuth — no npx, no API key to manage:
+
+```
+https://mcp.postfa.st/mcp
+```
+
+Add it as a remote/streamable-HTTP MCP server in any client that supports OAuth (e.g. ChatGPT, Claude). You'll be prompted to sign in to PostFast and authorize access on first use.
+
+Want to run the server yourself instead? Use the npx + API-key setup in **Quick Start** below.
+
 ## Quick Start
 
 ### 1. Get your API key
