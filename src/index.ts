@@ -9,7 +9,7 @@ import { registerFileTools } from './tools/files.js';
 
 const server = new McpServer({
   name: 'postfast',
-  version: '0.1.19',
+  version: '0.1.20',
 });
 
 const client = new PostFastClient();

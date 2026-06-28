@@ -99,7 +99,7 @@ export function registerPostTools(server: McpServer, client: PostFastClient) {
             .array(
               z.object({
                 content: z.string().describe('Post text content'),
-                firstComment: z.string().optional().describe('First comment to add after publishing'),
+                firstComment: z.string().optional().describe('First comment posted automatically after publishing. Supported on X, Instagram, Facebook, YouTube, Threads, and TikTok (TikTok: Business accounts only, max 150 chars, comments must be enabled).'),
                 mediaItems: z
                   .array(
                     z.object({
@@ -140,7 +140,7 @@ export function registerPostTools(server: McpServer, client: PostFastClient) {
             // X/Twitter
             xRetweetUrl: z.string().optional(),
             // TikTok
-            tiktokPrivacy: z.enum(['PUBLIC', 'MUTUAL_FRIENDS', 'FOLLOWER_OF_CREATOR', 'ONLY_ME']).optional(),
+            tiktokPrivacy: z.enum(['PUBLIC', 'MUTUAL_FRIENDS', 'FOLLOWER_OF_CREATOR', 'ONLY_ME']).optional().describe('Deprecated. TikTok videos use the account default privacy (no per-post control) and photos default to public; use a draft for private posts.'),
             tiktokIsDraft: z.boolean().optional(),
             tiktokAllowComments: z.boolean().optional(),
             tiktokAllowDuet: z.boolean().optional(),
@@ -237,7 +237,7 @@ export function registerPostTools(server: McpServer, client: PostFastClient) {
     'get_post_analytics',
     {
       description:
-        'Fetch published posts with their latest performance metrics (impressions, reach, likes, comments, shares). Only returns published posts that have a platform post ID. LinkedIn personal accounts are excluded. Supported: Instagram, Facebook, TikTok, Threads, YouTube, LinkedIn (company pages), Pinterest (Business accounts). Pinterest extras include pin_clicks, outbound_clicks, saves_90d, save_rate_90d (saves are 90-day rolling because Pinterest API does not expose lifetime totals); video pins additionally surface mrc_views, views_10s, avg_watch_time, v50_watch_time, video_starts, quartile_95_views. Video posts also include normalized watch-time on latestMetric: avgWatchTimeSeconds, totalWatchTimeSeconds, videoViews (Facebook, Instagram Reels, YouTube, Pinterest, LinkedIn company pages).',
+        'Fetch published posts with their latest performance metrics (impressions, reach, likes, comments, shares). Only returns published posts that have a platform post ID. LinkedIn personal accounts are excluded. Supported: Instagram, Facebook, TikTok, Threads, YouTube, LinkedIn (company pages), Pinterest (Business accounts). Pinterest extras include pin_clicks, outbound_clicks, saves_90d, save_rate_90d (saves are 90-day rolling because Pinterest API does not expose lifetime totals); video pins additionally surface mrc_views, views_10s, avg_watch_time, v50_watch_time, video_starts, quartile_95_views. Video posts also include normalized watch-time on latestMetric: avgWatchTimeSeconds, totalWatchTimeSeconds, videoViews (Facebook, Instagram Reels, YouTube, Pinterest, LinkedIn company pages, TikTok). TikTok also exposes total_time_watched, average_time_watched, and full_video_watched_rate in metric.extras.',
       inputSchema: {
         startDate: z
           .string()
