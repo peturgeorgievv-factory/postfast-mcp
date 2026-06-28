@@ -100,7 +100,7 @@ export function registerAccountTools(
     'get_follower_history',
     {
       description:
-        'Daily follower-count snapshots for a connected account, plus the current count (currentFollowerCount) and the net change (delta) over the range. Date range via from/to (ISO 8601); defaults to the last 90 days, capped at 365. Tracking is forward-only: data starts at trackingStartedAt (when PostFast began recording this account), with no snapshots before then. All counts are strings (bigint); currentFollowerCount, delta, and trackingStartedAt may be absent until the account has its first snapshot. Coverage: Facebook Pages, Instagram, YouTube, Pinterest, Threads, Bluesky, Telegram, LinkedIn company pages, and TikTok (Business accounts only). Not available: X, personal Facebook, and consumer (non-Business) TikTok.',
+        'Daily follower-count snapshots for a connected account, plus the current count (currentFollowerCount) and the net change (delta) over the range. Date range via from/to (ISO 8601); defaults to the last 90 days, capped at 365. Tracking is forward-only: data starts at trackingStartedAt (when PostFast began recording this account), with no snapshots before then. All counts are strings (bigint); currentFollowerCount, delta, and trackingStartedAt may be absent until the account has its first snapshot. Coverage: Facebook Pages, Instagram, YouTube, Pinterest, Threads, Bluesky, Telegram, LinkedIn company pages, and TikTok. Not available: X, personal Facebook.',
       inputSchema: {
         socialMediaId: z
           .uuid()
