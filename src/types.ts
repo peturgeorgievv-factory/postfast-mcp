@@ -137,6 +137,10 @@ export interface PostMetric {
   avgWatchTimeSeconds?: number;
   totalWatchTimeSeconds?: number;
   videoViews?: number;
+  // Instagram-only derived rates, as percentages rounded to 2 decimals.
+  // saveRate: saves/reach (IG feed posts, reels, carousels). reelsSkipRate: % of viewers who skipped a reel in the first 3s (IG Reels only).
+  saveRate?: number;
+  reelsSkipRate?: number;
 }
 
 export interface AnalyticsPost {
