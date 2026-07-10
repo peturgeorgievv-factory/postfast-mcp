@@ -18,7 +18,7 @@ export function registerAccountTools(
     'list_accounts',
     {
       description:
-        'List all social media accounts connected to the workspace. Each account includes connectionStatus (CONNECTED or DISABLED) and disabledReason (null unless DISABLED). If connectionStatus is DISABLED, the account will not publish until the user reconnects it.',
+        'List all social media accounts connected to the workspace. Each account includes connectionStatus (CONNECTED or DISABLED) and disabledReason (null unless DISABLED), plus followerCount (latest stored snapshot, a string; absent for platforms without follower data), followerCountUpdatedAt, and inboxCapable (whether the account can appear in the social inbox, i.e. comment ingestion is supported). If connectionStatus is DISABLED, the account will not publish until the user reconnects it. For a follower trend over time, use get_follower_history.',
       inputSchema: {},
     },
     async () => {

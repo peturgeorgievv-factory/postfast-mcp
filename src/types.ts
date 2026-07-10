@@ -80,6 +80,12 @@ export interface SocialAccount {
   connectionStatus: ConnectionStatus;
   /** Non-null only when connectionStatus is DISABLED. */
   disabledReason: DisabledReason | null;
+  /** Whether the account can appear in the social inbox (comment ingestion). */
+  inboxCapable: boolean;
+  /** Latest stored follower snapshot (string bigint); absent for platforms without follower data. */
+  followerCount?: string;
+  /** When the follower snapshot was captured (ISO 8601); absent when followerCount is. */
+  followerCountUpdatedAt?: string;
 }
 
 export interface PinterestBoard {
@@ -197,6 +203,7 @@ export interface PostControls {
   tiktokBrandContent?: boolean;
   tiktokAutoAddMusic?: boolean;
   tiktokIsAigc?: boolean;
+  tiktokTitle?: string;
   // Instagram
   instagramPostToGrid?: boolean;
   instagramPublishType?: 'TIMELINE' | 'STORY' | 'REEL';
@@ -218,7 +225,6 @@ export interface PostControls {
   facebookPrivacy?: 'PUBLIC' | 'FRIENDS_OF_FRIENDS' | 'FRIENDS' | 'SELF';
   facebookCarouselMainLink?: string;
   facebookCarouselShowEndCard?: boolean;
-  facebookReelsCoverImageKey?: string;
   facebookReelsCollaborators?: string[];
   facebookTargetCountries?: string[];
   facebookPlaceId?: string;

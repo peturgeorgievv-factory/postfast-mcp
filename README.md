@@ -119,7 +119,7 @@ Ask your AI assistant things like:
 
 | Tool | Description |
 |------|-------------|
-| `list_accounts` | List connected social media accounts (each with `connectionStatus` — `CONNECTED`/`DISABLED` — and `disabledReason`) |
+| `list_accounts` | List connected social media accounts (each with `connectionStatus` — `CONNECTED`/`DISABLED` — `disabledReason`, `followerCount`/`followerCountUpdatedAt`, and `inboxCapable`) |
 | `list_posts` | List posts with filters (specific IDs, platform, status, date range) |
 | `create_posts` | Create and schedule posts (batch, up to 15) |
 | `delete_post` | Delete a post by ID |
@@ -131,7 +131,7 @@ Ask your AI assistant things like:
 | `search_places` | Find a place to tag posts (the `id` works for both `facebookPlaceId` and `instagramLocationId`) |
 | `generate_connect_link` | Generate a link for clients to connect accounts |
 | `get_post_analytics` | Fetch published posts with performance metrics — Instagram, Facebook, TikTok, Threads, YouTube, LinkedIn (company pages), Pinterest (Business accounts) |
-| `get_follower_history` | Daily follower-count history for an account (current count + `delta` over a date range) — Facebook Pages, Instagram, YouTube, Pinterest, Threads, Bluesky, Telegram, LinkedIn (company pages) |
+| `get_follower_history` | Daily follower-count history for an account (current count + `delta` over a date range) — Facebook Pages, Instagram, YouTube, Pinterest, Threads, Bluesky, Telegram, LinkedIn (company pages), TikTok |
 
 ## Supported Platforms
 
@@ -145,8 +145,8 @@ When creating posts, you can pass platform-specific settings via the `controls` 
 |----------|----------|
 | **X (Twitter)** | `xRetweetUrl` |
 | **Instagram** | `instagramPublishType` (TIMELINE/STORY/REEL), `instagramPostToGrid`, `instagramCollaborators`, `instagramLocationId`/`instagramLocationName` (geotag from `search_places`) |
-| **Facebook** | `facebookContentType` (POST/REEL/STORY), `facebookAllowComments`, `facebookPrivacy`, `facebookReelsCollaborators`, `facebookTargetCountries` (ISO alpha-2, max 25), `facebookPlaceId`/`facebookPlaceName` (geotag from `search_places`) |
-| **TikTok** | `tiktokPrivacy` (PUBLIC/MUTUAL_FRIENDS/FOLLOWER_OF_CREATOR/ONLY_ME), `tiktokIsDraft`, `tiktokAllowComments`, `tiktokAllowDuet`, `tiktokAllowStitch`, `tiktokBrandOrganic`, `tiktokBrandContent`, `tiktokAutoAddMusic`, `tiktokIsAigc` |
+| **Facebook** | `facebookContentType` (POST/REEL/STORY), `facebookAllowComments`, `facebookPrivacy`, `facebookCarouselMainLink`, `facebookCarouselShowEndCard`, `facebookReelsCollaborators`, `facebookTargetCountries` (ISO alpha-2, max 25), `facebookPlaceId`/`facebookPlaceName` (geotag from `search_places`) |
+| **TikTok** | `tiktokTitle` (photo posts, max 90 chars), `tiktokIsDraft`, `tiktokAllowComments`, `tiktokAllowDuet`, `tiktokAllowStitch`, `tiktokBrandOrganic`, `tiktokBrandContent`, `tiktokAutoAddMusic`, `tiktokIsAigc`, `tiktokPrivacy` (deprecated — account default applies) |
 | **YouTube** | `youtubeTitle`, `youtubePrivacy` (PUBLIC/PRIVATE/UNLISTED), `youtubeTags`, `youtubeCategoryId`, `youtubeIsShort`, `youtubeMadeForKids`, `youtubePlaylistId`, `youtubeThumbnailKey` |
 | **Pinterest** | `pinterestBoardId` (required), `pinterestLink` |
 | **LinkedIn** | `linkedinAttachmentKey`, `linkedinAttachmentTitle` |
