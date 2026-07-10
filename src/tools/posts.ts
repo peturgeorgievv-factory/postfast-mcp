@@ -92,7 +92,7 @@ export function registerPostTools(server: McpServer, client: PostFastClient) {
     'create_posts',
     {
       description:
-        'Create and schedule social media posts. Supports batch creation (up to 15 posts). Each post targets a specific social account. Scheduling to a disconnected account (connectionStatus DISABLED in list_accounts) is rejected with HTTP 400 "socialMediaDisconnected" — pre-check connectionStatus before calling. Saving as DRAFT to a disconnected account is allowed.',
+        'Create and schedule social media posts. Supports batch creation (up to 15 posts). Each post targets a specific social account. Scheduling to a disconnected account (connectionStatus DISABLED in list_accounts) is rejected with HTTP 400 "socialMediaDisconnected" — pre-check connectionStatus before calling. Saving as DRAFT to a disconnected account is allowed. TikTok, Instagram, YouTube, Pinterest, and Google Business Profile require at least one media item EVEN FOR DRAFTS — attach media first (upload via upload_media or get_upload_urls, then reference the key in mediaItems).',
       inputSchema: {
         posts: jsonParse(
           z
@@ -149,12 +149,13 @@ export function registerPostTools(server: McpServer, client: PostFastClient) {
             tiktokBrandContent: z.boolean().optional(),
             tiktokAutoAddMusic: z.boolean().optional(),
             tiktokIsAigc: z.boolean().optional().describe('Declare video as AI-generated content'),
+            tiktokTitle: z.string().max(90).optional().describe('Title for TikTok photo posts (max 90 chars; photo posts only). When set, the full post content becomes the description; without it, content auto-splits on the first newline into title + description.'),
             // Instagram
             instagramPostToGrid: z.boolean().optional(),
             instagramPublishType: z.enum(['TIMELINE', 'STORY', 'REEL']).optional(),
             instagramCollaborators: z.array(z.string()).optional(),
             instagramLocationId: z.string().optional().describe('Geotag: same FB Page id from search_places. Single media only, not carousels.'),
-            instagramLocationName: z.string().optional().describe('Display-only location name (not sent to Meta).'),
+            instagramLocationName: z.string().max(255).optional().describe('Display-only location name (not sent to Meta).'),
             // YouTube
             youtubePrivacy: z.enum(['PUBLIC', 'PRIVATE', 'UNLISTED']).optional(),
             youtubeTags: z.array(z.string()).optional(),
@@ -172,9 +173,8 @@ export function registerPostTools(server: McpServer, client: PostFastClient) {
               .optional(),
             facebookCarouselMainLink: z.string().optional(),
             facebookCarouselShowEndCard: z.boolean().optional(),
-            facebookReelsCoverImageKey: z.string().optional(),
             facebookReelsCollaborators: z.array(z.string()).optional(),
-            facebookTargetCountries: z.array(z.string()).optional().describe('Facebook only: ISO 3166-1 alpha-2 codes (max 25). Limits who can see the post; also hidden from logged-out viewers. Feed posts only, not Reels/Stories.'),
+            facebookTargetCountries: z.array(z.string().length(2)).max(25).optional().describe('Facebook only: ISO 3166-1 alpha-2 codes (max 25). Limits who can see the post; also hidden from logged-out viewers. Feed posts only, not Reels/Stories.'),
             facebookPlaceId: z.string().optional().describe('Geotag: FB Page id (with location) from search_places. Feed posts only.'),
             facebookPlaceName: z.string().optional().describe('Display-only place name (not sent to Meta).'),
             // Google Business Profile

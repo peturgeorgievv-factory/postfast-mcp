@@ -62,6 +62,7 @@ If any PostFast tool call fails with an authentication/401 error, tell the user:
 - `tiktokBrandContent`: boolean, default false
 - `tiktokAutoAddMusic`: boolean, default false
 - `tiktokIsAigc`: boolean, default false (declare video as AI-generated content)
+- `tiktokTitle`: title for photo posts (max 90 chars; photo posts only) — when set, the full content becomes the description; without it, content auto-splits on the first newline into title + description
 
 ### YouTube
 - `youtubeTitle`: defaults to first 100 chars of content
