@@ -5,7 +5,7 @@
   "description": "MCP server for the PostFast API — schedule and manage social media posts via AI tools",
   "type": "module",
   "bin": {
-    "postfast-mcp": "./dist/index.js"
+    "postfast-mcp": "dist/index.js"
   },
   "main": "./dist/index.js",
   "files": [
@@ -33,7 +33,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/peturgeorgievv-factory/postfast-mcp"
+    "url": "git+https://github.com/peturgeorgievv-factory/postfast-mcp.git"
   },
   "engines": {
     "node": ">=18"
