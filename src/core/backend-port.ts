@@ -56,6 +56,43 @@ export interface UploadUrlsArgs {
   count: number;
 }
 
+export interface ListInboxConversationsArgs {
+  page: number;
+  limit: number;
+  platforms?: string[];
+  socialMediaIds?: string[];
+  statuses?: string[];
+  unreadOnly?: boolean;
+  assignedToUserId?: string;
+}
+
+export interface ListInboxItemsArgs {
+  conversationId: string;
+  page: number;
+  limit: number;
+  order?: 'ASC' | 'DESC';
+}
+
+export interface InboxReplyArgs {
+  itemId: string;
+  text: string;
+}
+
+export interface SetInboxItemStateArgs {
+  itemId: string;
+  action: string;
+}
+
+export interface SetInboxConversationStatusArgs {
+  conversationId: string;
+  status: string;
+}
+
+export interface AssignInboxConversationArgs {
+  conversationId: string;
+  assigneeUserId?: string;
+}
+
 export interface UploadFromUrlArgs {
   sourceUrl: string;
   contentType?: string;
@@ -133,4 +170,30 @@ export interface BackendPort {
   uploadFromUrl(args: UploadFromUrlArgs, workspaceId?: string): Promise<unknown>;
   /** Remote only: upload a conversation-attached file or base64 bytes. */
   uploadMedia(args: UploadMediaArgs, workspaceId?: string): Promise<unknown>;
+
+  // Social inbox (comments). OPTIONAL so an older adapter keeps compiling and
+  // deploying against a newer catalog — the registrar skips (and logs) any tool
+  // whose port method is absent, and registers it once the adapter catches up.
+  listInboxConversations?(
+    args: ListInboxConversationsArgs,
+    workspaceId?: string,
+  ): Promise<unknown>;
+  getInboxConversation?(id: string, workspaceId?: string): Promise<unknown>;
+  listInboxItems?(args: ListInboxItemsArgs, workspaceId?: string): Promise<unknown>;
+  getInboxUnreadCount?(workspaceId?: string): Promise<unknown>;
+  replyToInboxItem?(args: InboxReplyArgs, workspaceId?: string): Promise<unknown>;
+  sendInboxPrivateReply?(args: InboxReplyArgs, workspaceId?: string): Promise<unknown>;
+  setInboxItemState?(args: SetInboxItemStateArgs, workspaceId?: string): Promise<unknown>;
+  markInboxConversationRead?(
+    conversationId: string,
+    workspaceId?: string,
+  ): Promise<unknown>;
+  setInboxConversationStatus?(
+    args: SetInboxConversationStatusArgs,
+    workspaceId?: string,
+  ): Promise<unknown>;
+  assignInboxConversation?(
+    args: AssignInboxConversationArgs,
+    workspaceId?: string,
+  ): Promise<unknown>;
 }

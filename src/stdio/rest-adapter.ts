@@ -3,12 +3,18 @@ import { extname } from 'node:path';
 import type {
   AnalyticsArgs,
   ApprovePostsArgs,
+  AssignInboxConversationArgs,
   BackendPort,
   ConnectLinkArgs,
   CreatePostsArgs,
   FollowerHistoryArgs,
+  InboxReplyArgs,
+  ListInboxConversationsArgs,
+  ListInboxItemsArgs,
   ListPostsArgs,
   LocalUploadResult,
+  SetInboxConversationStatusArgs,
+  SetInboxItemStateArgs,
   UploadUrlsArgs,
 } from '../core/backend-port.js';
 import type { SignedUploadUrl } from '../core/types.js';
@@ -233,5 +239,67 @@ export class RestAdapter implements BackendPort {
     throw new Error(
       'Conversation-media upload is only available on the hosted PostFast MCP server.',
     );
+  }
+
+  listInboxConversations(args: ListInboxConversationsArgs): Promise<unknown> {
+    return this.get('/social-inbox/conversations', {
+      page: String(args.page),
+      limit: String(args.limit),
+      platforms: args.platforms?.join(','),
+      socialMediaIds: args.socialMediaIds?.join(','),
+      statuses: args.statuses?.join(','),
+      unreadOnly: args.unreadOnly === undefined ? undefined : String(args.unreadOnly),
+      assignedToUserId: args.assignedToUserId,
+    });
+  }
+
+  getInboxConversation(id: string): Promise<unknown> {
+    return this.get(`/social-inbox/conversations/${id}`);
+  }
+
+  listInboxItems(args: ListInboxItemsArgs): Promise<unknown> {
+    return this.get(`/social-inbox/conversations/${args.conversationId}/items`, {
+      page: String(args.page),
+      limit: String(args.limit),
+      order: args.order,
+    });
+  }
+
+  getInboxUnreadCount(): Promise<unknown> {
+    return this.get('/social-inbox/unread-count');
+  }
+
+  replyToInboxItem(args: InboxReplyArgs): Promise<unknown> {
+    return this.post(`/social-inbox/items/${args.itemId}/reply`, {
+      text: args.text,
+    });
+  }
+
+  sendInboxPrivateReply(args: InboxReplyArgs): Promise<unknown> {
+    return this.post(`/social-inbox/items/${args.itemId}/private-reply`, {
+      text: args.text,
+    });
+  }
+
+  setInboxItemState(args: SetInboxItemStateArgs): Promise<unknown> {
+    return this.post(`/social-inbox/items/${args.itemId}/state`, {
+      action: args.action,
+    });
+  }
+
+  markInboxConversationRead(conversationId: string): Promise<unknown> {
+    return this.post(`/social-inbox/conversations/${conversationId}/read`);
+  }
+
+  setInboxConversationStatus(args: SetInboxConversationStatusArgs): Promise<unknown> {
+    return this.post(`/social-inbox/conversations/${args.conversationId}/status`, {
+      status: args.status,
+    });
+  }
+
+  assignInboxConversation(args: AssignInboxConversationArgs): Promise<unknown> {
+    return this.post(`/social-inbox/conversations/${args.conversationId}/assign`, {
+      assigneeUserId: args.assigneeUserId,
+    });
   }
 }

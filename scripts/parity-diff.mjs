@@ -133,15 +133,26 @@ push(`# stdio parity: ${OLD_CMD} -> ${NEW_CMD}`);
 push('');
 push(`old tools: ${oldSide.tools.length}, new tools: ${newSide.tools.length}`);
 
+// PARITY_ALLOW_ADDED=1: new tools appended after the existing set are reported
+// as intended additions instead of failures (existing tools must still be
+// byte-stable and keep their relative order).
+const allowAdded = process.env.PARITY_ALLOW_ADDED === '1';
 const oldOrder = oldSide.tools.map((t) => t.name);
 const newOrder = newSide.tools.map((t) => t.name);
 if (oldOrder.join() !== newOrder.join()) {
   const missing = oldOrder.filter((n) => !newByName.has(n));
   const added = newOrder.filter((n) => !oldByName.has(n));
-  if (missing.length || added.length) {
-    push(`FAIL tool set changed. missing: [${missing}] added: [${added}]`, true);
+  const commonOrderKept =
+    newOrder.filter((n) => oldByName.has(n)).join() === oldOrder.join();
+  if (missing.length) {
+    push(`FAIL tools removed: [${missing}]`, true);
+  } else if (!commonOrderKept) {
+    push(`FAIL existing tool order changed: [${newOrder}]`, true);
+  } else if (allowAdded) {
+    push(`OK   existing ${oldOrder.length} tools present in original order`);
+    push(`ADD  ${added.length} new tool(s): [${added.join(', ')}]`);
   } else {
-    push(`FAIL tool order changed: [${newOrder}]`, true);
+    push(`FAIL tool set changed. added: [${added}]`, true);
   }
 } else {
   push(`OK   tool names + order identical: [${oldOrder.join(', ')}]`);

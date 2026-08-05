@@ -13,15 +13,32 @@ export interface BuildToolsOptions {
    * this — its pf-api-key is already workspace-scoped.
    */
   withWorkspaceField?: boolean;
+  /**
+   * When given, tools whose `portMethod` the port instance does not implement
+   * are skipped with a stderr log — so an adapter built against an older
+   * catalog keeps working when a newer catalog adds tools it can't serve yet.
+   */
+  port?: BackendPort;
 }
 
 /** Resolve the catalog for one binding: filter, flatten binding-variant fields. */
 export function buildTools(options: BuildToolsOptions): ResolvedTool[] {
-  const { binding, withWorkspaceField = false } = options;
+  const { binding, withWorkspaceField = false, port } = options;
 
-  return ALL_TOOLS.filter(
-    (def) => def.binding === 'both' || def.binding === binding,
-  ).map((def) => {
+  return ALL_TOOLS.filter((def) => {
+    if (def.binding !== 'both' && def.binding !== binding) return false;
+    if (
+      port &&
+      def.portMethod &&
+      typeof (port as unknown as Record<string, unknown>)[def.portMethod] !== 'function'
+    ) {
+      console.error(
+        `[postfast-mcp/core] skipping tool "${def.name}": the backend port does not implement ${def.portMethod}() yet (older adapter, newer catalog)`,
+      );
+      return false;
+    }
+    return true;
+  }).map((def) => {
     const inputSchema =
       typeof def.inputSchema === 'function' ? def.inputSchema(binding) : def.inputSchema;
 
@@ -37,6 +54,7 @@ export function buildTools(options: BuildToolsOptions): ResolvedTool[] {
       outputSchema: def.outputSchema,
       annotations: def.annotations,
       _meta: def._meta,
+      portMethod: def.portMethod,
       run: def.run,
     };
   });
