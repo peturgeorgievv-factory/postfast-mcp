@@ -15,6 +15,8 @@ export const PLATFORMS = [
 ] as const;
 
 export const POST_STATUSES = ['DRAFT', 'SCHEDULED', 'PUBLISHED', 'FAILED'] as const;
+export const INBOX_CONVERSATION_STATUSES = ['OPEN', 'SNOOZED', 'CLOSED'] as const;
+export const INBOX_ITEM_STATE_ACTIONS = ['HIDE', 'UNHIDE', 'DELETE'] as const;
 export const CREATE_STATUSES = ['DRAFT', 'SCHEDULED'] as const;
 export const CREATE_APPROVAL_STATUSES = ['PENDING_APPROVAL', 'APPROVED'] as const;
 export const SET_APPROVAL_STATUSES = [

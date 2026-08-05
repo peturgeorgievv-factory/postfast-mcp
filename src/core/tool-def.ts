@@ -31,6 +31,13 @@ export interface ToolDef {
   /** False only for tools that are not scoped to a workspace (list_workspaces). */
   workspaceScoped?: boolean;
   /**
+   * The BackendPort method this tool's run() dispatches to. When set and the
+   * port instance lacks the method (an older adapter running a newer catalog),
+   * the tool is skipped at registration with a stderr log instead of shipping
+   * a broken tool — lets bindings adopt new tool waves on their own schedule.
+   */
+  portMethod?: keyof BackendPort;
+  /**
    * Dispatch to the backend. `args` are the validated tool arguments minus
    * `workspaceId`, which is split off by the registrar and passed separately
    * (always undefined on stdio — the pf-api-key is already workspace-scoped).
@@ -51,5 +58,6 @@ export interface ResolvedTool {
   outputSchema?: ZodRawShape;
   annotations: ToolAnnotations;
   _meta?: Record<string, unknown>;
+  portMethod?: keyof BackendPort;
   run: ToolDef['run'];
 }
