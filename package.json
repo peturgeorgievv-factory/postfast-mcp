@@ -5,9 +5,19 @@
   "description": "MCP server for the PostFast API — schedule and manage social media posts via AI tools",
   "type": "module",
   "bin": {
-    "postfast-mcp": "dist/index.js"
+    "postfast-mcp": "dist/stdio/index.js"
   },
-  "main": "./dist/index.js",
+  "main": "./dist/stdio/index.js",
+  "exports": {
+    ".": {
+      "types": "./dist/stdio/index.d.ts",
+      "default": "./dist/stdio/index.js"
+    },
+    "./core": {
+      "types": "./dist/core/index.d.ts",
+      "default": "./dist/core/index.js"
+    }
+  },
   "files": [
     "dist",
     ".claude-plugin",
@@ -17,7 +27,9 @@
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
-    "start": "node dist/index.js",
+    "start": "node dist/stdio/index.js",
+    "version": "changeset version && node scripts/stamp-versions.mjs",
+    "release": "npm run build && changeset publish",
     "prepublishOnly": "npm run build"
   },
   "keywords": [
@@ -39,10 +51,12 @@
     "node": ">=18"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.29.0"
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
-    "typescript": "^5.9.3",
-    "@types/node": "^22.19.21"
+    "@changesets/cli": "^2.29.8",
+    "@types/node": "^22.19.21",
+    "typescript": "^5.9.3"
   }
 }
