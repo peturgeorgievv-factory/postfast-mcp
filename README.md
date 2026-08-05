@@ -189,8 +189,14 @@ Full REST API documentation: [postfa.st/docs](https://postfa.st/docs)
 ```bash
 npm install
 npm run build
-node dist/index.js
+node dist/stdio/index.js
 ```
+
+Tools are authored once in `src/core` (the catalog — schemas, descriptions,
+annotations, per-binding availability) and exposed to consumers as
+`postfast-mcp/core`; `src/stdio` binds the catalog to the public REST API.
+Releases go through changesets: PRs add a `.changeset/*.md`, and merging the
+generated Version Packages PR publishes npm + MCP Registry + the MCPB release.
 
 ## Badges
 

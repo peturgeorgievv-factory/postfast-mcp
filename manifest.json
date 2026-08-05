@@ -19,10 +19,10 @@
   "keywords": ["social-media", "scheduling", "postfast", "mcp"],
   "server": {
     "type": "node",
-    "entry_point": "dist/index.js",
+    "entry_point": "dist/stdio/index.js",
     "mcp_config": {
       "command": "node",
-      "args": ["${__dirname}/dist/index.js"],
+      "args": ["${__dirname}/dist/stdio/index.js"],
       "env": {
         "POSTFAST_API_KEY": "${user_config.api_key}"
       }
