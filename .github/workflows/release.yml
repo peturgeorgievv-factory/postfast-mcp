@@ -95,11 +95,22 @@ jobs:
           npx -y @anthropic-ai/mcpb@2.1.2 pack . postfast-mcp.mcpb
           gh release upload "$GITHUB_REF_NAME" postfast-mcp.mcpb --clobber
 
-      # DISPATCH_PAT is referenced ONLY here, step-level — it must never move to
-      # job/workflow env, where it would sit in the environment of npm ci/build.
+      # The release-bot app secrets are referenced ONLY on these two steps —
+      # never job/workflow env, where they would sit in the environment of
+      # npm ci/build. The minted token is short-lived and scoped to exactly
+      # one repository.
+      - name: Mint release-bot token for the dispatch
+        id: release-bot
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ secrets.RELEASE_BOT_APP_ID }}
+          private-key: ${{ secrets.RELEASE_BOT_PRIVATE_KEY }}
+          owner: peturgeorgievv-factory
+          repositories: social-schedule-mcp
+
       - name: Notify social-schedule-mcp of the new catalog version
         env:
-          GH_TOKEN: ${{ secrets.DISPATCH_PAT }}
+          GH_TOKEN: ${{ steps.release-bot.outputs.token }}
         run: |
           gh api repos/peturgeorgievv-factory/social-schedule-mcp/dispatches \
             -f event_type=catalog-release \

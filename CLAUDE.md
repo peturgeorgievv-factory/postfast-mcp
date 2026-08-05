@@ -8,7 +8,7 @@ Public **stdio MCP server** (npm: `postfast-mcp`) over PostFast's pf-api-key RES
 - **Tool descriptions ARE the API** — models discover fields only from descriptions/schemas, so wording changes are behavior changes. Keep them accurate against the BE REST responses.
 - **The catalog IS the single source**: every tool (schema + description + title + annotations + outputSchema + binding) lives ONLY in `src/core/tools/`. Never author tool text anywhere else; both bindings render from it.
 - stdio surface stability: `scripts/parity-diff.mjs` diffs a published version against the local build (initialize + tools/list over real stdio). Run it before any release that touches the catalog.
-- **Workflow security**: `release.yml` carries a secret (`DISPATCH_PAT`) — reference secrets ONLY as step-level `env` on the step that uses them, never job/workflow level. This repo must NEVER gain a `pull_request_target` workflow that checks out PR code, and no secret-bearing workflow may interpolate PR-controlled strings (titles, branch names, bodies).
+- **Workflow security**: `release.yml`'s dispatch authenticates as the release-bot GitHub App (`RELEASE_BOT_APP_ID` + `RELEASE_BOT_PRIVATE_KEY`; the private key is the critical credential) — it mints a short-lived token scoped to social-schedule-mcp only. Reference secrets ONLY on the step that uses them, never job/workflow level. This repo must NEVER gain a `pull_request_target` workflow that checks out PR code, and no secret-bearing workflow may interpolate PR-controlled strings (titles, branch names, bodies).
 - Never commit with AI/Claude attribution or Co-authored-by.
 
 ## Release (tag-triggered — CI holds no credentials)
