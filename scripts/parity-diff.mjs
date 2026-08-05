@@ -110,13 +110,14 @@ function canonical(value) {
 
 console.error(`old: ${OLD_CMD}`);
 console.error(`new: ${NEW_CMD}`);
-// The old side must NOT run from this repo: npx would satisfy postfast-mcp
-// from the cwd project instead of the registry and find no bin.
+// npx-launched sides must NOT run from this repo: npx would satisfy
+// postfast-mcp from the cwd project instead of the registry and find no bin.
 const repoRoot = resolve(new URL('..', import.meta.url).pathname);
-const neutralCwd = mkdtempSync(join(tmpdir(), 'postfast-parity-'));
+const cwdFor = (cmd) =>
+  cmd.startsWith('npx') ? mkdtempSync(join(tmpdir(), 'postfast-parity-')) : repoRoot;
 const [oldSide, newSide] = await Promise.all([
-  listTools(OLD_CMD, neutralCwd),
-  listTools(NEW_CMD, repoRoot),
+  listTools(OLD_CMD, cwdFor(OLD_CMD)),
+  listTools(NEW_CMD, cwdFor(NEW_CMD)),
 ]);
 
 const oldByName = new Map(oldSide.tools.map((t) => [t.name, t]));
