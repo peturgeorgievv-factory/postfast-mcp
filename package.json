@@ -29,7 +29,6 @@
     "dev": "tsc --watch",
     "start": "node dist/stdio/index.js",
     "version": "changeset version && node scripts/stamp-versions.mjs",
-    "release": "npm run build && changeset publish",
     "prepublishOnly": "npm run build"
   },
   "keywords": [

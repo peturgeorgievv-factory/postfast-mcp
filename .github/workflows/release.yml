@@ -1,17 +1,18 @@
 name: Release
 
-# Changesets two-merge flow: feature PRs carry .changeset/*.md files; on merge
-# this workflow opens/updates the "Version Packages" PR (version bump + stamps
-# + CHANGELOG). Merging THAT PR is the publish button: npm (trusted
-# publishing/OIDC — no tokens), MCP Registry, and a GitHub Release with the
-# .mcpb bundle attached.
+# Tag-triggered publishing (same model as n8n-nodes-postfast): prepare the
+# release locally with `npm run version` (changesets computes the bump +
+# changelog, stamp-versions propagates it), commit, then push a vX.Y.Z tag —
+# the tag is the publish button. CI holds no registry credentials anywhere:
+# npm goes through trusted publishing (OIDC) and the MCP Registry through
+# github-oidc, so nothing here needs the "Actions can create PRs" org setting.
 
 on:
   push:
-    branches: [main]
+    tags: ["v*.*.*"]
   # Manual re-publish of the CURRENT server.json to the MCP Registry (e.g. a
-  # registry hiccup, or a release where npm was published outside this
-  # workflow). OIDC from this org's repo grants the org namespace directly.
+  # registry hiccup, or a release published outside this workflow). OIDC from
+  # this org's repo grants the org namespace directly.
   workflow_dispatch:
 
 concurrency: ${{ github.workflow }}-${{ github.ref }}
@@ -41,13 +42,10 @@ jobs:
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
     permissions:
-      contents: write # push the Version Packages branch, create the release tag
-      pull-requests: write # open/update the Version Packages PR
       id-token: write # npm trusted publishing + MCP Registry github-oidc
+      contents: write # create the GitHub Release and upload the .mcpb
     steps:
       - uses: actions/checkout@v5
-        with:
-          fetch-depth: 0
 
       - uses: actions/setup-node@v5
         with:
@@ -60,17 +58,20 @@ jobs:
 
       - run: npm ci
 
-      - name: Version PR or publish to npm
-        id: changesets
-        uses: changesets/action@v1
-        with:
-          version: npm run version
-          publish: npm run release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Tag must match the stamped version
+        run: |
+          PKG=$(node -p "require('./package.json').version")
+          if [ "${GITHUB_REF_NAME#v}" != "$PKG" ]; then
+            echo "tag ${GITHUB_REF_NAME} does not match package.json ${PKG} — run npm run version and re-tag"
+            exit 1
+          fi
+
+      - run: npm run build
+
+      - name: Publish to npm (OIDC trusted publishing)
+        run: npm publish
 
       - name: Publish to MCP Registry
-        if: steps.changesets.outputs.published == 'true'
         run: |
           curl -L "https://github.com/modelcontextprotocol/registry/releases/latest/download/mcp-publisher_$(uname -s | tr '[:upper:]' '[:lower:]')_$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/').tar.gz" | tar xz mcp-publisher
           ./mcp-publisher login github-oidc
@@ -82,32 +83,25 @@ jobs:
           done
           exit 1
 
-      - name: Pack MCPB bundle and attach to the GitHub Release
-        if: steps.changesets.outputs.published == 'true'
+      - name: GitHub Release with the MCPB bundle
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          # Newest CHANGELOG section (header included) as the release notes.
+          awk '/^## /{n++} n==1' CHANGELOG.md > /tmp/release-notes.md
+          gh release create "$GITHUB_REF_NAME" --title "${GITHUB_REF_NAME#v}" --notes-file /tmp/release-notes.md
           # Prune to production deps so the bundle ships only runtime node_modules.
           npm ci --omit=dev
           npx -y @anthropic-ai/mcpb@2.1.2 pack . postfast-mcp.mcpb
-          VERSION=$(node -p "require('./package.json').version")
-          for TAG in "v${VERSION}" "postfast-mcp@${VERSION}"; do
-            if gh release view "$TAG" >/dev/null 2>&1; then
-              gh release upload "$TAG" postfast-mcp.mcpb --clobber
-              exit 0
-            fi
-          done
-          echo "no GitHub release found for ${VERSION}" && exit 1
+          gh release upload "$GITHUB_REF_NAME" postfast-mcp.mcpb --clobber
 
       # TODO(step 2 of the periphery plan): notify social-schedule-mcp once its
       # repository_dispatch receiver workflow exists. Needs a DISPATCH_PAT repo
       # secret (fine-grained PAT: contents+actions on social-schedule-mcp).
       # - name: Notify social-schedule-mcp of the new catalog version
-      #   if: steps.changesets.outputs.published == 'true'
       #   env:
       #     GH_TOKEN: ${{ secrets.DISPATCH_PAT }}
       #   run: |
-      #     VERSION=$(node -p "require('./package.json').version")
       #     gh api repos/peturgeorgievv-factory/social-schedule-mcp/dispatches \
       #       -f event_type=postfast-mcp-release \
-      #       -f "client_payload[version]=${VERSION}"
+      #       -f "client_payload[version]=${GITHUB_REF_NAME#v}"

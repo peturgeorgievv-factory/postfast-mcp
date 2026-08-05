@@ -195,8 +195,9 @@ node dist/stdio/index.js
 Tools are authored once in `src/core` (the catalog — schemas, descriptions,
 annotations, per-binding availability) and exposed to consumers as
 `postfast-mcp/core`; `src/stdio` binds the catalog to the public REST API.
-Releases go through changesets: PRs add a `.changeset/*.md`, and merging the
-generated Version Packages PR publishes npm + MCP Registry + the MCPB release.
+Releases: PRs add a `.changeset/*.md`; `npm run version` folds them into the
+bump + changelog, and pushing the `vX.Y.Z` tag publishes npm + MCP Registry +
+the MCPB release from CI (OIDC — no tokens anywhere).
 
 ## Badges
 

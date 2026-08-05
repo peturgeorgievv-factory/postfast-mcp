@@ -10,8 +10,8 @@ Public **stdio MCP server** (npm: `postfast-mcp`) over PostFast's pf-api-key RES
 - stdio surface stability: `scripts/parity-diff.mjs` diffs a published version against the local build (initialize + tools/list over real stdio). Run it before any release that touches the catalog.
 - Never commit with AI/Claude attribution or Co-authored-by.
 
-## Release (changesets — no laptop publishing)
+## Release (tag-triggered — CI holds no credentials)
 
 1. Every behavior-changing PR adds a `.changeset/*.md` (patch/minor + summary).
-2. Merging to main makes `release.yml` open/update the **Version Packages PR** (`changeset version` + `scripts/stamp-versions.mjs` stamps manifest.json, server.json, both `.claude-plugin/` files, `src/stdio/index.ts`, package-lock.json).
-3. **Merging the Version Packages PR is the publish button**: npm via trusted publishing (OIDC, no tokens), then MCP Registry (`mcp-publisher login github-oidc`), then the `.mcpb` bundle attached to the GitHub Release. The repository_dispatch to `social-schedule-mcp` is stubbed in `release.yml` until its receiver exists.
+2. To release: `npm run version` (changesets computes the bump + CHANGELOG, `scripts/stamp-versions.mjs` stamps manifest.json, server.json, both `.claude-plugin/` files, `src/stdio/index.ts`, package-lock.json) → review the diff → commit ("…, bump to X" style).
+3. **Pushing the tag is the publish button**: `git tag vX.Y.Z && git push origin main vX.Y.Z`. `release.yml` then publishes npm (trusted publishing/OIDC), the MCP Registry (github-oidc), and a GitHub Release with the `.mcpb` attached. A tag that doesn't match package.json fails fast. The repository_dispatch to `social-schedule-mcp` is stubbed until its receiver exists. Registry hiccup? Re-run via the workflow's manual `workflow_dispatch` (registry-republish job).
