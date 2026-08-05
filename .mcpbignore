@@ -8,6 +8,15 @@ tsconfig.json
 .claude-plugin/
 .git/
 .gitignore
+.mcpregistry_*
+.changeset/
+.github/
+scripts/
+CLAUDE.md
+CHANGELOG.md
+glama.json
+server.json
+package-lock.json
 *.tgz
 *.mcpb
 node_modules/typescript/
