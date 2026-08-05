@@ -9,13 +9,36 @@ name: Release
 on:
   push:
     branches: [main]
+  # Manual re-publish of the CURRENT server.json to the MCP Registry (e.g. a
+  # registry hiccup, or a release where npm was published outside this
+  # workflow). OIDC from this org's repo grants the org namespace directly.
+  workflow_dispatch:
 
 concurrency: ${{ github.workflow }}-${{ github.ref }}
 
 permissions: {}
 
 jobs:
+  registry-republish:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/checkout@v5
+      - name: Publish current server.json to MCP Registry
+        run: |
+          curl -L "https://github.com/modelcontextprotocol/registry/releases/latest/download/mcp-publisher_$(uname -s | tr '[:upper:]' '[:lower:]')_$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/').tar.gz" | tar xz mcp-publisher
+          ./mcp-publisher login github-oidc
+          for attempt in 1 2 3 4 5; do
+            ./mcp-publisher publish && exit 0
+            echo "publish attempt ${attempt} failed — retrying in 90s"
+            sleep 90
+          done
+          exit 1
+
   release:
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     permissions:
       contents: write # push the Version Packages branch, create the release tag
