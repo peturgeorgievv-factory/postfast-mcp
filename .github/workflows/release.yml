@@ -95,13 +95,12 @@ jobs:
           npx -y @anthropic-ai/mcpb@2.1.2 pack . postfast-mcp.mcpb
           gh release upload "$GITHUB_REF_NAME" postfast-mcp.mcpb --clobber
 
-      # TODO(step 2 of the periphery plan): notify social-schedule-mcp once its
-      # repository_dispatch receiver workflow exists. Needs a DISPATCH_PAT repo
-      # secret (fine-grained PAT: contents+actions on social-schedule-mcp).
-      # - name: Notify social-schedule-mcp of the new catalog version
-      #   env:
-      #     GH_TOKEN: ${{ secrets.DISPATCH_PAT }}
-      #   run: |
-      #     gh api repos/peturgeorgievv-factory/social-schedule-mcp/dispatches \
-      #       -f event_type=postfast-mcp-release \
-      #       -f "client_payload[version]=${GITHUB_REF_NAME#v}"
+      # DISPATCH_PAT is referenced ONLY here, step-level — it must never move to
+      # job/workflow env, where it would sit in the environment of npm ci/build.
+      - name: Notify social-schedule-mcp of the new catalog version
+        env:
+          GH_TOKEN: ${{ secrets.DISPATCH_PAT }}
+        run: |
+          gh api repos/peturgeorgievv-factory/social-schedule-mcp/dispatches \
+            -f event_type=catalog-release \
+            -f "client_payload[version]=${GITHUB_REF_NAME#v}"
