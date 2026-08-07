@@ -133,6 +133,23 @@ Ask your AI assistant things like:
 | `get_post_analytics` | Fetch published posts with performance metrics — Instagram, Facebook, TikTok, Threads, YouTube, LinkedIn (company pages), Pinterest (Business accounts) |
 | `get_follower_history` | Daily follower-count history for an account (current count + `delta` over a date range) — Facebook Pages, Instagram, YouTube, Pinterest, Threads, Bluesky, Telegram, LinkedIn (company pages), TikTok |
 
+### Social Inbox (comments)
+
+Comments on your posts — TikTok (Business connections), Instagram, Facebook Pages, and Threads — in one inbox. Comments only (no direct messages), from connect onward (no history backfill). Reply capability is always server-computed per conversation (`canReply`, `maxReplyLength`, `windowState`, `disabledReason`) — render from those fields, never platform assumptions.
+
+| Tool | Description |
+|------|-------------|
+| `list_inbox_conversations` | List comment conversations (filters: platforms, accounts, statuses, unread-only, assignee) |
+| `get_inbox_conversation` | Fetch one conversation with its reply-capability fields |
+| `list_inbox_items` | List a conversation's comments and replies (with `state` and, on Instagram, `canPrivateReply`) |
+| `get_inbox_unread_count` | Total unread comment count across the workspace |
+| `reply_to_inbox_item` | Reply publicly under a specific comment |
+| `send_inbox_private_reply` | Instagram only: one private reply per comment, within 7 days |
+| `set_inbox_item_state` | HIDE / UNHIDE / DELETE a comment on the platform (DELETE cannot be undone) |
+| `mark_inbox_conversation_read` | Zero a conversation's unread count |
+| `set_inbox_conversation_status` | Triage: OPEN / SNOOZED / CLOSED |
+| `assign_inbox_conversation` | Assign a conversation to a workspace member (or unassign) |
+
 ## Supported Platforms
 
 Facebook, Instagram, X (Twitter), TikTok, LinkedIn, YouTube, BlueSky, Threads, Pinterest, Telegram, Google Business Profile

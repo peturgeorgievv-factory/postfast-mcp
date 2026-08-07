@@ -1,5 +1,11 @@
 # postfast-mcp
 
+## 0.3.1
+
+### Patch Changes
+
+- Docs and hints for the inbox wave — no schema changes: server instructions (both bindings) gain a Social Inbox section (read flow, server-computed reply capability, comments-only framing), the README tool table covers all 23 tools, manifest.json lists the full tool set, and a `social-inbox` skill ships alongside the posting skill.
+
 ## 0.3.0
 
 ### Minor Changes

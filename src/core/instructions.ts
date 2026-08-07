@@ -41,7 +41,9 @@ Platform-specific options go in the controls object, e.g.:
 - X: controls.xRetweetUrl reposts an existing tweet (content/media are ignored).
 Note: list_pinterest_boards / list_youtube_playlists / list_gbp_locations take the account's socialMediaId; each returned item has BOTH an internal id and the platform id (boardId / playlistId / locationId) — pass the PLATFORM id to controls, not the internal id or the account id.
 
-Failed posts carry lastError — usually a disconnected account (reconnect, then retry) or platform-rejected media.`;
+Failed posts carry lastError — usually a disconnected account (reconnect, then retry) or platform-rejected media.
+
+Social inbox (comments on your posts — TikTok Business connections, Instagram, Facebook Pages, Threads): read with list_inbox_conversations → list_inbox_items (get_inbox_unread_count for the total), reply with reply_to_inbox_item (public, under a specific comment item) or send_inbox_private_reply (Instagram only: one per comment, within 7 days). Whether and how long a reply can be comes ONLY from the conversation's server-computed canReply / maxReplyLength / windowState / disabledReason — never assume platform rules. Moderate with set_inbox_item_state (HIDE / UNHIDE / DELETE — DELETE removes the comment on the platform and cannot be undone), triage with set_inbox_conversation_status and assign_inbox_conversation, and call mark_inbox_conversation_read after presenting a thread. It is a comments inbox — never present it as DMs or messages.`;
 
 const STDIO_INSTRUCTIONS = `PostFast schedules and publishes social posts across X, Instagram, Facebook, TikTok, LinkedIn, YouTube, Threads, Pinterest, Bluesky, Telegram, and Google Business Profile.
 
