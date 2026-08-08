@@ -50,7 +50,7 @@ const postItemSchema = (binding: Binding) =>
       .string()
       .optional()
       .describe(
-        'First comment posted automatically after publishing. Supported on X, Instagram, Facebook, YouTube, Threads, and TikTok (TikTok: Business accounts only, max 150 chars, comments must be enabled).',
+        'First comment posted automatically after publishing. Supported on X, Instagram, Facebook, YouTube, Threads, and TikTok (TikTok: max 150 chars, comments must be enabled).',
       ),
     mediaItems: z
       .array(mediaItemSchema(binding))
@@ -94,7 +94,7 @@ const controlsSchema = z.object({
     .max(128)
     .optional()
     .describe(
-      'Commercial Music Library sound id from list_tiktok_sounds. TikTok photo/carousel posts on Business API connections only. Mutually exclusive with tiktokAutoAddMusic (sending both is rejected). Not applied when tiktokIsDraft is true. Omit for no sound.',
+      'Commercial Music Library sound id from list_tiktok_sounds. TikTok photo/carousel posts only. Mutually exclusive with tiktokAutoAddMusic (sending both is rejected). Not applied when tiktokIsDraft is true. Omit for no sound.',
     ),
   tiktokMusicSoundName: z
     .string()

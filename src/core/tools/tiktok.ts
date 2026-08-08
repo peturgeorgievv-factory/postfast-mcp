@@ -9,7 +9,7 @@ export const tiktokTools: ToolDef[] = [
     binding: 'both',
     title: 'List TikTok Sounds',
     description:
-      "List trending pre-cleared Commercial Music Library tracks for a TikTok account connected via the Business API. Returns up to 100 trending sounds with musicSoundId, name, artist, duration, and preview/thumbnail URLs. Pass a musicSoundId to create_posts as tiktokMusicSoundId to attach that sound to a TikTok photo/carousel post. genre takes raw TikTok values like 'POP', 'HIP_HOP/RAP', 'R&B/SOUL', 'K-POP' (invalid values return the full valid list in the error). The list rotates daily — fetch fresh rather than reusing old ids for display. An unknown countryCode returns an empty list. Consumer-connected TikTok accounts are not supported (error tiktokMusic.requiresBusinessApi — the account must be reconnected).",
+      "List trending pre-cleared Commercial Music Library tracks for a connected TikTok account. Returns up to 100 trending sounds with musicSoundId, name, artist, duration, and preview/thumbnail URLs. Pass a musicSoundId to create_posts as tiktokMusicSoundId to attach that sound to a TikTok photo/carousel post. genre takes raw TikTok values like 'POP', 'HIP_HOP/RAP', 'R&B/SOUL', 'K-POP' (invalid values return the full valid list in the error). The list rotates daily — fetch fresh rather than reusing old ids for display. An unknown countryCode returns an empty list. If the API returns tiktokMusic.requiresBusinessApi, the TikTok account needs a one-time reconnect.",
     inputSchema: {
       socialMediaId: z.uuid().describe('TikTok account id (from list_accounts)'),
       genre: z

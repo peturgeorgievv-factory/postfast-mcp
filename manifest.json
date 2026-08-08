@@ -2,7 +2,7 @@
   "manifest_version": "0.3",
   "name": "postfast",
   "display_name": "PostFast",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "Schedule and manage social media posts via PostFast",
   "long_description": "Connect Claude to PostFast to schedule and manage social media posts across 11 platforms using natural language. Create, schedule, and delete posts on Instagram, TikTok, LinkedIn, X, Facebook, YouTube, Threads, BlueSky, Pinterest, Telegram, and Google Business Profile. Supports batch scheduling (up to 15 posts), media uploads, platform-specific controls, and post analytics (impressions, reach, likes, comments, shares).",
   "author": {
@@ -51,7 +51,7 @@
     { "name": "generate_connect_link", "description": "Generate a link for clients to connect accounts" },
     { "name": "get_post_analytics", "description": "Fetch published posts with performance metrics (impressions, reach, likes, etc.)" },
     { "name": "get_follower_history", "description": "Daily follower-count history for an account (current count + delta over a date range)" },
-    { "name": "list_inbox_conversations", "description": "List comment conversations from the social inbox (TikTok Business, Instagram, Facebook Pages, Threads)" },
+    { "name": "list_inbox_conversations", "description": "List comment conversations from the social inbox (TikTok, Instagram, Facebook Pages, Threads)" },
     { "name": "get_inbox_conversation", "description": "Fetch one inbox conversation with its server-computed reply capability" },
     { "name": "list_inbox_items", "description": "List a conversation's comments and replies" },
     { "name": "get_inbox_unread_count", "description": "Total unread comment count across the workspace" },
@@ -61,7 +61,7 @@
     { "name": "mark_inbox_conversation_read", "description": "Mark an inbox conversation read" },
     { "name": "set_inbox_conversation_status", "description": "Triage a conversation: OPEN, SNOOZED, or CLOSED" },
     { "name": "assign_inbox_conversation", "description": "Assign an inbox conversation to a workspace member" },
-    { "name": "list_tiktok_sounds", "description": "Trending Commercial Music Library sounds for a TikTok Business account" }
+    { "name": "list_tiktok_sounds", "description": "Trending Commercial Music Library sounds for a connected TikTok account" }
   ],
   "compatibility": {
     "platforms": ["darwin", "win32"],

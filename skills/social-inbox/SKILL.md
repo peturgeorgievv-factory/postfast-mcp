@@ -5,7 +5,7 @@ description: Read, reply to, moderate, and triage comments on social posts using
 
 # Social Inbox (comments) via PostFast
 
-You have access to PostFast MCP inbox tools — a **comments** inbox for the workspace's own posts. It is never a DM/messages inbox. Covered platforms: TikTok (Business connections), Instagram, Facebook Pages, Threads. Not covered: X, YouTube, Pinterest, Bluesky, Telegram, Google Business Profile, LinkedIn (yet). Comments appear from connect/launch onward — there is no history backfill.
+You have access to PostFast MCP inbox tools — a **comments** inbox for the workspace's own posts. It is never a DM/messages inbox. Covered platforms: TikTok, Instagram, Facebook Pages, Threads. Not covered: X, YouTube, Pinterest, Bluesky, Telegram, Google Business Profile, LinkedIn (yet). Comments appear from connect/launch onward — there is no history backfill.
 
 ## The one rule that overrides everything
 
@@ -34,6 +34,6 @@ Reply capability is **server-computed per conversation**: `canReply`, `maxReplyL
 
 - Failures come back as `inbox.*` codes (e.g. `replyTooLong`, `replyNotSupported`, `privateReplyWindowExpired`, `rateLimited`) — surface them plainly to the user.
 - Two-way sync: hiding/deleting a comment on the platform itself updates the inbox automatically.
-- TikTok quirks: Business connections only; commenter names can take about a minute to appear.
+- TikTok quirks: commenter names can take about a minute to appear.
 - Threads quirks: usernames only (no commenter avatars); replies up to 500 characters; no delete.
 - For drafting many replies, read the whole thread first (`list_inbox_items`) so replies land under the right comment items.

@@ -1,10 +1,16 @@
 # postfast-mcp
 
+## 0.4.1
+
+### Patch Changes
+
+- Client-language sweep: TikTok is just "TikTok" — removed every "Business connections"/"Business API"/"Business accounts" qualifier from tool descriptions, server instructions, README, manifest, and skills (sounds, inbox coverage, firstComment). The literal `tiktokMusic.requiresBusinessApi` error code stays documented as the reconnect signal.
+
 ## 0.4.0
 
 ### Minor Changes
 
-- TikTok sound selection: new `list_tiktok_sounds` tool (trending pre-cleared Commercial Music Library tracks for Business-API TikTok accounts, with genre/country/date-range filters) and two `create_posts` controls — `tiktokMusicSoundId` (mutually exclusive with `tiktokAutoAddMusic`, not applied to drafts) and `tiktokMusicSoundName` (composer display label). The tool carries a `portMethod`, so hosts on an older adapter skip it cleanly until they implement `listTikTokSounds`.
+- TikTok sound selection: new `list_tiktok_sounds` tool (trending pre-cleared Commercial Music Library tracks for connected TikTok accounts, with genre/country/date-range filters) and two `create_posts` controls — `tiktokMusicSoundId` (mutually exclusive with `tiktokAutoAddMusic`, not applied to drafts) and `tiktokMusicSoundName` (composer display label). The tool carries a `portMethod`, so hosts on an older adapter skip it cleanly until they implement `listTikTokSounds`.
 
 ## 0.3.1
 
@@ -16,7 +22,7 @@
 
 ### Minor Changes
 
-- a3bd898: Add the 10 social-inbox tools to the catalog (comments on TikTok Business / Instagram / Facebook Pages / Threads posts): list/get conversations, list items, unread count, public reply, Instagram private reply, hide/unhide/delete moderation, mark-read, status triage, and assignment — all `binding: 'both'`, with descriptions steering models to the server-computed reply capability (canReply / maxReplyLength / windowState / disabledReason). The stdio bin implements them over `/social-inbox/*`. The 10 new `BackendPort` methods are optional and the registrar skips (with a log) any tool whose port method is absent, so hosts on an older adapter deploy cleanly and pick the tools up when their adapter catches up. The release workflow now notifies social-schedule-mcp (`catalog-release` repository_dispatch) after a successful publish.
+- a3bd898: Add the 10 social-inbox tools to the catalog (comments on TikTok / Instagram / Facebook Pages / Threads posts): list/get conversations, list items, unread count, public reply, Instagram private reply, hide/unhide/delete moderation, mark-read, status triage, and assignment — all `binding: 'both'`, with descriptions steering models to the server-computed reply capability (canReply / maxReplyLength / windowState / disabledReason). The stdio bin implements them over `/social-inbox/*`. The 10 new `BackendPort` methods are optional and the registrar skips (with a log) any tool whose port method is absent, so hosts on an older adapter deploy cleanly and pick the tools up when their adapter catches up. The release workflow now notifies social-schedule-mcp (`catalog-release` repository_dispatch) after a successful publish.
 
 ## 0.2.0
 

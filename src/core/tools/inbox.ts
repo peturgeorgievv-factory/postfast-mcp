@@ -17,8 +17,8 @@ import type { ToolDef } from '../tool-def.js';
 
 /**
  * Social inbox — a COMMENTS inbox (comments on the workspace's own posts;
- * never described as DMs/messages). Coverage: TikTok (Business connections),
- * Instagram, Facebook Pages, Threads. Reply capability is server-computed per
+ * never described as DMs/messages). Coverage: TikTok, Instagram, Facebook
+ * Pages, Threads. Reply capability is server-computed per
  * conversation (canReply / maxReplyLength / windowState / disabledReason) —
  * descriptions steer models to render from those fields, never platform rules.
  * Every def carries portMethod so bindings whose adapter predates this wave
@@ -30,7 +30,7 @@ export const inboxTools: ToolDef[] = [
     binding: 'both',
     title: 'List Inbox Conversations',
     description:
-      "List comment conversations from the social inbox — comments on your connected accounts' posts, grouped per post, newest activity first. Covers TikTok (Business connections), Instagram, Facebook Pages, and Threads; comments arrive within seconds of being posted and only from connect/launch onward (no history backfill). Each conversation carries a server-computed reply capability — canReply, maxReplyLength, windowState, disabledReason — plus unreadCount, status (OPEN | SNOOZED | CLOSED), and assignedToUserId. ALWAYS derive whether and how long you can reply from those fields; never assume platform rules.",
+      "List comment conversations from the social inbox — comments on your connected accounts' posts, grouped per post, newest activity first. Covers TikTok, Instagram, Facebook Pages, and Threads; comments arrive within seconds of being posted and only from connect/launch onward (no history backfill). Each conversation carries a server-computed reply capability — canReply, maxReplyLength, windowState, disabledReason — plus unreadCount, status (OPEN | SNOOZED | CLOSED), and assignedToUserId. ALWAYS derive whether and how long you can reply from those fields; never assume platform rules.",
     inputSchema: {
       page: z.number().int().min(0).default(0).describe('Page number (0-based)'),
       limit: z

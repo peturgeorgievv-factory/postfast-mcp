@@ -132,11 +132,11 @@ Ask your AI assistant things like:
 | `generate_connect_link` | Generate a link for clients to connect accounts |
 | `get_post_analytics` | Fetch published posts with performance metrics — Instagram, Facebook, TikTok, Threads, YouTube, LinkedIn (company pages), Pinterest (Business accounts) |
 | `get_follower_history` | Daily follower-count history for an account (current count + `delta` over a date range) — Facebook Pages, Instagram, YouTube, Pinterest, Threads, Bluesky, Telegram, LinkedIn (company pages), TikTok |
-| `list_tiktok_sounds` | Trending pre-cleared Commercial Music Library tracks for a TikTok Business account (attach via `controls.tiktokMusicSoundId`) |
+| `list_tiktok_sounds` | Trending pre-cleared Commercial Music Library tracks for a TikTok account (attach via `controls.tiktokMusicSoundId`) |
 
 ### Social Inbox (comments)
 
-Comments on your posts — TikTok (Business connections), Instagram, Facebook Pages, and Threads — in one inbox. Comments only (no direct messages), from connect onward (no history backfill). Reply capability is always server-computed per conversation (`canReply`, `maxReplyLength`, `windowState`, `disabledReason`) — render from those fields, never platform assumptions.
+Comments on your posts — TikTok, Instagram, Facebook Pages, and Threads — in one inbox. Comments only (no direct messages), from connect onward (no history backfill). Reply capability is always server-computed per conversation (`canReply`, `maxReplyLength`, `windowState`, `disabledReason`) — render from those fields, never platform assumptions.
 
 | Tool | Description |
 |------|-------------|

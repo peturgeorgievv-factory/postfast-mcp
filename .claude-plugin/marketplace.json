@@ -11,7 +11,7 @@
     {
       "name": "postfast",
       "description": "Schedule, manage, and analyze social media posts via PostFast. Supports Facebook, Instagram, X, TikTok, LinkedIn, YouTube, BlueSky, Threads, Pinterest, Telegram, and Google Business Profile.",
-      "version": "0.4.0",
+      "version": "0.4.1",
       "author": {
         "name": "PostFast",
         "email": "me@peturgeorgievv.com"
