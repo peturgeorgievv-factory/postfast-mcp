@@ -63,6 +63,7 @@ If any PostFast tool call fails with an authentication/401 error, tell the user:
 - `tiktokAutoAddMusic`: boolean, default false
 - `tiktokIsAigc`: boolean, default false (declare video as AI-generated content)
 - `tiktokTitle`: title for photo posts (max 90 chars; photo posts only) — when set, the full content becomes the description; without it, content auto-splits on the first newline into title + description
+- `tiktokMusicSoundId` + `tiktokMusicSoundName`: attach a pre-cleared Commercial Music Library sound to a photo/carousel post — find sounds with `list_tiktok_sounds` (Business API connections only; the list rotates daily). Mutually exclusive with `tiktokAutoAddMusic`; not applied when `tiktokIsDraft` is true. Always set the name alongside the id
 
 ### YouTube
 - `youtubeTitle`: defaults to first 100 chars of content

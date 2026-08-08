@@ -89,6 +89,20 @@ const controlsSchema = z.object({
     .describe(
       'Title for TikTok photo posts (max 90 chars; photo posts only). When set, the full post content becomes the description; without it, content auto-splits on the first newline into title + description.',
     ),
+  tiktokMusicSoundId: z
+    .string()
+    .max(128)
+    .optional()
+    .describe(
+      'Commercial Music Library sound id from list_tiktok_sounds. TikTok photo/carousel posts on Business API connections only. Mutually exclusive with tiktokAutoAddMusic (sending both is rejected). Not applied when tiktokIsDraft is true. Omit for no sound.',
+    ),
+  tiktokMusicSoundName: z
+    .string()
+    .max(256)
+    .optional()
+    .describe(
+      "Display label for the chosen sound, e.g. 'Ok I Like It — Milky Chance'. Stored for the composer UI only; set it whenever tiktokMusicSoundId is set.",
+    ),
   // Instagram
   instagramPostToGrid: z.boolean().optional(),
   instagramPublishType: z.enum(['TIMELINE', 'STORY', 'REEL']).optional(),

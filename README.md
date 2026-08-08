@@ -132,6 +132,7 @@ Ask your AI assistant things like:
 | `generate_connect_link` | Generate a link for clients to connect accounts |
 | `get_post_analytics` | Fetch published posts with performance metrics — Instagram, Facebook, TikTok, Threads, YouTube, LinkedIn (company pages), Pinterest (Business accounts) |
 | `get_follower_history` | Daily follower-count history for an account (current count + `delta` over a date range) — Facebook Pages, Instagram, YouTube, Pinterest, Threads, Bluesky, Telegram, LinkedIn (company pages), TikTok |
+| `list_tiktok_sounds` | Trending pre-cleared Commercial Music Library tracks for a TikTok Business account (attach via `controls.tiktokMusicSoundId`) |
 
 ### Social Inbox (comments)
 
@@ -163,7 +164,7 @@ When creating posts, you can pass platform-specific settings via the `controls` 
 | **X (Twitter)** | `xRetweetUrl` |
 | **Instagram** | `instagramPublishType` (TIMELINE/STORY/REEL), `instagramPostToGrid`, `instagramCollaborators`, `instagramLocationId`/`instagramLocationName` (geotag from `search_places`) |
 | **Facebook** | `facebookContentType` (POST/REEL/STORY), `facebookAllowComments`, `facebookPrivacy`, `facebookCarouselMainLink`, `facebookCarouselShowEndCard`, `facebookReelsCollaborators`, `facebookTargetCountries` (ISO alpha-2, max 25), `facebookPlaceId`/`facebookPlaceName` (geotag from `search_places`) |
-| **TikTok** | `tiktokTitle` (photo posts, max 90 chars), `tiktokIsDraft`, `tiktokAllowComments`, `tiktokAllowDuet`, `tiktokAllowStitch`, `tiktokBrandOrganic`, `tiktokBrandContent`, `tiktokAutoAddMusic`, `tiktokIsAigc`, `tiktokPrivacy` (deprecated — account default applies) |
+| **TikTok** | `tiktokTitle` (photo posts, max 90 chars), `tiktokMusicSoundId`/`tiktokMusicSoundName` (Commercial Music Library sound from `list_tiktok_sounds`; photo/carousel posts, exclusive with `tiktokAutoAddMusic`), `tiktokIsDraft`, `tiktokAllowComments`, `tiktokAllowDuet`, `tiktokAllowStitch`, `tiktokBrandOrganic`, `tiktokBrandContent`, `tiktokAutoAddMusic`, `tiktokIsAigc`, `tiktokPrivacy` (deprecated — account default applies) |
 | **YouTube** | `youtubeTitle`, `youtubePrivacy` (PUBLIC/PRIVATE/UNLISTED), `youtubeTags`, `youtubeCategoryId`, `youtubeIsShort`, `youtubeMadeForKids`, `youtubePlaylistId`, `youtubeThumbnailKey` |
 | **Pinterest** | `pinterestBoardId` (required), `pinterestLink` |
 | **LinkedIn** | `linkedinAttachmentKey`, `linkedinAttachmentTitle` |

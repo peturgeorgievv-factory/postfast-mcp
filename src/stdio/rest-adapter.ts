@@ -12,6 +12,7 @@ import type {
   ListInboxConversationsArgs,
   ListInboxItemsArgs,
   ListPostsArgs,
+  ListTikTokSoundsArgs,
   LocalUploadResult,
   SetInboxConversationStatusArgs,
   SetInboxItemStateArgs,
@@ -239,6 +240,14 @@ export class RestAdapter implements BackendPort {
     throw new Error(
       'Conversation-media upload is only available on the hosted PostFast MCP server.',
     );
+  }
+
+  listTikTokSounds(args: ListTikTokSoundsArgs): Promise<unknown> {
+    return this.get(`/social-media/${args.socialMediaId}/tiktok-sounds`, {
+      genre: args.genre,
+      countryCode: args.countryCode,
+      dateRange: args.dateRange,
+    });
   }
 
   listInboxConversations(args: ListInboxConversationsArgs): Promise<unknown> {

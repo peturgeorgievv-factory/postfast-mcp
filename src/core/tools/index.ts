@@ -1,6 +1,7 @@
 import { accountTools } from './accounts.js';
 import { inboxTools } from './inbox.js';
 import { postTools } from './posts.js';
+import { tiktokTools } from './tiktok.js';
 import { uploadTools } from './uploads.js';
 import { workspaceTools } from './workspaces.js';
 import type { ToolDef } from '../tool-def.js';
@@ -17,4 +18,5 @@ export const ALL_TOOLS: ToolDef[] = [
   ...workspaceTools,
   ...uploadTools,
   ...inboxTools,
+  ...tiktokTools,
 ];

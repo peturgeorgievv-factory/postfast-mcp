@@ -56,6 +56,13 @@ export interface UploadUrlsArgs {
   count: number;
 }
 
+export interface ListTikTokSoundsArgs {
+  socialMediaId: string;
+  genre?: string;
+  countryCode?: string;
+  dateRange?: string;
+}
+
 export interface ListInboxConversationsArgs {
   page: number;
   limit: number;
@@ -196,4 +203,7 @@ export interface BackendPort {
     args: AssignInboxConversationArgs,
     workspaceId?: string,
   ): Promise<unknown>;
+
+  // TikTok Commercial Music Library (optional — same staggered-adoption rule).
+  listTikTokSounds?(args: ListTikTokSoundsArgs, workspaceId?: string): Promise<unknown>;
 }

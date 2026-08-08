@@ -1,5 +1,11 @@
 # postfast-mcp
 
+## 0.4.0
+
+### Minor Changes
+
+- TikTok sound selection: new `list_tiktok_sounds` tool (trending pre-cleared Commercial Music Library tracks for Business-API TikTok accounts, with genre/country/date-range filters) and two `create_posts` controls — `tiktokMusicSoundId` (mutually exclusive with `tiktokAutoAddMusic`, not applied to drafts) and `tiktokMusicSoundName` (composer display label). The tool carries a `portMethod`, so hosts on an older adapter skip it cleanly until they implement `listTikTokSounds`.
+
 ## 0.3.1
 
 ### Patch Changes
