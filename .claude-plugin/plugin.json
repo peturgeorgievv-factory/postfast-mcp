@@ -1,7 +1,7 @@
 {
   "name": "postfast",
   "description": "Schedule, manage, and analyze social media posts via PostFast. Supports Facebook, Instagram, X, TikTok, LinkedIn, YouTube, BlueSky, Threads, Pinterest, Telegram, and Google Business Profile. After installing, tell Cowork: 'Set my PostFast API key' — get your key at https://app.postfa.st/dashboard → API.",
-  "version": "0.4.2",
+  "version": "0.5.0",
   "author": {
     "name": "PostFast",
     "email": "me@peturgeorgievv.com"

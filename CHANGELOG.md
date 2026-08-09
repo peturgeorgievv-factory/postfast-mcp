@@ -1,5 +1,15 @@
 # postfast-mcp
 
+## 0.5.0
+
+### Minor Changes
+
+- AI-content disclosure controls on `create_posts`: `instagramIsAiGenerated` (adds Instagram's "AI info" label — images, reels, stories and carousels; labels the whole carousel, not individual slides) and `youtubeContainsSyntheticMedia` (altered/synthetic content disclosure, sent to YouTube only when true). Both are optional booleans on the top-level `controls` object, default false, set at creation only — neither can be changed after publishing. The backend has accepted both since social-schedule-service 3353104; they were simply undiscoverable without a description.
+
+  `tiktokIsAigc`'s description now cross-references the other two and says it covers photo posts as well as videos (it always did). The exported `PostControls` type also picks up `tiktokMusicSoundId`/`tiktokMusicSoundName`, which the 0.4.0 sound-selection release added to the schema but not the type.
+
+  Also describes `instagramTrialReelStrategy` (MANUAL | SS_PERFORMANCE) — publishes a trial reel, visible only to non-followers until it graduates, either by hand in the Instagram app or automatically on performance. The description carries both create-time guards so a model doesn't burn a batch on them: it requires `instagramPublishType: REEL` (`instagram.trialReelOnlyForReels`) and rejects `instagramCollaborators` (`instagram.trialReelNoCollaborators`). Backend-accepted since the trial-reel migration; likewise undiscoverable until now.
+
 ## 0.4.2
 
 ### Patch Changes

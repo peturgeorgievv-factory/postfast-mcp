@@ -204,18 +204,23 @@ export interface PostControls {
   tiktokAutoAddMusic?: boolean;
   tiktokIsAigc?: boolean;
   tiktokTitle?: string;
+  tiktokMusicSoundId?: string;
+  tiktokMusicSoundName?: string;
   // Instagram
   instagramPostToGrid?: boolean;
   instagramPublishType?: 'TIMELINE' | 'STORY' | 'REEL';
+  instagramTrialReelStrategy?: 'MANUAL' | 'SS_PERFORMANCE';
   instagramCollaborators?: string[];
   instagramLocationId?: string;
   instagramLocationName?: string;
+  instagramIsAiGenerated?: boolean;
   // YouTube
   youtubePrivacy?: 'PUBLIC' | 'PRIVATE' | 'UNLISTED';
   youtubeTags?: string[];
   youtubeCategoryId?: string;
   youtubeIsShort?: boolean;
   youtubeMadeForKids?: boolean;
+  youtubeContainsSyntheticMedia?: boolean;
   youtubeTitle?: string;
   youtubePlaylistId?: string;
   youtubeThumbnailKey?: string;

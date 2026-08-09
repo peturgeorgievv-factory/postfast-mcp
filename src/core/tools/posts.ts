@@ -81,7 +81,12 @@ const controlsSchema = z.object({
   tiktokBrandOrganic: z.boolean().optional(),
   tiktokBrandContent: z.boolean().optional(),
   tiktokAutoAddMusic: z.boolean().optional(),
-  tiktokIsAigc: z.boolean().optional().describe('Declare video as AI-generated content'),
+  tiktokIsAigc: z
+    .boolean()
+    .optional()
+    .describe(
+      "Declare the post as AI-generated content (videos and photo posts). Instagram's equivalent is instagramIsAiGenerated, YouTube's is youtubeContainsSyntheticMedia.",
+    ),
   tiktokTitle: z
     .string()
     .max(90)
@@ -106,6 +111,12 @@ const controlsSchema = z.object({
   // Instagram
   instagramPostToGrid: z.boolean().optional(),
   instagramPublishType: z.enum(['TIMELINE', 'STORY', 'REEL']).optional(),
+  instagramTrialReelStrategy: z
+    .enum(['MANUAL', 'SS_PERFORMANCE'])
+    .optional()
+    .describe(
+      'Publish as an Instagram trial reel — shown only to non-followers until it graduates to your followers. MANUAL: you graduate it yourself in the Instagram app. SS_PERFORMANCE: Instagram graduates it automatically if it performs well. Requires instagramPublishType REEL (otherwise rejected with HTTP 400 "instagram.trialReelOnlyForReels") and cannot be combined with instagramCollaborators ("instagram.trialReelNoCollaborators"). Omit for a normal reel.',
+    ),
   instagramCollaborators: z.array(z.string()).optional(),
   instagramLocationId: z
     .string()
@@ -120,12 +131,24 @@ const controlsSchema = z.object({
     .describe(
       'Display-only place label from search_places (stored for your portal; never sent to Meta)',
     ),
+  instagramIsAiGenerated: z
+    .boolean()
+    .optional()
+    .describe(
+      "Adds Instagram's 'AI info' label to the post — set it when the image or video was AI-generated. Applies to images, reels, stories and carousels; on a carousel it labels the whole post, not individual slides. Set at creation only: the label cannot be added or removed after publishing. TikTok's equivalent is tiktokIsAigc, YouTube's is youtubeContainsSyntheticMedia.",
+    ),
   // YouTube
   youtubePrivacy: z.enum(['PUBLIC', 'PRIVATE', 'UNLISTED']).optional(),
   youtubeTags: z.array(z.string()).optional(),
   youtubeCategoryId: z.string().optional(),
   youtubeIsShort: z.boolean().optional(),
   youtubeMadeForKids: z.boolean().optional(),
+  youtubeContainsSyntheticMedia: z
+    .boolean()
+    .optional()
+    .describe(
+      "Discloses that the video contains realistic altered or synthetic (AI) content. Sent to YouTube only when true. Set at creation only. Instagram's equivalent is instagramIsAiGenerated, TikTok's is tiktokIsAigc.",
+    ),
   youtubeTitle: z.string().optional(),
   youtubePlaylistId: z
     .string()

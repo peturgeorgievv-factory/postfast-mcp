@@ -162,10 +162,10 @@ When creating posts, you can pass platform-specific settings via the `controls` 
 | Platform | Controls |
 |----------|----------|
 | **X (Twitter)** | `xRetweetUrl` |
-| **Instagram** | `instagramPublishType` (TIMELINE/STORY/REEL), `instagramPostToGrid`, `instagramCollaborators`, `instagramLocationId`/`instagramLocationName` (geotag from `search_places`) |
+| **Instagram** | `instagramPublishType` (TIMELINE/STORY/REEL), `instagramTrialReelStrategy` (MANUAL/SS_PERFORMANCE — trial reel shown to non-followers; Reels only, no collaborators), `instagramPostToGrid`, `instagramCollaborators`, `instagramLocationId`/`instagramLocationName` (geotag from `search_places`), `instagramIsAiGenerated` (adds the "AI info" label; set at creation only) |
 | **Facebook** | `facebookContentType` (POST/REEL/STORY), `facebookAllowComments`, `facebookPrivacy`, `facebookCarouselMainLink`, `facebookCarouselShowEndCard`, `facebookReelsCollaborators`, `facebookTargetCountries` (ISO alpha-2, max 25), `facebookPlaceId`/`facebookPlaceName` (geotag from `search_places`) |
 | **TikTok** | `tiktokTitle` (photo posts, max 90 chars), `tiktokMusicSoundId`/`tiktokMusicSoundName` (Commercial Music Library sound from `list_tiktok_sounds`; photo/carousel posts, exclusive with `tiktokAutoAddMusic`), `tiktokIsDraft`, `tiktokAllowComments`, `tiktokAllowDuet`, `tiktokAllowStitch`, `tiktokBrandOrganic`, `tiktokBrandContent`, `tiktokAutoAddMusic`, `tiktokIsAigc`, `tiktokPrivacy` (deprecated — account default applies) |
-| **YouTube** | `youtubeTitle`, `youtubePrivacy` (PUBLIC/PRIVATE/UNLISTED), `youtubeTags`, `youtubeCategoryId`, `youtubeIsShort`, `youtubeMadeForKids`, `youtubePlaylistId`, `youtubeThumbnailKey` |
+| **YouTube** | `youtubeTitle`, `youtubePrivacy` (PUBLIC/PRIVATE/UNLISTED), `youtubeTags`, `youtubeCategoryId`, `youtubeIsShort`, `youtubeMadeForKids`, `youtubeContainsSyntheticMedia` (altered/synthetic content disclosure; set at creation only), `youtubePlaylistId`, `youtubeThumbnailKey` |
 | **Pinterest** | `pinterestBoardId` (required), `pinterestLink` |
 | **LinkedIn** | `linkedinAttachmentKey`, `linkedinAttachmentTitle` |
 | **Google Business Profile** | `gbpLocationId` (required), `gbpTopicType` (STANDARD/EVENT/OFFER), `gbpCallToActionType`, `gbpCallToActionUrl`, `gbpEventTitle`, `gbpEventStartDate`, `gbpEventEndDate`, `gbpOfferCouponCode`, `gbpOfferRedeemUrl`, `gbpOfferTerms` |

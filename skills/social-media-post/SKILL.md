@@ -42,8 +42,10 @@ If any PostFast tool call fails with an authentication/401 error, tell the user:
 
 ### Instagram
 - `instagramPublishType`: TIMELINE (default), STORY, or REEL
+- `instagramTrialReelStrategy`: MANUAL or SS_PERFORMANCE — publishes a trial reel, shown only to non-followers until it graduates. MANUAL = the user graduates it in the Instagram app; SS_PERFORMANCE = Instagram graduates it automatically if it performs well. Requires `instagramPublishType: REEL` and can't be combined with `instagramCollaborators` (both rejected with HTTP 400 at create time). Omit for a normal reel
 - `instagramPostToGrid`: boolean, default true (for Reels)
 - `instagramCollaborators`: array of usernames to invite as collaborators
+- `instagramIsAiGenerated`: boolean, default false — adds Instagram's "AI info" label. Covers images, reels, stories and carousels (on a carousel it labels the whole post, not individual slides). Set at creation only; the label can't be added or removed after publishing
 
 ### Facebook
 - `facebookContentType`: POST (default), REEL, or STORY
@@ -61,7 +63,7 @@ If any PostFast tool call fails with an authentication/401 error, tell the user:
 - `tiktokBrandOrganic`: boolean, default false
 - `tiktokBrandContent`: boolean, default false
 - `tiktokAutoAddMusic`: boolean, default false
-- `tiktokIsAigc`: boolean, default false (declare video as AI-generated content)
+- `tiktokIsAigc`: boolean, default false (declare the post as AI-generated content — videos and photo posts)
 - `tiktokTitle`: title for photo posts (max 90 chars; photo posts only) — when set, the full content becomes the description; without it, content auto-splits on the first newline into title + description
 - `tiktokMusicSoundId` + `tiktokMusicSoundName`: attach a pre-cleared Commercial Music Library sound to a photo/carousel post — find sounds with `list_tiktok_sounds` (the list rotates daily). Mutually exclusive with `tiktokAutoAddMusic`; not applied when `tiktokIsDraft` is true. Always set the name alongside the id
 
@@ -72,6 +74,7 @@ If any PostFast tool call fails with an authentication/401 error, tell the user:
 - `youtubeCategoryId`: YouTube category ID
 - `youtubeIsShort`: boolean, default true
 - `youtubeMadeForKids`: boolean, default false (COPPA compliance)
+- `youtubeContainsSyntheticMedia`: boolean, default false — discloses that the video contains realistic altered or synthetic (AI) content. Sent to YouTube only when true; set at creation only
 - `youtubePlaylistId`: playlist ID (use `list_youtube_playlists` to find it)
 - `youtubeThumbnailKey`: S3 media key for custom video thumbnail (upload via `upload_media` or `get_upload_urls`; JPEG/PNG recommended, max 2MB, min 640px wide, 1280x720 ideal; requires phone-verified YouTube channel)
 
@@ -120,3 +123,4 @@ If any PostFast tool call fails with an authentication/401 error, tell the user:
 - When posting to Google Business Profile, always fetch locations first — `gbpLocationId` is required.
 - Use DRAFT status if the user wants to review posts in the PostFast dashboard before they go live.
 - The `firstComment` feature is useful for adding hashtags on Instagram without cluttering the caption.
+- For AI-generated media, set the disclosure control for that platform: `instagramIsAiGenerated`, `youtubeContainsSyntheticMedia`, or `tiktokIsAigc`. All three are set at creation time only — there's no way to add or remove the label after publishing, so ask before scheduling. The other platforms expose no AI flag.
