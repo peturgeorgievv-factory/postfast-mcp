@@ -1,5 +1,11 @@
 # postfast-mcp
 
+## 0.4.2
+
+### Patch Changes
+
+- Mention `postPreview` in the `list_inbox_conversations` and `get_inbox_conversation` descriptions — one clause each: it carries the post's caption and thumbnail and, when available, its public permalink, so a model can link the user straight to the post on the platform (permalink is null on Instagram for now). The backend has been returning the field all along; descriptions are how models learn to use it. Docs-only — parity holds at 24 tools with names, order, and inputSchemas byte-identical, and server instructions unchanged.
+
 ## 0.4.1
 
 ### Patch Changes
