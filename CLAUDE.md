@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-Public **stdio MCP server** (npm: `postfast-mcp`) over PostFast's pf-api-key REST API — and the home of the **shared tool catalog** (`src/core`, exported as `postfast-mcp/core`). The deployed remote twin `../social-schedule-mcp` (mcp.postfa.st) consumes the catalog too (its adapter PR is step 2 of the periphery plan; until it lands, treat that repo as read-only frozen).
+Public **stdio MCP server** (npm: `postfast-mcp`) over PostFast's pf-api-key REST API — and the home of the **shared tool catalog** (`src/core`, exported as `postfast-mcp/core`). The deployed remote twin `../social-schedule-mcp` (mcp.postfa.st) consumes the catalog too — its adapter landed 2026-08-05 (`src/mcp/mcp.service.ts` + `gateway.adapter.ts` import `postfast-mcp/core`), and a release here auto-bumps it (Release step 3).
 
 ## Rules
 
@@ -15,4 +15,4 @@ Public **stdio MCP server** (npm: `postfast-mcp`) over PostFast's pf-api-key RES
 
 1. Every behavior-changing PR adds a `.changeset/*.md` (patch/minor + summary).
 2. To release: `npm run version` (changesets computes the bump + CHANGELOG, `scripts/stamp-versions.mjs` stamps manifest.json, server.json, both `.claude-plugin/` files, `src/stdio/index.ts`, package-lock.json) → review the diff → commit ("…, bump to X" style).
-3. **Pushing the tag is the publish button**: `git tag vX.Y.Z && git push origin main vX.Y.Z`. `release.yml` then publishes npm (trusted publishing/OIDC), the MCP Registry (github-oidc), and a GitHub Release with the `.mcpb` attached. A tag that doesn't match package.json fails fast. The repository_dispatch to `social-schedule-mcp` is stubbed until its receiver exists. Registry hiccup? Re-run via the workflow's manual `workflow_dispatch` (registry-republish job).
+3. **Pushing the tag is the publish button**: `git tag vX.Y.Z && git push origin main vX.Y.Z`. `release.yml` then publishes npm (trusted publishing/OIDC), the MCP Registry (github-oidc), and a GitHub Release with the `.mcpb` attached. A tag that doesn't match package.json fails fast. The `catalog-release` repository_dispatch then wakes `social-schedule-mcp`'s `catalog-bump.yml`, which waits for npm to serve the version, pins it exactly, commits `[skip ci]`, and triggers its Docker build — the host picks up the new catalog with nothing further to do here. Registry hiccup? Re-run via the workflow's manual `workflow_dispatch` (registry-republish job).
