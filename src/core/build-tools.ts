@@ -2,7 +2,7 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import type { BackendPort } from './backend-port.js';
 import { workspaceIdField } from './shared.js';
-import type { Binding, ResolvedTool, ToolDef } from './tool-def.js';
+import type { Binding, ResolvedTool } from './tool-def.js';
 import { ALL_TOOLS } from './tools/index.js';
 
 export interface BuildToolsOptions {
@@ -51,7 +51,6 @@ export function buildTools(options: BuildToolsOptions): ResolvedTool[] {
         withWorkspaceField && def.workspaceScoped !== false
           ? { ...inputSchema, workspaceId: workspaceIdField }
           : inputSchema,
-      outputSchema: def.outputSchema,
       annotations: def.annotations,
       _meta: def._meta,
       portMethod: def.portMethod,
@@ -63,9 +62,13 @@ export function buildTools(options: BuildToolsOptions): ResolvedTool[] {
 /**
  * Wrap backend data as MCP content: a JSON text block (proven across all
  * clients — and byte-stable for existing stdio consumers) plus
- * structuredContent for clients that consume outputSchema. Bare-array
- * responses are wrapped as { data } there, since structuredContent must be an
- * object; the text block stays the raw response.
+ * structuredContent for clients that read it. No catalog tool declares an
+ * outputSchema: the SDK renders zod shapes as JSON Schema draft-07, and
+ * clients whose validators accept only the 2020-12 dialect reject such a tool
+ * at list time, before any call. structuredContent without a schema is valid
+ * MCP and is never validated or stripped. Bare-array responses are wrapped as
+ * { data } there, since structuredContent must be an object; the text block
+ * stays the raw response.
  */
 export function toolResult(data: unknown): CallToolResult {
   const result: CallToolResult = {
@@ -114,7 +117,6 @@ export function registerCatalogTools(
         title: tool.title,
         description: tool.description,
         inputSchema: tool.inputSchema,
-        ...(tool.outputSchema ? { outputSchema: tool.outputSchema } : {}),
         annotations: tool.annotations,
         ...(tool._meta ? { _meta: tool._meta } : {}),
       },

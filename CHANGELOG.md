@@ -1,5 +1,11 @@
 # postfast-mcp
 
+## 0.5.3
+
+### Patch Changes
+
+- Remove outputSchema from every tool. The MCP SDK renders zod output schemas as JSON Schema draft-07 (its converter is never given a dialect target), and clients whose validator accepts only the 2020-12 dialect reject a tool carrying such a schema at list time — before any call, on both bindings. outputSchema is optional in MCP and tool results are unchanged: the JSON text block and structuredContent stay exactly as they were (without a declared schema, structuredContent is never validated or stripped). The parity gate now fails if outputSchema ever reappears.
+
 ## 0.5.2
 
 ### Patch Changes

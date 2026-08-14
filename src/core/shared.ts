@@ -49,14 +49,6 @@ export function jsonParse<T extends z.ZodTypeAny>(schema: T) {
   }, schema);
 }
 
-/**
- * Permissive output schema for list-style tools: { data: [...] }. Items are
- * unknown (never type-rejected) and extra top-level keys (totalCount, pageInfo)
- * pass through — so structuredContent is advertised without breaking on real
- * backend responses.
- */
-export const dataListOutputSchema = { data: z.array(z.unknown()).optional() };
-
 /** Optional per-call workspace selector, injected only on the remote binding. */
 export const workspaceIdField = z
   .uuid()

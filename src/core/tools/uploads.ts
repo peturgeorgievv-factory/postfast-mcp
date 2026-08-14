@@ -4,11 +4,7 @@ import type {
   UploadMediaArgs,
   UploadUrlsArgs,
 } from '../backend-port.js';
-import {
-  IMAGE_MIME_TYPES,
-  VIDEO_MIME_TYPES,
-  dataListOutputSchema,
-} from '../shared.js';
+import { IMAGE_MIME_TYPES, VIDEO_MIME_TYPES } from '../shared.js';
 import type { ToolDef } from '../tool-def.js';
 
 const SUPPORTED_MIME_TYPES = [...IMAGE_MIME_TYPES, ...VIDEO_MIME_TYPES].join(', ');
@@ -38,7 +34,6 @@ export const uploadTools: ToolDef[] = [
         .default(1)
         .describe('Number of upload URLs (1-8 for images, 1 for videos)'),
     },
-    outputSchema: dataListOutputSchema,
     annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: true },
     run: (port, args, workspaceId) =>
       port.getUploadUrls(args as unknown as UploadUrlsArgs, workspaceId),
@@ -53,11 +48,6 @@ export const uploadTools: ToolDef[] = [
       filePath: z
         .string()
         .describe('Absolute path to the local file (e.g. /Users/me/photo.jpg)'),
-    },
-    outputSchema: {
-      key: z.string().optional(),
-      type: z.string().optional(),
-      contentType: z.string().optional(),
     },
     annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: true },
     run: (port, args) => port.uploadLocalFile(args.filePath as string),
@@ -74,10 +64,6 @@ export const uploadTools: ToolDef[] = [
         .string()
         .optional()
         .describe("MIME type override. If omitted, the source's Content-Type is used."),
-    },
-    outputSchema: {
-      media_id: z.string().optional(),
-      type: z.string().optional(),
     },
     annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: true },
     run: (port, args, workspaceId) =>
@@ -107,10 +93,6 @@ export const uploadTools: ToolDef[] = [
         .string()
         .optional()
         .describe('MIME type for base64 data (e.g. image/png). Required with data.'),
-    },
-    outputSchema: {
-      media_id: z.string().optional(),
-      type: z.string().optional(),
     },
     annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: true },
     _meta: { 'openai/fileParams': ['file'] },

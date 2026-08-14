@@ -22,7 +22,6 @@ export {
   POST_STATUSES,
   SET_APPROVAL_STATUSES,
   VIDEO_MIME_TYPES,
-  dataListOutputSchema,
   jsonParse,
   workspaceIdField,
 } from './shared.js';

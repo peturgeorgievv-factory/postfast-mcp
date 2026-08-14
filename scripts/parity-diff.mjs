@@ -7,9 +7,11 @@
 //   default oldCmd: "npx -y postfast-mcp@0.1.24"
 //   default newCmd: "node dist/stdio/index.js"
 //
-// Exit 0 when tool names + input schemas + descriptions are identical and the
-// only additions are title/outputSchema/annotations; exit 1 otherwise, with
-// every difference printed for the PR body.
+// Exit 0 when tool names + input schemas + descriptions are identical, the
+// only additions are title/annotations, and the only removal is outputSchema
+// (dropped in 0.5.3: the SDK renders zod shapes as JSON Schema draft-07,
+// which validators that accept only the 2020-12 dialect reject at list
+// time); exit 1 otherwise, with every difference printed for the PR body.
 
 import { spawn } from 'node:child_process';
 import { mkdtempSync } from 'node:fs';
@@ -18,7 +20,12 @@ import { join, resolve } from 'node:path';
 
 const OLD_CMD = process.argv[2] ?? 'npx -y postfast-mcp@0.1.24';
 const NEW_CMD = process.argv[3] ?? 'node dist/stdio/index.js';
-const INTENDED_ADDITIONS = new Set(['title', 'outputSchema', 'annotations']);
+const INTENDED_ADDITIONS = new Set(['title', 'annotations']);
+// outputSchema was removed on purpose in 0.5.3 and must not come back as-is:
+// the SDK converts zod shapes to draft-07, which 2020-12-only client
+// validators reject wholesale. Its absence vs older versions is intended; its
+// reappearance is a failure (hence it is no longer in INTENDED_ADDITIONS).
+const INTENDED_REMOVALS = new Set(['outputSchema']);
 
 function listTools(command, cwd) {
   return new Promise((resolvePromise, reject) => {
@@ -185,7 +192,10 @@ for (const name of oldOrder) {
   const addedKeys = Object.keys(newTool).filter((k) => !oldKeys.has(k));
   const removedKeys = [...oldKeys].filter((k) => !(k in newTool));
   const unexpected = addedKeys.filter((k) => !INTENDED_ADDITIONS.has(k));
-  if (removedKeys.length) push(`FAIL ${name}: fields removed: ${removedKeys}`, true);
+  const badRemovals = removedKeys.filter((k) => !INTENDED_REMOVALS.has(k));
+  const okRemovals = removedKeys.filter((k) => INTENDED_REMOVALS.has(k));
+  if (badRemovals.length) push(`FAIL ${name}: fields removed: ${badRemovals}`, true);
+  if (okRemovals.length) push(`DEL  ${name}: -${okRemovals.join(' -')}`);
   if (unexpected.length) push(`FAIL ${name}: unintended additions: ${unexpected}`, true);
   if (addedKeys.length) push(`ADD  ${name}: +${addedKeys.join(' +')}`);
 }
@@ -200,6 +210,6 @@ if (!oldInstructions && newInstructions) {
 }
 
 push('');
-push(failures === 0 ? 'RESULT: parity clean (only intended additions)' : `RESULT: ${failures} difference(s)`);
+push(failures === 0 ? 'RESULT: parity clean (only intended additions/removals)' : `RESULT: ${failures} difference(s)`);
 console.log(report.join('\n'));
 process.exit(failures === 0 ? 0 : 1);

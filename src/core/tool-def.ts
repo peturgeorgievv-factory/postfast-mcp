@@ -24,7 +24,6 @@ export interface ToolDef {
   title: string;
   description: string | ((binding: Binding) => string);
   inputSchema: ZodRawShape | ((binding: Binding) => ZodRawShape);
-  outputSchema?: ZodRawShape;
   annotations: ToolAnnotations;
   /** Extra tool metadata, e.g. the ChatGPT file-param marker on upload_media. */
   _meta?: Record<string, unknown>;
@@ -55,7 +54,6 @@ export interface ResolvedTool {
   title: string;
   description: string;
   inputSchema: ZodRawShape;
-  outputSchema?: ZodRawShape;
   annotations: ToolAnnotations;
   _meta?: Record<string, unknown>;
   portMethod?: keyof BackendPort;

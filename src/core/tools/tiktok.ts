@@ -1,6 +1,5 @@
 import { z } from 'zod';
 import type { ListTikTokSoundsArgs } from '../backend-port.js';
-import { dataListOutputSchema } from '../shared.js';
 import type { ToolDef } from '../tool-def.js';
 
 export const tiktokTools: ToolDef[] = [
@@ -28,7 +27,6 @@ export const tiktokTools: ToolDef[] = [
         .optional()
         .describe('Trending window (default 7DAY)'),
     },
-    outputSchema: dataListOutputSchema,
     annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: true },
     portMethod: 'listTikTokSounds',
     run: (port, args, workspaceId) =>

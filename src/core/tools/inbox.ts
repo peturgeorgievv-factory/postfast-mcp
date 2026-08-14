@@ -11,7 +11,6 @@ import {
   INBOX_CONVERSATION_STATUSES,
   INBOX_ITEM_STATE_ACTIONS,
   PLATFORMS,
-  dataListOutputSchema,
 } from '../shared.js';
 import type { ToolDef } from '../tool-def.js';
 
@@ -59,7 +58,6 @@ export const inboxTools: ToolDef[] = [
         .optional()
         .describe('Only conversations assigned to this workspace member'),
     },
-    outputSchema: dataListOutputSchema,
     annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
     portMethod: 'listInboxConversations',
     run: (port, args, workspaceId) =>
@@ -99,7 +97,6 @@ export const inboxTools: ToolDef[] = [
         .optional()
         .describe('Sort by comment time. Default ASC (oldest first); DESC for newest first.'),
     },
-    outputSchema: dataListOutputSchema,
     annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
     portMethod: 'listInboxItems',
     run: (port, args, workspaceId) =>
@@ -112,7 +109,6 @@ export const inboxTools: ToolDef[] = [
     description:
       'Total unread comment count across all inbox conversations in the workspace (the sum of per-conversation unreadCount). Use mark_inbox_conversation_read after presenting a conversation to the user.',
     inputSchema: {},
-    outputSchema: { unreadCount: z.number().optional() },
     annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
     portMethod: 'getInboxUnreadCount',
     run: (port, _args, workspaceId) => port.getInboxUnreadCount!(workspaceId),
@@ -127,7 +123,6 @@ export const inboxTools: ToolDef[] = [
       itemId: z.uuid().describe('The comment item id to reply under (from list_inbox_items)'),
       text: z.string().min(1).describe("Reply text. Must fit the conversation's maxReplyLength."),
     },
-    outputSchema: { id: z.string().optional() },
     // destructive: publishes a public comment; Threads exposes no delete verb, so a
     // reply there cannot be removed through our API.
     annotations: { readOnlyHint: false, destructiveHint: true, openWorldHint: true },
@@ -147,7 +142,6 @@ export const inboxTools: ToolDef[] = [
         .describe('The Instagram comment item id to reply privately to (canPrivateReply must be true)'),
       text: z.string().min(1).describe('Private reply text (max 1,000 bytes)'),
     },
-    outputSchema: { id: z.string().optional() },
     // destructive: sends a real direct message with no unsend path, and the
     // once-per-comment guard means the attempt cannot be repeated.
     annotations: { readOnlyHint: false, destructiveHint: true, openWorldHint: true },
@@ -167,7 +161,6 @@ export const inboxTools: ToolDef[] = [
         .enum(INBOX_ITEM_STATE_ACTIONS)
         .describe('HIDE, UNHIDE, or DELETE (DELETE is irreversible)'),
     },
-    outputSchema: { id: z.string().optional() },
     annotations: { readOnlyHint: false, destructiveHint: true, openWorldHint: true },
     portMethod: 'setInboxItemState',
     run: (port, args, workspaceId) =>
@@ -184,7 +177,6 @@ export const inboxTools: ToolDef[] = [
         .uuid()
         .describe('Conversation id (from list_inbox_conversations)'),
     },
-    outputSchema: { id: z.string().optional() },
     annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: false },
     portMethod: 'markInboxConversationRead',
     run: (port, args, workspaceId) =>
@@ -202,7 +194,6 @@ export const inboxTools: ToolDef[] = [
         .describe('Conversation id (from list_inbox_conversations)'),
       status: z.enum(INBOX_CONVERSATION_STATUSES).describe('New conversation status'),
     },
-    outputSchema: { id: z.string().optional() },
     annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: false },
     portMethod: 'setInboxConversationStatus',
     run: (port, args, workspaceId) =>
@@ -226,7 +217,6 @@ export const inboxTools: ToolDef[] = [
         .optional()
         .describe('Workspace member user id to assign. Omit to unassign.'),
     },
-    outputSchema: { id: z.string().optional() },
     annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: false },
     portMethod: 'assignInboxConversation',
     run: (port, args, workspaceId) =>

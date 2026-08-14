@@ -1,6 +1,5 @@
 import { z } from 'zod';
 import type { ConnectLinkArgs, FollowerHistoryArgs } from '../backend-port.js';
-import { dataListOutputSchema } from '../shared.js';
 import type { ToolDef } from '../tool-def.js';
 
 export const accountTools: ToolDef[] = [
@@ -11,7 +10,6 @@ export const accountTools: ToolDef[] = [
     description:
       'List all social media accounts connected to the workspace. Each account includes connectionStatus (CONNECTED or DISABLED) and disabledReason (null unless DISABLED), plus followerCount (latest stored snapshot, a string; absent for platforms without follower data), followerCountUpdatedAt, and inboxCapable (whether the account can appear in the social inbox, i.e. comment ingestion is supported). A DISABLED account will not publish until the user reconnects it — pre-check before scheduling. For a follower trend over time, use get_follower_history.',
     inputSchema: {},
-    outputSchema: dataListOutputSchema,
     annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
     run: (port, _args, workspaceId) => port.listAccounts(workspaceId),
   },
@@ -24,7 +22,6 @@ export const accountTools: ToolDef[] = [
     inputSchema: {
       socialMediaId: z.uuid().describe('Pinterest account id (from list_accounts)'),
     },
-    outputSchema: dataListOutputSchema,
     // openWorld false: reads boards already stored in our database.
     annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
     run: (port, args, workspaceId) =>
@@ -39,7 +36,6 @@ export const accountTools: ToolDef[] = [
     inputSchema: {
       socialMediaId: z.uuid().describe('YouTube account id (from list_accounts)'),
     },
-    outputSchema: dataListOutputSchema,
     // openWorld false: reads playlists already stored in our database.
     annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
     run: (port, args, workspaceId) =>
@@ -54,7 +50,6 @@ export const accountTools: ToolDef[] = [
     inputSchema: {
       socialMediaId: z.uuid().describe('GBP account id (from list_accounts)'),
     },
-    outputSchema: dataListOutputSchema,
     // openWorld false: reads locations already stored in our database.
     annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
     run: (port, args, workspaceId) =>
@@ -77,13 +72,6 @@ export const accountTools: ToolDef[] = [
         .optional()
         .describe('Range end (ISO 8601). Defaults to now; range is capped at 365 days.'),
     },
-    outputSchema: {
-      socialMediaId: z.string().optional(),
-      series: z.array(z.unknown()).optional(),
-      currentFollowerCount: z.string().optional(),
-      delta: z.string().optional(),
-      trackingStartedAt: z.string().optional(),
-    },
     annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
     run: (port, args, workspaceId) =>
       port.getFollowerHistory(args as unknown as FollowerHistoryArgs, workspaceId),
@@ -97,7 +85,6 @@ export const accountTools: ToolDef[] = [
     inputSchema: {
       query: z.string().min(2).describe('Place search text, min 2 characters (e.g. "eiffel tower")'),
     },
-    outputSchema: dataListOutputSchema,
     annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: true },
     run: (port, args, workspaceId) => port.searchPlaces(args.query as string, workspaceId),
   },
@@ -121,7 +108,6 @@ export const accountTools: ToolDef[] = [
         .optional()
         .describe('Recipient email (required when sendEmail is true)'),
     },
-    outputSchema: { connectUrl: z.string().optional() },
     // destructive: sendEmail delivers a real email that cannot be recalled, and the
     // minted link grants account-connect access until it expires.
     annotations: { readOnlyHint: false, destructiveHint: true, openWorldHint: true },

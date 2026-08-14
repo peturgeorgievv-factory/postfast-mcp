@@ -11,7 +11,6 @@ import {
   PLATFORMS,
   POST_STATUSES,
   SET_APPROVAL_STATUSES,
-  dataListOutputSchema,
   jsonParse,
 } from '../shared.js';
 import type { Binding, ToolDef } from '../tool-def.js';
@@ -256,11 +255,6 @@ export const postTools: ToolDef[] = [
         .optional()
         .describe('End date filter (ISO 8601, e.g. 2026-01-31T23:59:59.999Z)'),
     },
-    outputSchema: {
-      data: z.array(z.unknown()).optional(),
-      totalCount: z.unknown().optional(),
-      pageInfo: z.unknown().optional(),
-    },
     annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
     run: (port, args, workspaceId) =>
       port.listPosts(args as unknown as ListPostsArgs, workspaceId),
@@ -294,7 +288,6 @@ export const postTools: ToolDef[] = [
           .describe('Platform-specific controls (shared across all posts in the batch)'),
       ),
     }),
-    outputSchema: { postIds: z.array(z.string()).optional() },
     // destructive: a SCHEDULED+APPROVED post (both defaults) publishes publicly and
     // cannot be retracted through our API — delete_post removes our row, not the
     // platform post.
@@ -312,7 +305,6 @@ export const postTools: ToolDef[] = [
       postIds: z.array(z.uuid()).min(1).describe('Post ids to update'),
       approvalStatus: z.enum(SET_APPROVAL_STATUSES).describe('New approval status'),
     },
-    outputSchema: { success: z.boolean().optional() },
     // destructive: APPROVED is the last gate before the scheduler publishes, and a
     // published post cannot be un-published through our API.
     annotations: { readOnlyHint: false, destructiveHint: true, openWorldHint: true },
@@ -328,7 +320,6 @@ export const postTools: ToolDef[] = [
     inputSchema: {
       id: z.uuid().describe('Post id to delete'),
     },
-    outputSchema: { deleted: z.boolean().optional() },
     // openWorld false: deletes the PostFast record only — no platform call is made.
     annotations: {
       readOnlyHint: false,
@@ -357,7 +348,6 @@ export const postTools: ToolDef[] = [
         .optional()
         .describe('Filter by specific social media account ids'),
     },
-    outputSchema: dataListOutputSchema,
     // openWorld false: reads metrics already synced into our database; no live
     // platform call at request time.
     annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
