@@ -50,7 +50,7 @@ const postItemSchema = (binding: Binding) =>
       .string()
       .optional()
       .describe(
-        'First comment posted automatically after publishing. Supported on X, Instagram, Facebook, YouTube, Threads, and TikTok (TikTok: max 150 chars, comments must be enabled).',
+        'First comment posted automatically after publishing. Supported on X, Instagram, Facebook, YouTube, Threads, and TikTok (TikTok: max 1,200 chars and requires a TikTok Business API connection).',
       ),
     mediaItems: z
       .array(mediaItemSchema(binding))

@@ -15,14 +15,14 @@ const SHARED_TAIL = `Before scheduling, confirm the target account's connectionS
 
 Status & timing: status=SCHEDULED requires scheduledAt on every post (ISO-8601, in the future, within 1 year); status=DRAFT must omit scheduledAt. approvalStatus=APPROVED publishes; PENDING_APPROVAL holds it for review. There is no instant "publish now" — for an immediate post, set scheduledAt a few minutes ahead of now (a time at or before the current moment is rejected).
 
-Media: use the key returned by an upload tool, and set mediaItems[].type to match the file (IMAGE for image/* keys, VIDEO for video/* keys — a mismatch is rejected). Videos are capped at 250MB (Telegram 50MB, Bluesky 100MB). Media is REQUIRED on TikTok, YouTube (video only), Instagram, Pinterest, and Google Business Profile; X, LinkedIn, Facebook, Threads, Bluesky, and Telegram allow text-only posts. This requirement applies even to DRAFTS — a draft to a media-required platform without media is rejected. So if the user asks to post to a media-required platform and provides no media, ask them for an image/video (or generate and upload one) BEFORE calling create_posts; don't attempt the post without media.
+Media: use the key returned by an upload tool, and set mediaItems[].type to match the file (IMAGE for image/* keys, VIDEO for video/* keys — a mismatch is rejected). Videos are capped at 250MB (Telegram 50MB, Bluesky 100MB). Media is REQUIRED on TikTok, YouTube (video only), Instagram, and Pinterest; X, LinkedIn, Facebook, Threads, Bluesky, Telegram, and Google Business Profile allow text-only posts (GBP accepts 1 image and no video). This requirement applies even to DRAFTS — a draft to a media-required platform without media is rejected. So if the user asks to post to a media-required platform and provides no media, ask them for an image/video (or generate and upload one) BEFORE calling create_posts; don't attempt the post without media.
 
 Per-platform limits (media counts / characters):
 - X: up to 4 images or 1 video (no mixing); 280 chars (4,000 with X Premium).
 - TikTok: 1 video OR up to 10 images; 4,000 chars.
 - Instagram: up to 10 images + 10 videos (mixed OK); 2,200 chars, max 30 hashtags.
 - YouTube: 1 video, no images; title max 100 chars.
-- Facebook / LinkedIn: up to 10 images + 1 video.
+- Facebook / LinkedIn: up to 10 images OR 1 video (no mixing).
 - Threads: up to 10 images + 10 videos; 500 chars.
 - Pinterest: up to 5 images or 1 video; title max 100, description max 800.
 - Google Business Profile: 1 image; 1,500 chars.
@@ -33,7 +33,7 @@ Platform-specific options go in the controls object, e.g.:
 - Pinterest: controls.pinterestBoardId is REQUIRED — it is a board's boardId from list_pinterest_boards, NOT the Pinterest account's socialMediaId.
 - Google Business Profile: controls.gbpLocationId is required — the locationId from list_gbp_locations.
 - YouTube: controls.youtubePlaylistId is the playlistId from list_youtube_playlists; youtubeIsShort defaults true; title falls back to the first 100 chars of content.
-- TikTok: controls.tiktokPrivacy is deprecated (videos use the account default, photos default to public); tiktokTitle applies to photo carousels only (max 90); firstComment (max 150, comments must be enabled).
+- TikTok: controls.tiktokPrivacy is deprecated (videos use the account default, photos default to public); tiktokTitle applies to photo carousels only (max 90); firstComment (max 1,200, requires a Business API connection).
 - Instagram: controls.instagramPublishType = TIMELINE | STORY | REEL.
 - Facebook: controls.facebookContentType = POST | REEL | STORY. controls.facebookTargetCountries limits who can see a FEED post by country (ISO 3166-1 alpha-2, max 25; not Reels/Stories).
 - Geotag a place (Facebook/Instagram): call search_places, then pass a returned id as controls.facebookPlaceId (Facebook feed posts only — not Reels/Stories/video) and/or controls.instagramLocationId (Instagram single media only — not carousels). One id works for both.
@@ -45,7 +45,7 @@ Failed posts carry lastError — usually a disconnected account (reconnect, then
 
 delete_post removes a post from PostFast only — it never deletes an already-published post from the social platform. Say so when a user asks to delete something that has already gone out.
 
-Social inbox (comments on your posts — TikTok, Instagram, Facebook Pages, Threads, LinkedIn; an account's inboxCapable flag from list_accounts says what is live today): read with list_inbox_conversations → list_inbox_items (get_inbox_unread_count for the total), reply with reply_to_inbox_item (public, under a specific comment item) or send_inbox_private_reply (Instagram only: one per comment, within 7 days). Whether and how long a reply can be comes ONLY from the conversation's server-computed canReply / maxReplyLength / windowState / disabledReason — never assume platform rules. Moderate with set_inbox_item_state (HIDE / UNHIDE / DELETE — DELETE removes the comment on the platform and cannot be undone), triage with set_inbox_conversation_status and assign_inbox_conversation, and call mark_inbox_conversation_read after presenting a thread. It is a comments inbox — never present it as DMs or messages.`;
+Social inbox (comments on your posts — TikTok, Instagram, Facebook Pages, Threads; an account's inboxCapable flag from list_accounts says what is live today): read with list_inbox_conversations → list_inbox_items (get_inbox_unread_count for the total), reply with reply_to_inbox_item (public, under a specific comment item) or send_inbox_private_reply (Instagram only: one per comment, within 7 days). Whether and how long a reply can be comes ONLY from the conversation's server-computed canReply / maxReplyLength / windowState / disabledReason — never assume platform rules. Moderate with set_inbox_item_state (HIDE / UNHIDE / DELETE — DELETE removes the comment on the platform and cannot be undone), triage with set_inbox_conversation_status and assign_inbox_conversation, and call mark_inbox_conversation_read after presenting a thread. It is a comments inbox — never present it as DMs or messages.`;
 
 const STDIO_INSTRUCTIONS = `PostFast schedules and publishes social posts across X, Instagram, Facebook, TikTok, LinkedIn, YouTube, Threads, Pinterest, Bluesky, Telegram, and Google Business Profile.
 

@@ -136,7 +136,7 @@ Ask your AI assistant things like:
 
 ### Social Inbox (comments)
 
-Comments on your posts — TikTok, Instagram, Facebook Pages, Threads, and LinkedIn — in one inbox (an account's `inboxCapable` flag says what is live today). Comments only (no direct messages), from connect onward (no history backfill). Reply capability is always server-computed per conversation (`canReply`, `maxReplyLength`, `windowState`, `disabledReason`) — render from those fields, never platform assumptions.
+Comments on your posts — TikTok, Instagram, Facebook Pages, and Threads — in one inbox (an account's `inboxCapable` flag says what is live today). Comments only (no direct messages), from connect onward (no history backfill). Reply capability is always server-computed per conversation (`canReply`, `maxReplyLength`, `windowState`, `disabledReason`) — render from those fields, never platform assumptions.
 
 | Tool | Description |
 |------|-------------|

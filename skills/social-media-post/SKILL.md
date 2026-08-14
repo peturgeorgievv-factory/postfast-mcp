@@ -28,7 +28,7 @@ If any PostFast tool call fails with an authentication/401 error, tell the user:
    - `scheduledAt`: ISO 8601 datetime (required unless status is DRAFT)
    - `mediaItems`: array of `{key, type, sortOrder}` from uploaded media
    - `status`: SCHEDULED (default) or DRAFT
-   - `firstComment`: optional first comment text, posted automatically after publishing (supported on X, Instagram, Facebook, YouTube, Threads, and TikTok — TikTok: max 150 chars, comments must be enabled)
+   - `firstComment`: optional first comment text, posted automatically after publishing (supported on X, Instagram, Facebook, YouTube, Threads, and TikTok — TikTok: max 1,200 chars, requires a Business API connection)
    - `controls`: platform-specific settings (see below)
    - You can batch up to 15 posts in a single call — great for content calendars
    - Don't schedule to a `DISABLED` account — the API rejects it with HTTP 400 `socialMediaDisconnected`. Saving as DRAFT is still allowed. Check `connectionStatus` from step 1 first.

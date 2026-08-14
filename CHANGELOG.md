@@ -1,5 +1,36 @@
 # postfast-mcp
 
+## 0.5.2
+
+### Patch Changes
+
+- Descriptions only — remove claims we cannot serve today. No code, annotation or
+  schema changes.
+
+  LinkedIn inbox is still in LinkedIn app review, so 0.5.1's affirmative LinkedIn
+  support claims were wrong. Removed from `list_inbox_conversations`, the inbox
+  file header, the server instructions, the README and the social-inbox skill;
+  the LinkedIn 1,250-character reply cap is gone from `reply_to_inbox_item`, and
+  `set_inbox_item_state` no longer mentions LinkedIn hide support. Coverage is
+  TikTok, Instagram, Facebook Pages and Threads. The `inboxCapable` deferral
+  stays, so LinkedIn starts working on its own when review clears — no release
+  needed.
+
+  Also corrected, found while sweeping every description for claims the backend
+  does not actually enforce:
+
+  - `get_inbox_conversation` no longer promises a `postPreview` thumbnail. The
+    remote host stopped forwarding the presigned media URL in 0.5.1;
+    `list_inbox_conversations` was updated then and this one was missed.
+  - TikTok `firstComment` cap is 1,200, not 150 (the same 2026-08-07 raise as the
+    inbox reply cap), and the real gate is a TikTok Business API connection.
+  - Google Business Profile does not require media. It rejects video and more
+    than one image, but a text-only GBP post is valid; the instructions listed it
+    as media-required, which would make a model demand an image it does not need.
+  - Facebook and LinkedIn reject mixed image+video posts, so their limit reads
+    "10 images OR 1 video (no mixing)" rather than "+", which matched the wording
+    used for the platforms that do allow mixing.
+
 ## 0.5.1
 
 ### Patch Changes
