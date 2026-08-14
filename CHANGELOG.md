@@ -1,5 +1,40 @@
 # postfast-mcp
 
+## 0.5.1
+
+### Patch Changes
+
+- Correct ten tool annotations so every hint matches real behaviour, and fix the
+  descriptions that had drifted from the backend.
+
+  Annotations (derived from the gateway/backend code paths, not from tool names):
+
+  - `destructiveHint` false -> true on `create_posts`, `approve_posts`,
+    `generate_connect_link`, `reply_to_inbox_item`, `send_inbox_private_reply` —
+    each can cause something that cannot be undone through the PostFast API
+    (a public post, a sent email, a public comment on a platform with no delete
+    verb, a direct message with no unsend).
+  - `openWorldHint` true -> false on `delete_post`, `get_post_analytics`,
+    `list_pinterest_boards`, `list_youtube_playlists`, `list_gbp_locations` —
+    these read or write data PostFast already stores and make no live platform
+    call.
+
+  The rule, applied uniformly: `openWorldHint` is true when a tool calls an
+  external platform live or causes content to be published/sent outside PostFast;
+  `destructiveHint` is true wherever the action cannot be undone through our API.
+
+  Descriptions:
+
+  - `delete_post` now states that it removes the post from PostFast and does NOT
+    delete an already-published post from the platform.
+  - Inbox reply caps corrected (TikTok is 1,200, not 150) and LinkedIn added.
+  - Inbox coverage now names LinkedIn and defers to each account's `inboxCapable`
+    flag instead of asserting a fixed platform list.
+  - `set_inbox_item_state` now states that HIDE/UNHIDE are unsupported on
+    LinkedIn and DELETE is unsupported on Threads.
+  - `list_inbox_conversations` no longer advertises a `postPreview` thumbnail: the
+    remote host stops returning the presigned media URL.
+
 ## 0.5.0
 
 ### Minor Changes

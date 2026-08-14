@@ -295,7 +295,10 @@ export const postTools: ToolDef[] = [
       ),
     }),
     outputSchema: { postIds: z.array(z.string()).optional() },
-    annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: true },
+    // destructive: a SCHEDULED+APPROVED post (both defaults) publishes publicly and
+    // cannot be retracted through our API — delete_post removes our row, not the
+    // platform post.
+    annotations: { readOnlyHint: false, destructiveHint: true, openWorldHint: true },
     run: (port, args, workspaceId) =>
       port.createPosts(args as unknown as CreatePostsArgs, workspaceId),
   },
@@ -310,7 +313,9 @@ export const postTools: ToolDef[] = [
       approvalStatus: z.enum(SET_APPROVAL_STATUSES).describe('New approval status'),
     },
     outputSchema: { success: z.boolean().optional() },
-    annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: true },
+    // destructive: APPROVED is the last gate before the scheduler publishes, and a
+    // published post cannot be un-published through our API.
+    annotations: { readOnlyHint: false, destructiveHint: true, openWorldHint: true },
     run: (port, args, workspaceId) =>
       port.approvePosts(args as unknown as ApprovePostsArgs, workspaceId),
   },
@@ -318,16 +323,18 @@ export const postTools: ToolDef[] = [
     name: 'delete_post',
     binding: 'both',
     title: 'Delete Post',
-    description: 'Delete a social media post by id.',
+    description:
+      'Delete a social media post by id. This removes the post from PostFast — its record, its schedule, and its stored media. It does NOT delete anything from the social platform: a post that has already published stays live there and must be removed on the platform itself. Deleting a SCHEDULED post that has not published yet does prevent it from publishing. The deletion cannot be undone.',
     inputSchema: {
       id: z.uuid().describe('Post id to delete'),
     },
     outputSchema: { deleted: z.boolean().optional() },
+    // openWorld false: deletes the PostFast record only — no platform call is made.
     annotations: {
       readOnlyHint: false,
       destructiveHint: true,
       idempotentHint: true,
-      openWorldHint: true,
+      openWorldHint: false,
     },
     run: (port, args, workspaceId) => port.deletePost(args.id as string, workspaceId),
   },
@@ -351,7 +358,9 @@ export const postTools: ToolDef[] = [
         .describe('Filter by specific social media account ids'),
     },
     outputSchema: dataListOutputSchema,
-    annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: true },
+    // openWorld false: reads metrics already synced into our database; no live
+    // platform call at request time.
+    annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
     run: (port, args, workspaceId) =>
       port.getPostAnalytics(args as unknown as AnalyticsArgs, workspaceId),
   },

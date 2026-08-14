@@ -122,7 +122,7 @@ Ask your AI assistant things like:
 | `list_accounts` | List connected social media accounts (each with `connectionStatus` — `CONNECTED`/`DISABLED` — `disabledReason`, `followerCount`/`followerCountUpdatedAt`, and `inboxCapable`) |
 | `list_posts` | List posts with filters (specific IDs, platform, status, date range) |
 | `create_posts` | Create and schedule posts (batch, up to 15) |
-| `delete_post` | Delete a post by ID |
+| `delete_post` | Delete a post from PostFast by ID (does not remove an already-published post from the platform) |
 | `upload_media` | Upload a local file and get a media key (handles the full flow) |
 | `get_upload_urls` | Get signed URLs to upload media files |
 | `list_pinterest_boards` | Get Pinterest boards for an account |
@@ -136,7 +136,7 @@ Ask your AI assistant things like:
 
 ### Social Inbox (comments)
 
-Comments on your posts — TikTok, Instagram, Facebook Pages, and Threads — in one inbox. Comments only (no direct messages), from connect onward (no history backfill). Reply capability is always server-computed per conversation (`canReply`, `maxReplyLength`, `windowState`, `disabledReason`) — render from those fields, never platform assumptions.
+Comments on your posts — TikTok, Instagram, Facebook Pages, Threads, and LinkedIn — in one inbox (an account's `inboxCapable` flag says what is live today). Comments only (no direct messages), from connect onward (no history backfill). Reply capability is always server-computed per conversation (`canReply`, `maxReplyLength`, `windowState`, `disabledReason`) — render from those fields, never platform assumptions.
 
 | Tool | Description |
 |------|-------------|

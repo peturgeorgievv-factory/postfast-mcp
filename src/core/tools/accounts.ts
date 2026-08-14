@@ -25,7 +25,8 @@ export const accountTools: ToolDef[] = [
       socialMediaId: z.uuid().describe('Pinterest account id (from list_accounts)'),
     },
     outputSchema: dataListOutputSchema,
-    annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: true },
+    // openWorld false: reads boards already stored in our database.
+    annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
     run: (port, args, workspaceId) =>
       port.listPinterestBoards(args.socialMediaId as string, workspaceId),
   },
@@ -39,7 +40,8 @@ export const accountTools: ToolDef[] = [
       socialMediaId: z.uuid().describe('YouTube account id (from list_accounts)'),
     },
     outputSchema: dataListOutputSchema,
-    annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: true },
+    // openWorld false: reads playlists already stored in our database.
+    annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
     run: (port, args, workspaceId) =>
       port.listYoutubePlaylists(args.socialMediaId as string, workspaceId),
   },
@@ -53,7 +55,8 @@ export const accountTools: ToolDef[] = [
       socialMediaId: z.uuid().describe('GBP account id (from list_accounts)'),
     },
     outputSchema: dataListOutputSchema,
-    annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: true },
+    // openWorld false: reads locations already stored in our database.
+    annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
     run: (port, args, workspaceId) =>
       port.listGbpLocations(args.socialMediaId as string, workspaceId),
   },
@@ -119,7 +122,9 @@ export const accountTools: ToolDef[] = [
         .describe('Recipient email (required when sendEmail is true)'),
     },
     outputSchema: { connectUrl: z.string().optional() },
-    annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: true },
+    // destructive: sendEmail delivers a real email that cannot be recalled, and the
+    // minted link grants account-connect access until it expires.
+    annotations: { readOnlyHint: false, destructiveHint: true, openWorldHint: true },
     run: (port, args, workspaceId) =>
       port.generateConnectLink(args as unknown as ConnectLinkArgs, workspaceId),
   },

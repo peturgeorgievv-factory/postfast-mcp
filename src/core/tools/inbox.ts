@@ -18,7 +18,8 @@ import type { ToolDef } from '../tool-def.js';
 /**
  * Social inbox — a COMMENTS inbox (comments on the workspace's own posts;
  * never described as DMs/messages). Coverage: TikTok, Instagram, Facebook
- * Pages, Threads. Reply capability is server-computed per
+ * Pages, Threads, LinkedIn — per account, `inboxCapable` from list_accounts is
+ * the authority on what is live today. Reply capability is server-computed per
  * conversation (canReply / maxReplyLength / windowState / disabledReason) —
  * descriptions steer models to render from those fields, never platform rules.
  * Every def carries portMethod so bindings whose adapter predates this wave
@@ -30,7 +31,7 @@ export const inboxTools: ToolDef[] = [
     binding: 'both',
     title: 'List Inbox Conversations',
     description:
-      "List comment conversations from the social inbox — comments on your connected accounts' posts, grouped per post, newest activity first. Covers TikTok, Instagram, Facebook Pages, and Threads; comments arrive within seconds of being posted and only from connect/launch onward (no history backfill). Each conversation carries a server-computed reply capability — canReply, maxReplyLength, windowState, disabledReason — plus unreadCount, status (OPEN | SNOOZED | CLOSED), and assignedToUserId. ALWAYS derive whether and how long you can reply from those fields; never assume platform rules. postPreview carries the post's caption and thumbnail and, when available, its public permalink — use the permalink to link the user to the post on the platform (null on Instagram for now).",
+      "List comment conversations from the social inbox — comments on your connected accounts' posts, grouped per post, newest activity first. Covers TikTok, Instagram, Facebook Pages, Threads, and LinkedIn; an account's inboxCapable flag (from list_accounts) tells you whether comments can flow for it today. Comments arrive within seconds of being posted and only from connect/launch onward (no history backfill). Each conversation carries a server-computed reply capability — canReply, maxReplyLength, windowState, disabledReason — plus unreadCount, status (OPEN | SNOOZED | CLOSED), and assignedToUserId. ALWAYS derive whether and how long you can reply from those fields; never assume platform rules. postPreview carries the post's caption and, when available, its public permalink — use the permalink to link the user to the post on the platform (null on Instagram for now).",
     inputSchema: {
       page: z.number().int().min(0).default(0).describe('Page number (0-based)'),
       limit: z
@@ -121,13 +122,15 @@ export const inboxTools: ToolDef[] = [
     binding: 'both',
     title: 'Reply to Inbox Comment',
     description:
-      "Reply publicly UNDER a specific comment — pass the comment item's id (from list_inbox_items), not the conversation id. BEFORE replying, check the conversation's canReply and maxReplyLength and stay within them; the caps are per platform (TikTok 150, Instagram 2,200, Facebook 8,000, Threads 500 characters) but the server-computed fields are authoritative — never assume. Failures return inbox.* codes (e.g. replyTooLong, replyNotSupported, rateLimited).",
+      "Reply publicly UNDER a specific comment — pass the comment item's id (from list_inbox_items), not the conversation id. BEFORE replying, check the conversation's canReply and maxReplyLength and stay within them; the caps are per platform (TikTok 1,200, Instagram 2,200, Facebook 8,000, LinkedIn 1,250, Threads 500 characters) but the server-computed fields are authoritative — never assume. Failures return inbox.* codes (e.g. replyTooLong, replyNotSupported, rateLimited).",
     inputSchema: {
       itemId: z.uuid().describe('The comment item id to reply under (from list_inbox_items)'),
       text: z.string().min(1).describe("Reply text. Must fit the conversation's maxReplyLength."),
     },
     outputSchema: { id: z.string().optional() },
-    annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: true },
+    // destructive: publishes a public comment; Threads exposes no delete verb, so a
+    // reply there cannot be removed through our API.
+    annotations: { readOnlyHint: false, destructiveHint: true, openWorldHint: true },
     portMethod: 'replyToInboxItem',
     run: (port, args, workspaceId) =>
       port.replyToInboxItem!(args as unknown as InboxReplyArgs, workspaceId),
@@ -145,7 +148,9 @@ export const inboxTools: ToolDef[] = [
       text: z.string().min(1).describe('Private reply text (max 1,000 bytes)'),
     },
     outputSchema: { id: z.string().optional() },
-    annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: true },
+    // destructive: sends a real direct message with no unsend path, and the
+    // once-per-comment guard means the attempt cannot be repeated.
+    annotations: { readOnlyHint: false, destructiveHint: true, openWorldHint: true },
     portMethod: 'sendInboxPrivateReply',
     run: (port, args, workspaceId) =>
       port.sendInboxPrivateReply!(args as unknown as InboxReplyArgs, workspaceId),
@@ -155,7 +160,7 @@ export const inboxTools: ToolDef[] = [
     binding: 'both',
     title: 'Moderate Inbox Comment',
     description:
-      'Moderate a comment on the platform: HIDE hides it from the public, UNHIDE restores it, DELETE removes the comment on the platform — cannot be undone. Hide/unhide work on TikTok, Instagram, Facebook, and Threads; DELETE is not supported on Threads (inbox.deleteNotSupported). State changes made on the platform itself sync back to the inbox automatically.',
+      'Moderate a comment on the platform: HIDE hides it from the public, UNHIDE restores it, DELETE removes the comment on the platform — cannot be undone. HIDE/UNHIDE work on TikTok, Instagram, Facebook, and Threads, but not LinkedIn (inbox.hideNotSupported); DELETE works everywhere except Threads (inbox.deleteNotSupported). State changes made on the platform itself sync back to the inbox automatically.',
     inputSchema: {
       itemId: z.uuid().describe('The comment item id (from list_inbox_items)'),
       action: z

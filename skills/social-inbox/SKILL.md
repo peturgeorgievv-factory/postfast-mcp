@@ -5,7 +5,7 @@ description: Read, reply to, moderate, and triage comments on social posts using
 
 # Social Inbox (comments) via PostFast
 
-You have access to PostFast MCP inbox tools — a **comments** inbox for the workspace's own posts. It is never a DM/messages inbox. Covered platforms: TikTok, Instagram, Facebook Pages, Threads. Not covered: X, YouTube, Pinterest, Bluesky, Telegram, Google Business Profile, LinkedIn (yet). Comments appear from connect/launch onward — there is no history backfill.
+You have access to PostFast MCP inbox tools — a **comments** inbox for the workspace's own posts. It is never a DM/messages inbox. Covered platforms: TikTok, Instagram, Facebook Pages, Threads, LinkedIn — an account's `inboxCapable` flag (from `list_accounts`) is the authority on what is live today. Not covered: X, YouTube, Pinterest, Bluesky, Telegram, Google Business Profile. Comments appear from connect/launch onward — there is no history backfill.
 
 ## The one rule that overrides everything
 
@@ -20,7 +20,7 @@ Reply capability is **server-computed per conversation**: `canReply`, `maxReplyL
 
 ## Replying
 
-- **Public reply** — `reply_to_inbox_item` with the **comment item's id** (not the conversation id). Respect `maxReplyLength` (platform caps as context: TikTok 150, Instagram 2,200, Facebook 8,000, Threads 500 — the fields are authoritative). Confirm the reply text with the user before sending; it posts publicly.
+- **Public reply** — `reply_to_inbox_item` with the **comment item's id** (not the conversation id). Respect `maxReplyLength` (platform caps as context: TikTok 1,200, Instagram 2,200, Facebook 8,000, LinkedIn 1,250, Threads 500 — the fields are authoritative). Confirm the reply text with the user before sending; it posts publicly.
 - **Instagram private reply** — `send_inbox_private_reply`, only where the item's `canPrivateReply` is true: exactly one per comment, within 7 days of the comment, up to 1,000 bytes (emoji count multi-byte), and it may land in the recipient's Message Requests. A second attempt fails with `inbox.privateReplyAlreadySent`.
 - Replies sent through PostFast appear once in the thread — no duplicates when the platform confirms them.
 
