@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import type { ConnectLinkArgs, FollowerHistoryArgs } from '../backend-port.js';
+import { PLATFORMS } from '../shared.js';
 import type { ToolDef } from '../tool-def.js';
 
 export const accountTools: ToolDef[] = [
@@ -93,7 +94,7 @@ export const accountTools: ToolDef[] = [
     binding: 'both',
     title: 'Generate Connect Link',
     description:
-      'Generate a shareable link for external clients to connect their social accounts to the workspace.',
+      'Generate a shareable link for external clients to connect their social accounts to the workspace. Can be scoped to specific platforms and return the user to your own app when done.',
     inputSchema: {
       expiryDays: z
         .number()
@@ -107,6 +108,27 @@ export const accountTools: ToolDef[] = [
         .email()
         .optional()
         .describe('Recipient email (required when sendEmail is true)'),
+      platforms: z
+        .array(z.enum(PLATFORMS))
+        .nonempty()
+        .optional()
+        .describe(
+          'Restrict the link to these platforms, e.g. ["INSTAGRAM"]. Omit to offer all of them. Enforced server-side, so a scoped link cannot connect any other platform.',
+        ),
+      redirectUrl: z
+        .string()
+        .max(2000)
+        .optional()
+        .describe(
+          'Where the connect page offers to send the user once connecting finishes, with status, platform, accountId and externalId on the query string. Must be https (http is accepted only on localhost).',
+        ),
+      externalId: z
+        .string()
+        .max(128)
+        .optional()
+        .describe(
+          'Your own reference for this link, echoed back unchanged on the return URL. Letters, digits and - . _ ~ : @ only.',
+        ),
     },
     // destructive: sendEmail delivers a real email that cannot be recalled, and the
     // minted link grants account-connect access until it expires.

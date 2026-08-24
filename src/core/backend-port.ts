@@ -5,6 +5,7 @@ import type {
   PaginatedPosts,
   PinterestBoard,
   Place,
+  Platform,
   SignedUploadUrl,
   SocialAccount,
   YouTubePlaylist,
@@ -49,6 +50,9 @@ export interface ConnectLinkArgs {
   expiryDays: number;
   sendEmail: boolean;
   email?: string;
+  platforms?: Platform[];
+  redirectUrl?: string;
+  externalId?: string;
 }
 
 export interface UploadUrlsArgs {

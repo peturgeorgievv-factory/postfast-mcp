@@ -154,6 +154,9 @@ export class RestAdapter implements BackendPort {
       expiryDays: args.expiryDays,
       sendEmail: args.sendEmail,
       email: args.email,
+      platforms: args.platforms,
+      redirectUrl: args.redirectUrl,
+      externalId: args.externalId,
     });
   }
 
