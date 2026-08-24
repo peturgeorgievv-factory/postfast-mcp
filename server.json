@@ -6,12 +6,12 @@
     "url": "https://github.com/peturgeorgievv-factory/postfast-mcp",
     "source": "github"
   },
-  "version": "0.5.3",
+  "version": "0.6.0",
   "packages": [
     {
       "registryType": "npm",
       "identifier": "postfast-mcp",
-      "version": "0.5.3",
+      "version": "0.6.0",
       "transport": {
         "type": "stdio"
       },

@@ -1,5 +1,11 @@
 # postfast-mcp
 
+## 0.6.0
+
+### Minor Changes
+
+- 6bd80b4: `generate_connect_link` gains the three optional fields the backend now accepts, so a connect link can be scoped and can return the user to your own app: `platforms` (restrict the link to specific platforms — enforced server-side on every path the link can reach, so a scoped link cannot connect anything else), `redirectUrl` (where the connect page offers to send the user once connecting finishes; https, with http allowed only on loopback) and `externalId` (your own reference, echoed back unchanged, max 128 chars). On success the user returns with `status`, `platform`, `accountId` and `externalId` on the query string — `accountId` is the same `id` `list_accounts` returns, so it is the completion signal. The schema keeps only the max-lengths; the URL-scheme and charset rules stay with the backend, which rejects violations with a clear 400 rather than being restated here where they could drift. The tool description now mentions the capability, since that is the only place a model can discover it. The stdio adapter sends the new keys (its request body is an explicit whitelist, so they were being dropped).
+
 ## 0.5.3
 
 ### Patch Changes
