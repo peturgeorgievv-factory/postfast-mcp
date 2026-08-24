@@ -115,6 +115,22 @@ Ask your AI assistant things like:
 - "Create a Facebook reel with this video"
 - "Show me analytics for my Instagram posts this month"
 
+### Optional X/Twitter source context
+
+When an assistant needs current X/Twitter evidence before scheduling a post, pair
+PostFast with a read-only source step. For example,
+[TweetClaw](https://github.com/Xquik-dev/tweetclaw) can collect approved
+X/Twitter source packets through OpenClaw before PostFast creates the final
+draft, schedule, or media upload.
+
+Keep the boundary clear:
+
+- Treat source packets as context, not authorization to publish.
+- Review the final copy, account, media, and schedule in PostFast.
+- Never move API keys, account sessions, cookies, or access tokens between
+  tools.
+- Use DRAFT status when source evidence still needs a human check.
+
 ## Available Tools
 
 | Tool | Description |

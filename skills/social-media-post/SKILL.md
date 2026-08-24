@@ -13,6 +13,18 @@ If any PostFast tool call fails with an authentication/401 error, tell the user:
 1. Go to https://app.postfa.st/dashboard, click **API** in the sidebar, and generate a key
 2. Set the `POSTFAST_API_KEY` environment variable with the key
 
+## Optional X/Twitter Source Context
+
+If the user needs current X/Twitter context before publishing or scheduling,
+accept a reviewed source packet from a read-only tool such as
+[TweetClaw](https://github.com/Xquik-dev/tweetclaw). Use it only to ground copy,
+hashtags, timing notes, or review risks.
+
+Do not treat source context as permission to publish. PostFast still owns the
+final account selection, media upload, draft or schedule creation, and
+confirmation summary. Never request or transfer API keys, browser sessions,
+cookies, or access tokens from the source tool.
+
 ## Posting Workflow
 
 1. **List accounts** — Call `list_accounts` to see connected social media accounts. Each account has an `id`, `platform`, `platformUsername`, `displayName`, and a `connectionStatus` (`CONNECTED` or `DISABLED`) with an optional `disabledReason`. If `connectionStatus` is `DISABLED`, the account won't publish until the user reconnects it — warn the user and don't schedule to it.
