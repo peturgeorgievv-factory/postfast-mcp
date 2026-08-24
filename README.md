@@ -129,7 +129,7 @@ Ask your AI assistant things like:
 | `list_youtube_playlists` | Get YouTube playlists for an account |
 | `list_gbp_locations` | Get Google Business Profile locations for an account |
 | `search_places` | Find a place to tag posts (the `id` works for both `facebookPlaceId` and `instagramLocationId`) |
-| `generate_connect_link` | Generate a link for clients to connect accounts |
+| `generate_connect_link` | Generate a link for clients to connect accounts — optionally scoped to specific platforms, with a `redirectUrl` the user returns to (carrying `status`, `platform`, `accountId` and your own `externalId`) |
 | `get_post_analytics` | Fetch published posts with performance metrics — Instagram, Facebook, TikTok, Threads, YouTube, LinkedIn (company pages), Pinterest (Business accounts) |
 | `get_follower_history` | Daily follower-count history for an account (current count + `delta` over a date range) — Facebook Pages, Instagram, YouTube, Pinterest, Threads, Bluesky, Telegram, LinkedIn (company pages), TikTok |
 | `list_tiktok_sounds` | Trending pre-cleared Commercial Music Library tracks for a TikTok account (attach via `controls.tiktokMusicSoundId`) |
