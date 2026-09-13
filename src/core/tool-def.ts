@@ -4,12 +4,25 @@ import type { BackendPort } from './backend-port.js';
 /** The two deployments a catalog tool can ship in. */
 export type Binding = 'stdio' | 'remote';
 
+/**
+ * The behaviour hints a tool authors. The display name is NOT here: it is
+ * authored once as `ToolDef.title` and copied into the emitted annotations by
+ * buildTools(), so the two can never disagree.
+ */
 export interface ToolAnnotations {
   readOnlyHint: boolean;
   destructiveHint: boolean;
   idempotentHint?: boolean;
   openWorldHint: boolean;
 }
+
+/**
+ * What buildTools() emits: the authored hints plus the display name. Clients
+ * are told to prefer the top-level `title`, then `annotations.title`, then
+ * `name` — so the title is carried in both fields for clients (and directory
+ * validators) that only read the annotation.
+ */
+export type ResolvedToolAnnotations = ToolAnnotations & { title: string };
 
 /**
  * One tool as authored in the catalog. `description`/`inputSchema` may be a
@@ -54,7 +67,7 @@ export interface ResolvedTool {
   title: string;
   description: string;
   inputSchema: ZodRawShape;
-  annotations: ToolAnnotations;
+  annotations: ResolvedToolAnnotations;
   _meta?: Record<string, unknown>;
   portMethod?: keyof BackendPort;
   run: ToolDef['run'];

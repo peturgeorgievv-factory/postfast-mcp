@@ -51,7 +51,7 @@ export function buildTools(options: BuildToolsOptions): ResolvedTool[] {
         withWorkspaceField && def.workspaceScoped !== false
           ? { ...inputSchema, workspaceId: workspaceIdField }
           : inputSchema,
-      annotations: def.annotations,
+      annotations: { title: def.title, ...def.annotations },
       _meta: def._meta,
       portMethod: def.portMethod,
       run: def.run,

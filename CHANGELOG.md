@@ -1,5 +1,15 @@
 # postfast-mcp
 
+## 0.6.1
+
+### Patch Changes
+
+- Every tool now carries its display name in `annotations.title` as well as the top-level `title`. Both fields are filled from the single `title` authored on the tool definition, so they cannot drift. Nothing else about the surface changes: descriptions, input schemas and all four behaviour hints are byte-identical to the previous release.
+
+  The top-level `title` has been present since the catalog was extracted, and per the spec it is what a client should display first — so this is not a fix to what well-behaved clients show. It matters for consumers that read only the annotation: the MCP `ToolAnnotations` object has carried an optional `title` since it was introduced, and directory validators check for it there, reporting a tool as missing a title when the field is absent even though the top-level one is set. Filling both satisfies readers of either field.
+
+  The catalog's `ToolAnnotations` type still declares only the four hints, so a title cannot be authored twice; the resolved shape emitted by `buildTools()` is typed separately as `ResolvedToolAnnotations`, which includes it.
+
 ## 0.6.0
 
 ### Minor Changes

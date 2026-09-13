@@ -28,6 +28,7 @@ export {
 export type {
   Binding,
   ResolvedTool,
+  ResolvedToolAnnotations,
   ToolAnnotations,
   ToolDef,
 } from './tool-def.js';
