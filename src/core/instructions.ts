@@ -33,7 +33,7 @@ Platform-specific options go in the controls object, e.g.:
 - Pinterest: controls.pinterestBoardId is REQUIRED — it is a board's boardId from list_pinterest_boards, NOT the Pinterest account's socialMediaId.
 - Google Business Profile: controls.gbpLocationId is required — the locationId from list_gbp_locations.
 - YouTube: controls.youtubePlaylistId is the playlistId from list_youtube_playlists; youtubeIsShort defaults true; title falls back to the first 100 chars of content.
-- TikTok: controls.tiktokPrivacy is deprecated (videos use the account default, photos default to public); tiktokTitle applies to photo carousels only (max 90); firstComment (max 1,200, requires a Business API connection).
+- TikTok: controls.tiktokPrivacy is deprecated (videos use the account default, photos default to public); tiktokTitle applies to photo carousels only (max 90); firstComment (max 1,200).
 - Instagram: controls.instagramPublishType = TIMELINE | STORY | REEL.
 - Facebook: controls.facebookContentType = POST | REEL | STORY. controls.facebookTargetCountries limits who can see a FEED post by country (ISO 3166-1 alpha-2, max 25; not Reels/Stories).
 - Geotag a place (Facebook/Instagram): call search_places, then pass a returned id as controls.facebookPlaceId (Facebook feed posts only — not Reels/Stories/video) and/or controls.instagramLocationId (Instagram single media only — not carousels). One id works for both.

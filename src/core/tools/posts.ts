@@ -32,7 +32,7 @@ const mediaItemSchema = (binding: Binding) =>
       .string()
       .optional()
       .describe(
-        'Media key of a custom cover/thumbnail for video posts. Supported on Instagram Reels, Facebook Reels, Pinterest video pins.',
+        'Media key of a custom cover/thumbnail for video posts. Supported on Instagram Reels, Facebook Reels, Pinterest video pins, and TikTok videos.',
       ),
     coverTimestamp: z
       .string()
@@ -49,7 +49,7 @@ const postItemSchema = (binding: Binding) =>
       .string()
       .optional()
       .describe(
-        'First comment posted automatically after publishing. Supported on X, Instagram, Facebook, YouTube, Threads, and TikTok (TikTok: max 1,200 chars and requires a TikTok Business API connection).',
+        'First comment posted automatically after publishing. Supported on X, Instagram, Facebook, YouTube, Threads, and TikTok (TikTok: max 1,200 chars).',
       ),
     mediaItems: z
       .array(mediaItemSchema(binding))
@@ -79,7 +79,12 @@ const controlsSchema = z.object({
   tiktokAllowStitch: z.boolean().optional(),
   tiktokBrandOrganic: z.boolean().optional(),
   tiktokBrandContent: z.boolean().optional(),
-  tiktokAutoAddMusic: z.boolean().optional(),
+  tiktokAutoAddMusic: z
+    .boolean()
+    .optional()
+    .describe(
+      'Let TikTok add a recommended sound. Photo/carousel posts only (ignored on videos). Mutually exclusive with tiktokMusicSoundId (sending both is rejected).',
+    ),
   tiktokIsAigc: z
     .boolean()
     .optional()
@@ -98,7 +103,7 @@ const controlsSchema = z.object({
     .max(128)
     .optional()
     .describe(
-      'Commercial Music Library sound id from list_tiktok_sounds. TikTok photo/carousel posts only. Mutually exclusive with tiktokAutoAddMusic (sending both is rejected). Not applied when tiktokIsDraft is true. Omit for no sound.',
+      "Commercial Music Library sound id from list_tiktok_sounds. TikTok photo, carousel and video posts. On videos the track plays at 50% volume over the video's original audio at 50%, like the TikTok app; there are no volume or trim controls. Mutually exclusive with tiktokAutoAddMusic (sending both is rejected). Not applied when tiktokIsDraft is true. Omit for no sound.",
     ),
   tiktokMusicSoundName: z
     .string()

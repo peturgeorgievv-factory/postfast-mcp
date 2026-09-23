@@ -1,5 +1,15 @@
 # postfast-mcp
 
+## 0.6.2
+
+### Patch Changes
+
+- TikTok sound selection now covers video posts. `tiktokMusicSoundId` and `list_tiktok_sounds` describe sounds for photo, carousel and video posts, and say how a video is mixed: the track plays at 50% volume over the video's original audio at 50%, the TikTok app's defaults, with no volume or trim controls. `tiktokAutoAddMusic` gains a description: TikTok adds a recommended sound on photo/carousel posts only, the field is ignored on videos, and it is mutually exclusive with `tiktokMusicSoundId`. `coverImageKey` now lists TikTok videos among the video posts that take a custom cover. The README and the social-media-post skill match.
+
+  The TikTok `firstComment` note is plain "TikTok" again: the connection-type qualifier that came back in 0.5.2 is removed from the `firstComment` description, the server instructions and the social-media-post skill, as in 0.4.1.
+
+  Wording only: field names, types, limits and errors are unchanged, on both bindings.
+
 ## 0.6.1
 
 ### Patch Changes
