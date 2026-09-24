@@ -5,6 +5,11 @@ import { workspaceIdField } from './shared.js';
 import type { Binding, ResolvedTool } from './tool-def.js';
 import { ALL_TOOLS } from './tools/index.js';
 
+export interface ConfirmGateOptions {
+  /** HMAC key for confirm tokens; at least 32 characters. */
+  secret: string;
+}
+
 export interface BuildToolsOptions {
   binding: Binding;
   /**
@@ -19,14 +24,25 @@ export interface BuildToolsOptions {
    * catalog keeps working when a newer catalog adds tools it can't serve yet.
    */
   port?: BackendPort;
+  /**
+   * Remote only. Holds every new post for approval and routes comment
+   * replies, private replies and deletions through prepare_inbox_action and
+   * confirm_inbox_action. When absent, the output is identical to 0.6.2.
+   */
+  confirmGate?: ConfirmGateOptions;
 }
 
 /** Resolve the catalog for one binding: filter, flatten binding-variant fields. */
 export function buildTools(options: BuildToolsOptions): ResolvedTool[] {
-  const { binding, withWorkspaceField = false, port } = options;
+  const { binding, withWorkspaceField = false, port, confirmGate } = options;
+  const gated = binding === 'remote' && !!confirmGate;
+  if (gated && !(confirmGate.secret?.length >= 32)) {
+    throw new Error('confirmGate.secret must be at least 32 characters.');
+  }
 
   return ALL_TOOLS.filter((def) => {
     if (def.binding !== 'both' && def.binding !== binding) return false;
+    if (gated ? def.hiddenWhenGated : def.gatedOnly) return false;
     if (
       port &&
       def.portMethod &&
@@ -40,21 +56,26 @@ export function buildTools(options: BuildToolsOptions): ResolvedTool[] {
     return true;
   }).map((def) => {
     const inputSchema =
-      typeof def.inputSchema === 'function' ? def.inputSchema(binding) : def.inputSchema;
+      typeof def.inputSchema === 'function' ? def.inputSchema(binding, gated) : def.inputSchema;
+    const annotations = gated && def.gatedAnnotations ? def.gatedAnnotations : def.annotations;
 
     return {
       name: def.name,
       title: def.title,
       description:
-        typeof def.description === 'function' ? def.description(binding) : def.description,
+        typeof def.description === 'function' ? def.description(binding, gated) : def.description,
       inputSchema:
         withWorkspaceField && def.workspaceScoped !== false
           ? { ...inputSchema, workspaceId: workspaceIdField }
           : inputSchema,
-      annotations: { title: def.title, ...def.annotations },
+      annotations: { title: def.title, ...annotations },
       _meta: def._meta,
       portMethod: def.portMethod,
-      run: def.run,
+      // Gated: hand the secret to run(), also for hosts that call tool.run() themselves.
+      run: gated
+        ? (p, args, workspaceId) =>
+            def.run(p, args, workspaceId, { confirmSecret: confirmGate.secret })
+        : def.run,
     };
   });
 }

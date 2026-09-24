@@ -12,6 +12,7 @@ tsconfig.json
 .changeset/
 .github/
 scripts/
+test/
 CLAUDE.md
 CHANGELOG.md
 glama.json

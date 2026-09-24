@@ -1,5 +1,11 @@
 # postfast-mcp
 
+## 0.7.0
+
+### Minor Changes
+
+- Opt-in confirmGate for the remote binding: posts held for approval, comment replies, private replies and deletions via prepare_inbox_action and confirm_inbox_action, and client-agnostic upload copy. Default output is unchanged.
+
 ## 0.6.2
 
 ### Patch Changes
