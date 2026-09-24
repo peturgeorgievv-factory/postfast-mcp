@@ -1,5 +1,17 @@
 # postfast-mcp
 
+## 0.7.2
+
+### Patch Changes
+
+- Claude Code plugin: pass POSTFAST_API_KEY through from the environment, pin the MCP launcher to this release; fix the plugin install docs.
+
+  The plugin manifest set `POSTFAST_API_KEY` to an empty string, which replaced a key exported in the shell or set under `env` in `~/.claude/settings.json`, so the server exited at startup. It now passes `${POSTFAST_API_KEY}` through, and its description says where to generate the key.
+
+  The plugin's MCP launcher is pinned to this release (`npx -y postfast-mcp@0.7.2`) instead of whatever the registry serves at session start, and `npm run version` keeps the pin in step with package.json. The repository root no longer carries a `.mcp.json`: it launched the published package with a placeholder key, and a plugin installed from the repository copied it along.
+
+  The README's Claude Code section installs the plugin from this repository's marketplace, puts the key in `~/.claude/settings.json` (a user-level `settings.local.json` is not read), and replaces the `~/.claude/.mcp.json` path, which Claude Code does not read, with `claude mcp add --scope user`. The MCP server and its tools are unchanged.
+
 ## 0.7.1
 
 ### Patch Changes

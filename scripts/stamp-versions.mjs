@@ -5,7 +5,8 @@
 //
 // Stamps: manifest.json, server.json (top-level + packages[]),
 // .claude-plugin/plugin.json (plugin update detection keys off this file's
-// version inside the npm package), .claude-plugin/marketplace.json (plugins[]),
+// version inside the npm package; its MCP launcher is pinned to
+// postfast-mcp@<version> too), .claude-plugin/marketplace.json (plugins[]),
 // src/stdio/index.ts, and package-lock.json (regenerated via npm).
 // JSON files are edited textually to preserve their checked-in formatting;
 // in each of them every `"version": "x.y.z"` key is one of our stamps
@@ -40,6 +41,31 @@ function stampJson(relPath) {
   console.log(`  ${relPath}`);
 }
 
+/**
+ * Pin the plugin's MCP launcher (`npx -y postfast-mcp@x.y.z`) to this version.
+ * A floating spec runs whatever the registry serves at session start, which
+ * pinning the plugin source to a commit does not fix, so every launcher arg
+ * naming the package must come out exact. Runs first: a missing or floating
+ * launcher aborts before any file is written.
+ */
+function stampLauncherPin(relPath) {
+  const path = join(root, relPath);
+  const raw = readFileSync(path, 'utf8');
+  const stamped = raw.replace(/("postfast-mcp@)\d+\.\d+\.\d+(")/g, `$1${version}$2`);
+  const launchers = Object.values(JSON.parse(stamped).mcpServers ?? {})
+    .flatMap((server) => server?.args ?? [])
+    .filter((arg) => typeof arg === 'string' && /^postfast-mcp(@|$)/.test(arg));
+  if (launchers.length === 0 || launchers.some((arg) => arg !== `postfast-mcp@${version}`)) {
+    console.error(
+      `${relPath}: MCP launcher must be pinned as "postfast-mcp@x.y.z" (found: ${launchers.join(', ') || 'none'}), aborting`,
+    );
+    process.exit(1);
+  }
+  writeFileSync(path, stamped);
+  console.log(`  ${relPath} (launcher postfast-mcp@${version})`);
+}
+
+stampLauncherPin('.claude-plugin/plugin.json');
 stampJson('manifest.json');
 stampJson('server.json');
 stampJson('.claude-plugin/plugin.json');
