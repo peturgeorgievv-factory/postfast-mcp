@@ -50,6 +50,8 @@ Download the extension from the [Claude Desktop extension directory](https://cla
 
 **Via plugin:**
 
+If you already added PostFast by hand, remove that entry before installing the plugin, or Claude Code shows two sets of PostFast tools.
+
 ```shell
 /plugin marketplace add peturgeorgievv-factory/postfast-mcp
 /plugin install postfast@postfast-mcp
