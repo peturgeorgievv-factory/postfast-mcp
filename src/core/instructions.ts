@@ -76,7 +76,7 @@ export const SERVER_INSTRUCTIONS: Record<Binding, string> = {
 const GATED_PARAGRAPHS: [prefix: string, text: string][] = [
   [
     'Flow: ',
-    "Flow: list_accounts (+ list_workspaces) to see what's connected → create_posts (one socialMediaId per post; batch up to 15) → attach media via upload_from_url (a public https URL) or upload_media (base64 bytes in data + contentType). Posts are held for approval and nothing publishes until approve_posts sets them to APPROVED: show the user what will be posted, where and when, and call approve_posts only after they confirm.",
+    "Flow: list_accounts (+ list_workspaces) to see what's connected → create_posts (one socialMediaId per post; batch up to 15) → attach media via upload_from_url (a public https URL) or upload_media (base64 bytes in data + contentType). Posts are held for approval and nothing publishes until approve_posts sets them to APPROVED: show the user what will be posted, where and when, and call approve_posts only after they say yes, even if they asked you to post it.",
   ],
   [
     'Status & timing: ',
@@ -84,7 +84,7 @@ const GATED_PARAGRAPHS: [prefix: string, text: string][] = [
   ],
   [
     'Social inbox ',
-    "Social inbox (comments on your posts: TikTok, Instagram, Facebook Pages, Threads; an account's inboxCapable flag from list_accounts says what is live today): read with list_inbox_conversations → list_inbox_items (get_inbox_unread_count for the total). To reply publicly under a comment (REPLY), send an Instagram private reply (PRIVATE_REPLY: one per comment, within 7 days) or delete a comment permanently (DELETE), call prepare_inbox_action, show the user the preview, and carry it out with confirm_inbox_action only after they agree. Whether and how long a reply can be comes ONLY from the conversation's server-computed canReply / maxReplyLength / windowState / disabledReason; never assume platform rules. Hide or restore a comment with set_inbox_item_state (HIDE / UNHIDE), triage with set_inbox_conversation_status and assign_inbox_conversation, and call mark_inbox_conversation_read after presenting a thread. It is a comments inbox; never present it as DMs or messages.",
+    "Social inbox (comments on your posts: TikTok, Instagram, Facebook Pages, Threads; an account's inboxCapable flag from list_accounts says what is live today): read with list_inbox_conversations → list_inbox_items (get_inbox_unread_count for the total). To reply publicly under a comment (REPLY), send an Instagram private reply (PRIVATE_REPLY: one per comment, within 7 days) or delete a comment permanently (DELETE), call prepare_inbox_action, show the user the preview, and carry it out with confirm_inbox_action only after they say yes, even if they gave you the text. Whether and how long a reply can be comes ONLY from the conversation's server-computed canReply / maxReplyLength / windowState / disabledReason; never assume platform rules. Hide or restore a comment with set_inbox_item_state (HIDE / UNHIDE), triage with set_inbox_conversation_status and assign_inbox_conversation, and call mark_inbox_conversation_read after presenting a thread. It is a comments inbox; never present it as DMs or messages.",
   ],
 ];
 

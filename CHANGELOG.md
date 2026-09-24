@@ -1,5 +1,11 @@
 # postfast-mcp
 
+## 0.7.1
+
+### Patch Changes
+
+- Confirm gate wording: prepare_inbox_action, confirm_inbox_action, approve_posts and the gated server instructions now tell the model to show the user what will happen and wait for a yes in the conversation before confirming or approving, even when the request already included the text. Gated surface only; the default output is unchanged.
+
 ## 0.7.0
 
 ### Minor Changes
