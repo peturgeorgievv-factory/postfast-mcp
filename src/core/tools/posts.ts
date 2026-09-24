@@ -318,7 +318,7 @@ export const postTools: ToolDef[] = [
     title: 'Approve Posts',
     description: (_binding, gated) =>
       gated
-        ? 'Approve posts so they publish at their scheduled time. This is the only way a post created with create_posts goes out, so show the user exactly what will be posted, where and when, and call this only after they confirm. Can also set PENDING_APPROVAL, REJECTED or NEEDS_WORK. If its scheduled time passed more than 2 hours ago, create the post again with a new time instead of approving it, and delete the old one.'
+        ? 'Approve posts so they publish at their scheduled time. This is the only way a post created with create_posts goes out, so show the user exactly what will be posted, where and when, and call this only after they say yes in the conversation, even if they asked you to post it. Can also set PENDING_APPROVAL, REJECTED or NEEDS_WORK. If its scheduled time passed more than 2 hours ago, create the post again with a new time instead of approving it, and delete the old one.'
         : 'Set the approval status of one or more posts (approval workflow). Typically used to move posts to APPROVED so they can publish, or to PENDING_APPROVAL / REJECTED / NEEDS_WORK.',
     inputSchema: {
       postIds: z.array(z.uuid()).min(1).describe('Post ids to update'),
