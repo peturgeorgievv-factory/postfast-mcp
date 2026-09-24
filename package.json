@@ -1,6 +1,6 @@
 {
   "name": "postfast-mcp",
-  "version": "0.6.2",
+  "version": "0.7.0",
   "mcpName": "io.github.peturgeorgievv-factory/postfast-mcp",
   "description": "MCP server for the PostFast API — schedule and manage social media posts via AI tools",
   "type": "module",
@@ -28,6 +28,7 @@
     "build": "tsc",
     "dev": "tsc --watch",
     "start": "node dist/stdio/index.js",
+    "test": "npm run build && node --test test/*.test.mjs",
     "version": "changeset version && node scripts/stamp-versions.mjs",
     "prepublishOnly": "npm run build"
   },

@@ -29,19 +29,27 @@ export type ResolvedToolAnnotations = ToolAnnotations & { title: string };
  * function of the binding for the few spots where the surfaces genuinely
  * differ (upload-tool references — stdio uploads local files, the remote
  * uploads conversation media/URLs). Everything else is binding-invariant.
+ * The functions also receive `gated`: true only on a remote build with the
+ * confirm gate on (BuildToolsOptions.confirmGate).
  */
 export interface ToolDef {
   name: string;
   /** Which binding(s) expose the tool. */
   binding: Binding | 'both';
   title: string;
-  description: string | ((binding: Binding) => string);
-  inputSchema: ZodRawShape | ((binding: Binding) => ZodRawShape);
+  description: string | ((binding: Binding, gated?: boolean) => string);
+  inputSchema: ZodRawShape | ((binding: Binding, gated?: boolean) => ZodRawShape);
   annotations: ToolAnnotations;
+  /** Replaces `annotations` when the confirm gate is on. */
+  gatedAnnotations?: ToolAnnotations;
   /** Extra tool metadata, e.g. the ChatGPT file-param marker on upload_media. */
   _meta?: Record<string, unknown>;
   /** False only for tools that are not scoped to a workspace (list_workspaces). */
   workspaceScoped?: boolean;
+  /** The tool exists only when the confirm gate is on. */
+  gatedOnly?: boolean;
+  /** The tool is dropped when the confirm gate is on. */
+  hiddenWhenGated?: boolean;
   /**
    * The BackendPort method this tool's run() dispatches to. When set and the
    * port instance lacks the method (an older adapter running a newer catalog),
@@ -53,11 +61,13 @@ export interface ToolDef {
    * Dispatch to the backend. `args` are the validated tool arguments minus
    * `workspaceId`, which is split off by the registrar and passed separately
    * (always undefined on stdio — the pf-api-key is already workspace-scoped).
+   * `ctx.confirmSecret` is set by buildTools() when the confirm gate is on.
    */
   run: (
     port: BackendPort,
     args: Record<string, unknown>,
     workspaceId?: string,
+    ctx?: { confirmSecret?: string },
   ) => Promise<unknown>;
 }
 

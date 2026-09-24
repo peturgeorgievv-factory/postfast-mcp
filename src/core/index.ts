@@ -11,6 +11,7 @@ export {
   toolError,
   toolResult,
   type BuildToolsOptions,
+  type ConfirmGateOptions,
   type RegisterToolsOptions,
 } from './build-tools.js';
 export { SERVER_INSTRUCTIONS, instructionsFor } from './instructions.js';

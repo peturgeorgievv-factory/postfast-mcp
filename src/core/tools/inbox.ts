@@ -84,8 +84,10 @@ export const inboxTools: ToolDef[] = [
     name: 'list_inbox_items',
     binding: 'both',
     title: 'List Inbox Items',
-    description:
-      'List the items of one inbox conversation — the comments and the replies sent to them — oldest first by default (order=DESC for newest first). Items carry direction (INBOUND | OUTBOUND), state (VISIBLE | HIDDEN | DELETED), author info, and on Instagram comments canPrivateReply (eligibility for send_inbox_private_reply). Replies sent from PostFast appear exactly once — no duplicates when the platform reports them back.',
+    description: (_binding, gated) =>
+      'List the items of one inbox conversation — the comments and the replies sent to them — oldest first by default (order=DESC for newest first). Items carry direction (INBOUND | OUTBOUND), state (VISIBLE | HIDDEN | DELETED), author info, and on Instagram comments canPrivateReply (eligibility for ' +
+      (gated ? 'a PRIVATE_REPLY through prepare_inbox_action' : 'send_inbox_private_reply') +
+      '). Replies sent from PostFast appear exactly once — no duplicates when the platform reports them back.',
     inputSchema: {
       conversationId: z
         .uuid()
@@ -126,6 +128,7 @@ export const inboxTools: ToolDef[] = [
     // destructive: publishes a public comment; Threads exposes no delete verb, so a
     // reply there cannot be removed through our API.
     annotations: { readOnlyHint: false, destructiveHint: true, openWorldHint: true },
+    hiddenWhenGated: true,
     portMethod: 'replyToInboxItem',
     run: (port, args, workspaceId) =>
       port.replyToInboxItem!(args as unknown as InboxReplyArgs, workspaceId),
@@ -145,6 +148,7 @@ export const inboxTools: ToolDef[] = [
     // destructive: sends a real direct message with no unsend path, and the
     // once-per-comment guard means the attempt cannot be repeated.
     annotations: { readOnlyHint: false, destructiveHint: true, openWorldHint: true },
+    hiddenWhenGated: true,
     portMethod: 'sendInboxPrivateReply',
     run: (port, args, workspaceId) =>
       port.sendInboxPrivateReply!(args as unknown as InboxReplyArgs, workspaceId),
@@ -153,15 +157,27 @@ export const inboxTools: ToolDef[] = [
     name: 'set_inbox_item_state',
     binding: 'both',
     title: 'Moderate Inbox Comment',
-    description:
-      'Moderate a comment on the platform: HIDE hides it from the public, UNHIDE restores it, DELETE removes the comment on the platform — cannot be undone. HIDE/UNHIDE work on TikTok, Instagram, Facebook, and Threads; DELETE is not supported on Threads (inbox.deleteNotSupported). State changes made on the platform itself sync back to the inbox automatically.',
-    inputSchema: {
+    description: (_binding, gated) =>
+      gated
+        ? 'Hide a comment from the public on the platform (HIDE) or restore it (UNHIDE). Works on TikTok, Instagram, Facebook and Threads and can be reversed. To delete a comment permanently, use prepare_inbox_action with action DELETE. State changes made on the platform itself sync back to the inbox automatically.'
+        : 'Moderate a comment on the platform: HIDE hides it from the public, UNHIDE restores it, DELETE removes the comment on the platform — cannot be undone. HIDE/UNHIDE work on TikTok, Instagram, Facebook, and Threads; DELETE is not supported on Threads (inbox.deleteNotSupported). State changes made on the platform itself sync back to the inbox automatically.',
+    inputSchema: (_binding, gated) => ({
       itemId: z.uuid().describe('The comment item id (from list_inbox_items)'),
-      action: z
-        .enum(INBOX_ITEM_STATE_ACTIONS)
-        .describe('HIDE, UNHIDE, or DELETE (DELETE is irreversible)'),
-    },
+      action: gated
+        ? z.enum(['HIDE', 'UNHIDE']).describe('HIDE or UNHIDE')
+        : z
+            .enum(INBOX_ITEM_STATE_ACTIONS)
+            .describe('HIDE, UNHIDE, or DELETE (DELETE is irreversible)'),
+    }),
     annotations: { readOnlyHint: false, destructiveHint: true, openWorldHint: true },
+    // Gated, DELETE moves to prepare/confirm_inbox_action, leaving only
+    // reversible HIDE/UNHIDE here.
+    gatedAnnotations: {
+      readOnlyHint: false,
+      destructiveHint: false,
+      idempotentHint: true,
+      openWorldHint: true,
+    },
     portMethod: 'setInboxItemState',
     run: (port, args, workspaceId) =>
       port.setInboxItemState!(args as unknown as SetInboxItemStateArgs, workspaceId),
