@@ -48,10 +48,11 @@ Download the extension from the [Claude Desktop extension directory](https://cla
 
 #### Claude Code
 
-**Via plugin (pending marketplace approval):**
+**Via plugin:**
 
 ```shell
-/plugin install postfast@claude-plugins-official
+/plugin marketplace add peturgeorgievv-factory/postfast-mcp
+/plugin install postfast@postfast-mcp
 ```
 
 After installing, set your API key — pick one of these:
@@ -60,7 +61,7 @@ After installing, set your API key — pick one of these:
 # Option A: Add to your shell profile (~/.zshrc or ~/.bashrc)
 export POSTFAST_API_KEY="your-api-key-here"
 
-# Option B: Add to ~/.claude/settings.local.json
+# Option B: Add to ~/.claude/settings.json
 # { "env": { "POSTFAST_API_KEY": "your-api-key-here" } }
 ```
 
@@ -68,7 +69,7 @@ Then restart Claude Code.
 
 **Via manual config:**
 
-Add to your project's `.mcp.json` or `~/.claude/.mcp.json` (global):
+Add to your project's `.mcp.json`:
 
 ```json
 {
@@ -83,6 +84,12 @@ Add to your project's `.mcp.json` or `~/.claude/.mcp.json` (global):
     }
   }
 }
+```
+
+Or add it for every project:
+
+```bash
+claude mcp add --scope user postfast --env POSTFAST_API_KEY=your-api-key-here -- npx -y postfast-mcp
 ```
 
 #### Cursor / VS Code / Windsurf / Other MCP clients

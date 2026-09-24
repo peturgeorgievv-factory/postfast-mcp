@@ -1,5 +1,13 @@
 # postfast-mcp
 
+## 0.7.2
+
+### Patch Changes
+
+- Claude Code plugin: pass POSTFAST_API_KEY through from the environment; fix the plugin install docs.
+
+  The plugin manifest set `POSTFAST_API_KEY` to an empty string, which replaced a key exported in the shell or set under `env` in `~/.claude/settings.json`, so the server exited at startup. It now passes `${POSTFAST_API_KEY}` through. The README's Claude Code section installs the plugin from this repository's marketplace, puts the key in `~/.claude/settings.json` (a user-level `settings.local.json` is not read), and replaces the `~/.claude/.mcp.json` path, which Claude Code does not read, with `claude mcp add --scope user`. The MCP server and its tools are unchanged.
+
 ## 0.7.1
 
 ### Patch Changes
