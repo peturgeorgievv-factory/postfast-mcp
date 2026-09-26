@@ -177,7 +177,7 @@ When creating posts, you can pass platform-specific settings via the `controls` 
 | **YouTube** | `youtubeTitle`, `youtubePrivacy` (PUBLIC/PRIVATE/UNLISTED), `youtubeTags`, `youtubeCategoryId`, `youtubeIsShort`, `youtubeMadeForKids`, `youtubeContainsSyntheticMedia` (altered/synthetic content disclosure; set at creation only), `youtubePlaylistId`, `youtubeThumbnailKey` |
 | **Pinterest** | `pinterestBoardId` (required), `pinterestLink` |
 | **LinkedIn** | `linkedinAttachmentKey`, `linkedinAttachmentTitle` |
-| **Threads** | `threadsTopicTag` (the post's topic: one topic, not a list; 1-50 chars, no `.` or `&`. Like every control it applies to every post in the call, so use separate calls for different topics) |
+| **Threads** | `threadsTopicTag` (the post's topic: one topic, not a list; 1-50 chars, no `.` or `&`; takes precedence over a #hashtag in the content, which then stays plain text. Like every control it applies to every post in the call, so use separate calls for different topics) |
 | **Google Business Profile** | `gbpLocationId` (required), `gbpTopicType` (STANDARD/EVENT/OFFER), `gbpCallToActionType`, `gbpCallToActionUrl`, `gbpEventTitle`, `gbpEventStartDate`, `gbpEventEndDate`, `gbpOfferCouponCode`, `gbpOfferRedeemUrl`, `gbpOfferTerms` |
 
 ## Media Upload

@@ -1,5 +1,11 @@
 # postfast-mcp
 
+## 0.8.1
+
+### Patch Changes
+
+- The `threadsTopicTag` description now says that the topic takes precedence over a #hashtag in the post content, which then stays plain text; this was checked on live Threads posts. The README and the social-media-post skill match. Wording only: the field, its limits and its errors are unchanged, on both bindings.
+
 ## 0.8.0
 
 ### Minor Changes
