@@ -48,12 +48,26 @@ export interface SocialPost {
   groupId: string | null;
   firstComment: string | null;
   firstCommentError: string | null;
+  controls: ReadablePostControls;
   /**
    * Present on FAILED (and missed) posts. `code` carries platform-specific error codes
    * plus two scheduling codes: MISSED_DISCONNECTED (account was disconnected when the
    * post was due) and MISSED_NOT_PUBLISHED (passed scheduled time + 2h grace unpublished).
    */
   lastError: { message: string; code: string | null } | null;
+}
+
+/**
+ * The post settings list_posts reads back, each null when unset. Only the field
+ * for the post's own platform is meaningful: posts created through the API store
+ * every platform's defaults.
+ */
+export interface ReadablePostControls {
+  threadsTopicTag: string | null;
+  instagramPublishType: 'TIMELINE' | 'STORY' | 'REEL' | null;
+  facebookContentType: 'POST' | 'REEL' | 'STORY' | null;
+  tiktokIsDraft: boolean | null;
+  youtubePrivacy: 'PUBLIC' | 'PRIVATE' | 'UNLISTED' | null;
 }
 
 export interface MediaItem {
@@ -251,4 +265,6 @@ export interface PostControls {
   // LinkedIn
   linkedinAttachmentKey?: string;
   linkedinAttachmentTitle?: string;
+  // Threads
+  threadsTopicTag?: string;
 }

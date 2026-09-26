@@ -223,6 +223,15 @@ const controlsSchema = z.object({
   // LinkedIn
   linkedinAttachmentKey: z.string().optional(),
   linkedinAttachmentTitle: z.string().optional(),
+  // Threads
+  threadsTopicTag: z
+    .string()
+    .min(1)
+    .max(50)
+    .optional()
+    .describe(
+      "Threads topic for the post: one topic, not a list; 1-50 characters, no '.' or '&'. Used only by Threads posts; applies to every post in this call, so use separate calls for different topics. Omit for no topic.",
+    ),
 });
 
 export const postTools: ToolDef[] = [
@@ -231,7 +240,7 @@ export const postTools: ToolDef[] = [
     binding: 'both',
     title: 'List Posts',
     description:
-      'List social media posts with optional filters for specific IDs, platform, status, and date range. Failed or missed posts carry a lastError { message, code }; codes include MISSED_DISCONNECTED (the account was disconnected when the post was due — reconnect, then retry) and MISSED_NOT_PUBLISHED (passed its scheduled time plus a 2h grace window without publishing).',
+      'List social media posts with optional filters for specific IDs, platform, status, and date range. Failed or missed posts carry a lastError { message, code }; codes include MISSED_DISCONNECTED (the account was disconnected when the post was due — reconnect, then retry) and MISSED_NOT_PUBLISHED (passed its scheduled time plus a 2h grace window without publishing). Each post also carries controls { threadsTopicTag, instagramPublishType, facebookContentType, tiktokIsDraft, youtubePrivacy }, each null when unset. Only the field for the post\'s own platform (its account\'s platform in list_accounts) is meaningful: posts created through the API store every platform\'s defaults, so the other fields can be non-null.',
     inputSchema: {
       page: z.number().int().min(0).default(0).describe('Page number (0-based)'),
       limit: z
@@ -273,7 +282,8 @@ export const postTools: ToolDef[] = [
         ? 'Create social media posts (batch up to 15), held for approval: nothing publishes until approve_posts sets them to APPROVED.'
         : 'Create and schedule social media posts (batch up to 15).') +
       ' Each post targets one social account (socialMediaId from list_accounts). SCHEDULED requires scheduledAt on every post; DRAFT must omit scheduledAt. Scheduling to a disconnected account (connectionStatus DISABLED in list_accounts) is rejected with HTTP 400 "socialMediaDisconnected" — pre-check connectionStatus before calling. Saving as DRAFT to a disconnected account is allowed. TikTok, Instagram, YouTube, Pinterest, and Google Business Profile require at least one media item EVEN FOR DRAFTS — attach media first (ask the user for an image/video, or generate+upload one, if none was provided). Attach media via the key returned by ' +
-      `${UPLOAD_TOOLS[binding]}.`,
+      `${UPLOAD_TOOLS[binding]}.` +
+      ' A Threads post can carry one topic, set with controls.threadsTopicTag; like every control it applies to every post in the call, so put Threads posts with different topics in separate calls.',
     inputSchema: (binding, gated) => ({
       posts: jsonParse(
         z

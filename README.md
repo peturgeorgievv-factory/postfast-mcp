@@ -129,7 +129,7 @@ Ask your AI assistant things like:
 | Tool | Description |
 |------|-------------|
 | `list_accounts` | List connected social media accounts (each with `connectionStatus` — `CONNECTED`/`DISABLED` — `disabledReason`, `followerCount`/`followerCountUpdatedAt`, and `inboxCapable`) |
-| `list_posts` | List posts with filters (specific IDs, platform, status, date range) |
+| `list_posts` | List posts with filters (specific IDs, platform, status, date range); each post carries its key settings in `controls` (Threads topic, Instagram/Facebook format, TikTok draft flag, YouTube privacy) |
 | `create_posts` | Create and schedule posts (batch, up to 15) |
 | `delete_post` | Delete a post from PostFast by ID (does not remove an already-published post from the platform) |
 | `upload_media` | Upload a local file and get a media key (handles the full flow) |
@@ -177,6 +177,7 @@ When creating posts, you can pass platform-specific settings via the `controls` 
 | **YouTube** | `youtubeTitle`, `youtubePrivacy` (PUBLIC/PRIVATE/UNLISTED), `youtubeTags`, `youtubeCategoryId`, `youtubeIsShort`, `youtubeMadeForKids`, `youtubeContainsSyntheticMedia` (altered/synthetic content disclosure; set at creation only), `youtubePlaylistId`, `youtubeThumbnailKey` |
 | **Pinterest** | `pinterestBoardId` (required), `pinterestLink` |
 | **LinkedIn** | `linkedinAttachmentKey`, `linkedinAttachmentTitle` |
+| **Threads** | `threadsTopicTag` (the post's topic: one topic, not a list; 1-50 chars, no `.` or `&`. Like every control it applies to every post in the call, so use separate calls for different topics) |
 | **Google Business Profile** | `gbpLocationId` (required), `gbpTopicType` (STANDARD/EVENT/OFFER), `gbpCallToActionType`, `gbpCallToActionUrl`, `gbpEventTitle`, `gbpEventStartDate`, `gbpEventEndDate`, `gbpOfferCouponCode`, `gbpOfferRedeemUrl`, `gbpOfferTerms` |
 
 ## Media Upload

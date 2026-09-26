@@ -1,7 +1,7 @@
 {
   "name": "postfast",
   "description": "Schedule, manage, and analyze social media posts via PostFast. Supports Facebook, Instagram, X, TikTok, LinkedIn, YouTube, BlueSky, Threads, Pinterest, Telegram, and Google Business Profile. Needs POSTFAST_API_KEY set before Claude Code starts; in PostFast, open API in the sidebar and click Generate API Key.",
-  "version": "0.7.2",
+  "version": "0.8.0",
   "author": {
     "name": "PostFast",
     "email": "me@peturgeorgievv.com"
@@ -13,7 +13,7 @@
   "mcpServers": {
     "postfast": {
       "command": "npx",
-      "args": ["-y", "postfast-mcp@0.7.2"],
+      "args": ["-y", "postfast-mcp@0.8.0"],
       "env": {
         "POSTFAST_API_KEY": "${POSTFAST_API_KEY}"
       }
