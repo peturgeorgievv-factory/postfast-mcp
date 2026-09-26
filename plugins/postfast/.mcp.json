@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "postfast": {
+      "type": "http",
+      "url": "https://mcp.postfa.st/mcp"
+    }
+  }
+}
