@@ -1,5 +1,15 @@
 # postfast-mcp
 
+## 0.8.0
+
+### Minor Changes
+
+- Threads topic on `create_posts`, and post settings in `list_posts` results.
+
+  `controls.threadsTopicTag` (optional string, 1-50 characters) sets a Threads post's topic: one topic, not a list, with no `.` or `&`. Only Threads posts use it; other platforms ignore it. Like every key in `controls` it applies to every post in the call, so Threads posts with different topics go in separate calls, and the `create_posts` description now says so. On a Threads post, a topic that breaks these rules is rejected with HTTP 400 `threadsTopicTag.invalid`. The schema checks only the length; the character rule stays with the backend.
+
+  The `list_posts` description now covers the `controls` object on each returned post: `threadsTopicTag`, `instagramPublishType`, `facebookContentType`, `tiktokIsDraft` and `youtubePrivacy`, each null when unset. Only the field for the post's own platform is meaningful, because posts created through the API store every platform's defaults. The exported types follow: `PostControls` gains `threadsTopicTag`, and `SocialPost` gains `controls` (`ReadablePostControls`). The README and the social-media-post skill match. Both bindings.
+
 ## 0.7.2
 
 ### Patch Changes
