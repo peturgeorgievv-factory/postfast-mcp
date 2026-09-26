@@ -230,7 +230,7 @@ const controlsSchema = z.object({
     .max(50)
     .optional()
     .describe(
-      "Threads topic for the post: one topic, not a list; 1-50 characters, no '.' or '&'. Used only by Threads posts; applies to every post in this call, so use separate calls for different topics. Omit for no topic.",
+      "Threads topic for the post: one topic, not a list; 1-50 characters, no '.' or '&'. Takes precedence over a #hashtag in the post content, which then stays plain text. Used only by Threads posts; applies to every post in this call, so use separate calls for different topics. Omit for no topic.",
     ),
 });
 

@@ -104,7 +104,7 @@ If any PostFast tool call fails with an authentication/401 error, tell the user:
 - Supported document formats: PDF, DOC, DOCX, PPT, PPTX (max 60MB)
 
 ### Threads
-- `threadsTopicTag`: the post's Threads topic — one topic, not a list; 1-50 characters, no `.` or `&`. Ignored on other platforms. Like every control it applies to every post in the call, so use separate `create_posts` calls for Threads posts with different topics
+- `threadsTopicTag`: the post's Threads topic — one topic, not a list; 1-50 characters, no `.` or `&`. Takes precedence over a #hashtag in the content, which then stays plain text. Ignored on other platforms. Like every control it applies to every post in the call, so use separate `create_posts` calls for Threads posts with different topics
 
 ## Other Actions
 
