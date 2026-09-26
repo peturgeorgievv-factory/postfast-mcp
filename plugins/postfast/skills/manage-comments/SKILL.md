@@ -27,7 +27,7 @@ The PostFast inbox holds comments on the user's own posts on TikTok, Instagram, 
 ## Reply
 
 1. Draft a short reply to each comment the user wants answered, in the voice of the account and within `maxReplyLength`. Suggest hiding spam or abuse rather than answering it. Show the drafts as a numbered list so the user can change or drop any of them.
-2. For each reply the user keeps, call `prepare_inbox_action` with `action: "REPLY"`, the comment's own `itemId` (the item from `list_inbox_items`, not the conversation), and the `text`.
+2. For each reply the user keeps, call `prepare_inbox_action` with `action: "REPLY"`, the comment's own `itemId` (the item from `list_inbox_items`, not the conversation), and the `text` exactly as the user kept it, word for word.
 3. Show the previews together: for each, whose comment it is and what it says, and the exact reply that will appear under it publicly. For example:
 
    > **Nothing is sent yet. Reply to these?**

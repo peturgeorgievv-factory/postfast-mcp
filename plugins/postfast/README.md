@@ -20,7 +20,7 @@ The plugin uses the PostFast connector, the same one listed in the Claude direct
 1. You need a [PostFast](https://postfa.st) account with at least one social account connected.
 2. Add the plugin, then connect PostFast:
    - **Claude on the web, desktop and mobile, and Cowork**: open the plugin's **Connectors** tab and connect PostFast. You sign in with your PostFast account, pick the workspace Claude should use by default, and allow access; no API key is needed.
-   - **Claude Code**: run `/mcp`, select `postfast` and sign in the same way. Claude Code keeps its own sign-in.
+   - **Claude Code**: run `/mcp`, select PostFast and sign in the same way. Claude Code keeps its own sign-in. The plugin and the claude.ai PostFast connector share one server, so `/mcp` may list it under either name.
 3. Ask Claude, for example:
    - "Schedule a post for our Instagram and LinkedIn tomorrow at 9am about the autumn menu, with this photo."
    - "Which comments on my posts haven't been answered yet? Draft replies."
