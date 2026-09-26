@@ -18,7 +18,7 @@ These steps use the PostFast connector's tools. PostFast holds each post you cre
 
 ### 1. Pick the workspace
 
-Call `list_workspaces`. With one workspace, carry on and leave `workspaceId` out. With several, use the one the user names or ask which, then pass its `id` as `workspaceId` on every call that follows. Leaving it out uses the workspace the user connected.
+Call `list_workspaces`. With one workspace, carry on and leave `workspaceId` out. With several, use the one the user names or ask which, then pass its `id` as `workspaceId` on every call that follows, including `approve_posts`, `delete_post` and `list_posts` in later turns. Leaving it out uses the workspace the user connected, where a post from another workspace isn't found: `delete_post` then answers `deleted: false` and `list_posts` returns nothing.
 
 ### 2. Pick the accounts
 
@@ -73,7 +73,7 @@ Give the full text, the media, and the settings that change what people see, suc
 
 When the user says yes to the preview, call `approve_posts` with the post ids and `approvalStatus: "APPROVED"`. Then check them with `list_posts` and `ids`: each should be SCHEDULED and APPROVED, and it publishes at its time.
 
-- **Changes:** there is no edit. Delete the held post with `delete_post`, create the new version (step 5), and preview again.
+- **Changes:** there is no edit. Delete the held post with `delete_post` (its `id`, and the same `workspaceId`), create the new version (step 5), and preview again.
 - **No, or no answer:** leave the posts held. They stay in PostFast unpublished, where the user can review them. Delete them only if the user asks.
 - **Approved after the time has passed:** the post goes out within about a minute if it is less than 2 hours late. Past 2 hours, create it again with a new time and delete the old one.
 
