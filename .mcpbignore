@@ -6,7 +6,9 @@ tsconfig.json
 .mcp.json
 .claude/
 .claude-plugin/
-plugins/
+/.cursor-plugin/
+/assets/
+/plugins/
 .git/
 .gitignore
 .mcpregistry_*

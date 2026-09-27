@@ -94,6 +94,12 @@ Or add it for every project:
 claude mcp add --scope user postfast --env POSTFAST_API_KEY=your-api-key-here -- npx -y postfast-mcp
 ```
 
+#### Cursor
+
+This repository is also a Cursor plugin: the PostFast MCP server together with its two skills, for scheduling posts and for the comments inbox.
+
+To install it, open **Customize** in Cursor, search the marketplace for **PostFast**, select **Install**, and paste your API key when Cursor asks for it. Cursor starts the server with that key, so there is nothing else to configure. If PostFast doesn't show up in the marketplace yet, add the server by hand with the config below.
+
 #### Cursor / VS Code / Windsurf / Other MCP clients
 
 Add to your MCP config (`.mcp.json`, `mcp.json`, or the tool's settings UI):
