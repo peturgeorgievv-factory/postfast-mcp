@@ -7,7 +7,8 @@
 // .claude-plugin/plugin.json (plugin update detection keys off this file's
 // version inside the npm package; its MCP launcher is pinned to
 // postfast-mcp@<version> too), .claude-plugin/marketplace.json (plugins[]),
-// src/stdio/index.ts, and package-lock.json (regenerated via npm).
+// .cursor-plugin/plugin.json (version and launcher pin, as for the Claude
+// Code plugin), src/stdio/index.ts, and package-lock.json (regenerated via npm).
 // JSON files are edited textually to preserve their checked-in formatting;
 // in each of them every `"version": "x.y.z"` key is one of our stamps
 // ("manifest_version" and dependency ranges never match the pattern).
@@ -42,13 +43,14 @@ function stampJson(relPath) {
 }
 
 /**
- * Pin the plugin's MCP launcher (`npx -y postfast-mcp@x.y.z`) to this version.
+ * Pin a plugin's MCP launcher (`npx -y postfast-mcp@x.y.z`) to this version.
  * A floating spec runs whatever the registry serves at session start, which
  * pinning the plugin source to a commit does not fix, so every launcher arg
- * naming the package must come out exact. Runs first: a missing or floating
- * launcher aborts before any file is written.
+ * naming the package must come out exact. Returns the stamped text without
+ * writing it, so every launcher is checked before any file is written: a
+ * missing or floating launcher in either manifest aborts with nothing changed.
  */
-function stampLauncherPin(relPath) {
+function pinLauncher(relPath) {
   const path = join(root, relPath);
   const raw = readFileSync(path, 'utf8');
   const stamped = raw.replace(/("postfast-mcp@)\d+\.\d+\.\d+(")/g, `$1${version}$2`);
@@ -61,15 +63,19 @@ function stampLauncherPin(relPath) {
     );
     process.exit(1);
   }
+  return { relPath, path, stamped };
+}
+
+const pinned = ['.claude-plugin/plugin.json', '.cursor-plugin/plugin.json'].map(pinLauncher);
+for (const { relPath, path, stamped } of pinned) {
   writeFileSync(path, stamped);
   console.log(`  ${relPath} (launcher postfast-mcp@${version})`);
 }
-
-stampLauncherPin('.claude-plugin/plugin.json');
 stampJson('manifest.json');
 stampJson('server.json');
 stampJson('.claude-plugin/plugin.json');
 stampJson('.claude-plugin/marketplace.json');
+stampJson('.cursor-plugin/plugin.json');
 
 // src/stdio/index.ts — the MCP server's self-reported version literal.
 const indexPath = join(root, 'src/stdio/index.ts');

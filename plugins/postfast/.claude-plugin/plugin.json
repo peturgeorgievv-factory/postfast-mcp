@@ -1,13 +1,14 @@
 {
   "name": "postfast",
   "displayName": "PostFast",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Schedule social media posts, answer comments and review results with PostFast across X, Instagram, Facebook, TikTok, LinkedIn, YouTube, Threads, Pinterest, Bluesky, Telegram and Google Business Profile. Claude fits each post to its network, holds it until you approve it, and shows you every comment reply before it is sent.",
   "author": {
     "name": "PostFast",
     "url": "https://postfa.st"
   },
   "homepage": "https://postfa.st/api-integrations/claude",
+  "privacyPolicyUrl": "https://postfa.st/privacy",
   "repository": "https://github.com/peturgeorgievv-factory/postfast-mcp",
   "license": "MIT",
   "keywords": ["social-media", "scheduling", "content-calendar", "social-inbox", "analytics", "postfast"]

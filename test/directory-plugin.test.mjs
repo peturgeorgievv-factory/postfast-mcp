@@ -78,7 +78,6 @@ test('the plugin reaches PostFast only through the hosted connector', () => {
   for (const key of ['mcpServers', 'hooks', 'agents', 'commands', 'lspServers', 'userConfig']) {
     assert.ok(!(key in manifest), `plugin.json declares ${key}`);
   }
-  assert.deepEqual(readdirSync(join(PLUGIN, '.claude-plugin')), ['plugin.json']);
   assert.ok(!existsSync(join(PLUGIN, 'bin')), 'a top-level bin/ blocks installs outside the CLI');
 
   const { mcpServers } = JSON.parse(read(join(PLUGIN, '.mcp.json')));
@@ -89,6 +88,24 @@ test('the plugin reaches PostFast only through the hosted connector', () => {
       assert.match(new URL(url).hostname, /(^|\.)postfa\.st$/, `${relative(PLUGIN, path)}: ${url}`);
     }
   }
+});
+
+test('the directory listing has its icon and privacy policy', () => {
+  // .claude-plugin holds the manifest and the listing icon, nothing else.
+  assert.deepEqual(readdirSync(join(PLUGIN, '.claude-plugin')).sort(), ['icon.png', 'plugin.json']);
+  const manifest = JSON.parse(read(join(PLUGIN, '.claude-plugin', 'plugin.json')));
+  const privacy = new URL(manifest.privacyPolicyUrl);
+  assert.equal(privacy.protocol, 'https:');
+  assert.match(privacy.hostname, /(^|\.)postfa\.st$/);
+
+  // A complete PNG (signature, IHDR first, IEND last), square, at least 128 px.
+  const png = readFileSync(join(PLUGIN, '.claude-plugin', 'icon.png'));
+  assert.deepEqual([...png.subarray(0, 8)], [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+  assert.equal(png.toString('latin1', 12, 16), 'IHDR');
+  assert.equal(png.toString('latin1', png.length - 8, png.length - 4), 'IEND');
+  const [width, height] = [png.readUInt32BE(16), png.readUInt32BE(20)];
+  assert.equal(width, height, `icon is ${width}x${height}`);
+  assert.ok(width >= 128, `icon is ${width}px`);
 });
 
 test('each skill is named for its folder, fits the size limits and its files exist', () => {
