@@ -95,7 +95,7 @@ If any PostFast tool call fails with an authentication/401 error, tell the user:
 - `gbpOfferCouponCode`: coupon code (OFFER only)
 - `gbpOfferRedeemUrl`: redemption URL (OFFER only)
 - `gbpOfferTerms`: terms and conditions (OFFER only)
-- Content max: 1,500 chars. Media: up to 5 images or 1 video. Standard posts expire after 6 months; EVENT/OFFER posts expire at end date.
+- Content max: 1,500 chars. Media: optional, at most 1 image, no video. Standard posts expire after 6 months; EVENT/OFFER posts expire at end date.
 
 ### LinkedIn
 - `linkedinAttachmentKey`: S3 key for document attachment (for document posts)
