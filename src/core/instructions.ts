@@ -20,13 +20,14 @@ Media: use the key returned by an upload tool, and set mediaItems[].type to matc
 Per-platform limits (media counts / characters):
 - X: up to 4 images or 1 video (no mixing); 280 chars (4,000 with X Premium).
 - TikTok: 1 video OR up to 10 images; 4,000 chars.
-- Instagram: up to 10 images + 10 videos (mixed OK); 2,200 chars, max 30 hashtags.
+- Instagram: up to 10 media items, images and videos mixed; 2,200 chars, max 30 hashtags.
 - YouTube: 1 video, no images; title max 100 chars.
 - Facebook / LinkedIn: up to 10 images OR 1 video (no mixing).
-- Threads: up to 10 images + 10 videos; 500 chars.
+- Threads: up to 10 media items, images and videos mixed; 500 chars.
 - Pinterest: up to 5 images or 1 video; title max 100, description max 800.
-- Google Business Profile: 1 image; 1,500 chars.
-- Bluesky: up to 4 images or 1 video. Telegram: up to 10 images + 3 videos.
+- Google Business Profile: text only, or 1 image and no video; 1,500 chars.
+- Bluesky: up to 4 images or 1 video. Telegram: up to 10 media items, at most 3 of them videos.
+No post carries more than 10 media items.
 If content exceeds the target platform's character limit, don't schedule it as-is — tell the user and offer to shorten or split it (X is 280 unless the account has X Premium = 4,000).
 
 Platform-specific options go in the controls object, e.g.:

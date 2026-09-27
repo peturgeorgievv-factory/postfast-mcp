@@ -1,5 +1,19 @@
 # postfast-mcp
 
+## 0.8.2
+
+### Patch Changes
+
+- Media wording now matches the backend's validation, on both bindings:
+
+  - `create_posts` no longer lists Google Business Profile among the platforms that require media. TikTok, Instagram, YouTube and Pinterest still do, drafts included. Google Business Profile accepts text-only posts, or one image and no video, and the server instructions' Google Business Profile line says the same.
+  - The server instructions gave Instagram and Threads "up to 10 images + 10 videos" and Telegram "10 images + 3 videos". A post carries at most 10 media items, so they now read "up to 10 media items, images and videos mixed" and "up to 10 media items, at most 3 of them videos". `create_posts` states the 10-item cap too.
+  - The social-media-post skill's Google Business Profile media line now says media is optional, at most one image and no video.
+
+  Wording only: fields, limits, validation and errors are unchanged. A new test checks that `create_posts` and the instructions name the same media-required platforms on every surface, and that no stated count exceeds 10 items per post.
+
+- The repository is now also a Cursor plugin. `.cursor-plugin/plugin.json` packages the stdio server, pinned to this release like the Claude Code plugin, together with the two skills. It declares `POSTFAST_API_KEY` as a plugin variable, which Cursor asks for at install, and it carries a logo (`assets/logo.png`). `npm run version` stamps its version and launcher pin along with the other manifests. The README gains an "Install in Cursor" section. The MCP server and its tools are unchanged, and the new files stay out of the npm package and the `.mcpb`.
+
 ## 0.8.1
 
 ### Patch Changes
