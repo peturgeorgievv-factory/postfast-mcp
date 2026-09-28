@@ -90,13 +90,16 @@ test('the plugin reaches PostFast only through the hosted connector', () => {
   }
 });
 
-test('the directory listing has its icon and privacy policy', () => {
+test('the directory listing has its icon and PostFast links', () => {
   // .claude-plugin holds the manifest and the listing icon, nothing else.
   assert.deepEqual(readdirSync(join(PLUGIN, '.claude-plugin')).sort(), ['icon.png', 'plugin.json']);
   const manifest = JSON.parse(read(join(PLUGIN, '.claude-plugin', 'plugin.json')));
-  const privacy = new URL(manifest.privacyPolicyUrl);
-  assert.equal(privacy.protocol, 'https:');
-  assert.match(privacy.hostname, /(^|\.)postfa\.st$/);
+  for (const field of ['homepage', 'documentationUrl', 'supportUrl', 'privacyPolicyUrl', 'termsOfServiceUrl']) {
+    const url = new URL(manifest[field]);
+    assert.equal(url.protocol, 'https:', field);
+    assert.match(url.hostname, /(^|\.)postfa\.st$/, field);
+  }
+  assert.notEqual(manifest.homepage, manifest.documentationUrl);
 
   // A complete PNG (signature, IHDR first, IEND last), square, at least 128 px.
   const png = readFileSync(join(PLUGIN, '.claude-plugin', 'icon.png'));
