@@ -26,7 +26,7 @@ Per-platform limits (media counts / characters):
 - Threads: up to 10 media items, images and videos mixed; 500 chars.
 - Pinterest: up to 5 images or 1 video; title max 100, description max 800.
 - Google Business Profile: text only, or 1 image and no video; 1,500 chars.
-- Bluesky: up to 4 images or 1 video. Telegram: up to 10 media items, at most 3 of them videos.
+- Bluesky: up to 10 images or 1 video. Telegram: up to 10 media items, at most 3 of them videos.
 No post carries more than 10 media items.
 If content exceeds the target platform's character limit, don't schedule it as-is — tell the user and offer to shorten or split it (X is 280 unless the account has X Premium = 4,000).
 

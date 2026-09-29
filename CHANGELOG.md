@@ -1,5 +1,11 @@
 # postfast-mcp
 
+## 0.8.3
+
+### Patch Changes
+
+- Bluesky posts can carry up to 10 images (was 4), or 1 video, never both. The server instructions and the directory plugin's platform rules state the new limit.
+
 ## 0.8.2
 
 ### Patch Changes

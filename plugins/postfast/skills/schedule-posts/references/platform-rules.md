@@ -37,7 +37,7 @@ Media is required on TikTok, Instagram, Pinterest and YouTube (one video), even 
 | Threads | Up to 10 items in total, images and videos mixed |
 | Pinterest | Up to 5 images, or 1 video |
 | Google Business Profile | 1 image, no video |
-| Bluesky | Up to 4 images, or 1 video |
+| Bluesky | Up to 10 images, or 1 video |
 | Telegram | Up to 10 items in total, at most 3 of them videos |
 
 - Where the table says "or", a post carries images or a video, not both.
