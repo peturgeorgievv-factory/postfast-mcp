@@ -5,6 +5,13 @@
  */
 export * from './backend-port.js';
 export {
+  APP_RESOURCE_MIME_TYPE,
+  APP_RESOURCE_URI,
+  appViewHtml,
+  assertAppOptions,
+  type AppOptions,
+} from './app.js';
+export {
   buildTools,
   registerCatalogTools,
   runTool,
@@ -32,6 +39,7 @@ export type {
   ResolvedToolAnnotations,
   ToolAnnotations,
   ToolDef,
+  ToolIcon,
 } from './tool-def.js';
 export { ALL_TOOLS } from './tools/index.js';
 export * from './types.js';

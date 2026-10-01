@@ -56,11 +56,9 @@ export const uploadTools: ToolDef[] = [
     name: 'upload_from_url',
     binding: 'remote',
     title: 'Upload Media From URL',
-    description: (_binding, gated) =>
+    description:
       'Fetch media from a public https URL and store it for use in create_posts. Returns { media_id, type }; pass media_id as a mediaItems[].key. ' +
-      (gated
-        ? 'Use this when the media is already at a public https URL, such as a CDN or hosted image.'
-        : 'Ideal for ChatGPT/Claude-generated image URLs and remote CDN media.') +
+      'Use this when the media is already at a public https URL, such as a CDN or hosted image.' +
       ' Redirects are followed (each hop is SSRF-validated); the URL must be public https and within the size limit. Supported types: image/jpeg, image/png, image/gif, image/webp, video/mp4, video/webm, video/quicktime.',
     inputSchema: {
       sourceUrl: z.url().describe('Public https URL of the media to upload'),
@@ -77,11 +75,9 @@ export const uploadTools: ToolDef[] = [
     name: 'upload_media',
     binding: 'remote',
     title: 'Upload Media',
-    description: (_binding, gated) =>
-      gated
-        ? "Upload an image or video for use in create_posts. If the media is already at a public https URL, use upload_from_url instead. Otherwise pass the file as base64 bytes in `data` with its MIME type in `contentType`. If you cannot read the file's bytes, ask the user for a public https link and use upload_from_url. Clients that attach files natively may supply `file` instead. Returns { media_id, type }; use media_id as a mediaItems[].key. Supported types: image/jpeg, image/png, image/gif, image/webp, video/mp4, video/webm, video/quicktime."
-        : 'Upload an image/video that is present in this conversation, for use in create_posts. Pass EITHER a ChatGPT-attached or model-generated file (the `file` argument — ChatGPT fills this automatically) OR base64 bytes (`data` + `contentType`). Returns { media_id, type }; use media_id as a mediaItems[].key. For large or remote media, prefer upload_from_url. Supported types: image/jpeg, image/png, image/gif, image/webp, video/mp4, video/webm, video/quicktime.',
-    inputSchema: (_binding, gated) => ({
+    description:
+      "Upload an image or video for use in create_posts. If the media is already at a public https URL, use upload_from_url instead. If the user attached or generated the file in this conversation and your app passes files to tools, pass it as `file`; the app fills it in. Otherwise pass the file's bytes as base64 in `data` with its MIME type in `contentType`. Only if you can do neither, ask the user for a public https link and use upload_from_url. Returns { media_id, type }; use media_id as a mediaItems[].key. Supported types: image/jpeg, image/png, image/gif, image/webp, video/mp4, video/webm, video/quicktime.",
+    inputSchema: {
       file: z
         .object({
           download_url: z.url().describe('Temporary URL to fetch the file'),
@@ -91,9 +87,7 @@ export const uploadTools: ToolDef[] = [
         })
         .optional()
         .describe(
-          gated
-            ? 'A file supplied natively by the client, for clients that support attaching files to tool calls. If yours does not, leave this empty and use data + contentType.'
-            : 'A ChatGPT-provided file (attached or generated). Filled in automatically by ChatGPT.',
+          "The file the user attached or generated in this conversation, for apps that pass files to tools; the app fills it in. If yours doesn't, leave this empty and use data + contentType.",
         ),
       data: z
         .string()
@@ -103,7 +97,7 @@ export const uploadTools: ToolDef[] = [
         .string()
         .optional()
         .describe('MIME type for base64 data (e.g. image/png). Required with data.'),
-    }),
+    },
     annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: true },
     _meta: { 'openai/fileParams': ['file'] },
     run: (port, args, workspaceId) =>

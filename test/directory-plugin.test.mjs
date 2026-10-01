@@ -1,7 +1,8 @@
 // The directory plugin in plugins/postfast, checked against the built dist.
-// Its skills run on the remote binding with the confirm gate on, so they may
-// name only tools on that surface; a tool rename fails here instead of
-// silently breaking a skill. Run with `npm test`.
+// Its skills run on the remote binding (every hosted session, which holds
+// posts and replies for the user's yes), so they may name only tools on that
+// surface; a tool rename fails here instead of silently breaking a skill.
+// Run with `npm test`.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
@@ -21,42 +22,40 @@ const filesUnder = (dir) =>
 const skillDocs = filesUnder(SKILLS).filter((path) => path.endsWith('.md'));
 
 const namesOf = (tools) => new Set(tools.map((t) => t.name));
-const GATED = namesOf(
+const REMOTE = namesOf(
   buildTools({
     binding: 'remote',
     withWorkspaceField: true,
     confirmGate: { secret: 'directory-plugin-test-secret-32ch' },
   }),
 );
-// Names that exist on the stdio or ungated remote surface but not the gated one.
-const NOT_GATED = [
-  ...namesOf(buildTools({ binding: 'stdio' })),
-  ...namesOf(buildTools({ binding: 'remote', withWorkspaceField: true })),
-].filter((name) => !GATED.has(name));
+// Names that exist only on the stdio surface, and the app tools, which the
+// model never sees.
+const NOT_REMOTE = ALL_TOOLS.map((t) => t.name).filter((name) => !REMOTE.has(name));
 
 // A tool-shaped word: a verb some catalog tool starts with, then snake_case.
 const VERBS = [...new Set(ALL_TOOLS.map((t) => t.name.split('_')[0]))];
 const TOOL_WORD = new RegExp(`\\b(?:${VERBS.join('|')})_[a-z_]*[a-z]\\b`, 'g');
 const toolWords = (text) => [...text.matchAll(TOOL_WORD)].map(([word]) => word);
 
-test('the skills name only tools on the gated remote surface', () => {
+test('the skills name only tools on the remote surface', () => {
   const named = new Map();
   for (const path of skillDocs) {
     for (const word of toolWords(read(path))) {
       named.set(word, [...new Set([...(named.get(word) ?? []), relative(PLUGIN, path)])]);
     }
   }
-  const unknown = [...named].filter(([name]) => !GATED.has(name));
-  assert.deepEqual(unknown, [], 'named but not on the gated remote surface');
+  const unknown = [...named].filter(([name]) => !REMOTE.has(name));
+  assert.deepEqual(unknown, [], 'named but not on the remote surface');
 
-  // The scan catches a name from the other surfaces (negative control).
-  assert.ok(NOT_GATED.length > 0);
-  for (const name of NOT_GATED) {
+  // The scan catches a name from the stdio surface or the app (negative control).
+  assert.ok(NOT_REMOTE.includes('reply_to_inbox_item') && NOT_REMOTE.includes('open_postfast'));
+  for (const name of NOT_REMOTE) {
     assert.deepEqual(toolWords(`then call \`${name}\` with it`), [name]);
     assert.ok(!named.has(name), name);
   }
 
-  // The gated flow the skills exist to teach.
+  // The confirmation flow the skills exist to teach.
   for (const name of [
     'approve_posts',
     'prepare_inbox_action',
@@ -128,13 +127,23 @@ test('each skill is named for its folder, fits the size limits and its files exi
   }
 });
 
+test('the skills name no client app, so every client package can ship them', () => {
+  const CLIENTS = /\b(?:Claude|ChatGPT|OpenAI|Anthropic|Codex|Cursor|Copilot|Gemini)\b/;
+  for (const path of skillDocs) {
+    const found = CLIENTS.exec(read(path));
+    assert.equal(found, null, `${relative(PLUGIN, path)} names "${found?.[0]}"`);
+  }
+  // Negative control: the pattern catches a client name in running text.
+  assert.ok(CLIENTS.test('The connector holds posts in Claude anyway.'));
+});
+
 test('platform limits are stated once, in the shared platform rules', () => {
   for (const path of skillDocs.filter((p) => p !== RULES)) {
     const limit = /\d[\d,]*\s*(?:characters|chars)\b/i.exec(read(path));
     assert.equal(limit, null, `${relative(PLUGIN, path)} states "${limit?.[0]}"; limits belong in the platform rules`);
   }
-  // Every count and limit the gated server instructions give appears in the rules.
-  const stated = instructionsFor('remote', { gated: true })
+  // Every count and limit the remote server instructions give appears in the rules.
+  const stated = instructionsFor('remote')
     .split('\n\n')
     .filter((paragraph) => /^(?:Media|Per-platform limits)/.test(paragraph))
     .join('\n');

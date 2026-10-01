@@ -1,8 +1,15 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
+import {
+  APP_RESOURCE_URI,
+  assertAppOptions,
+  listToolIcons,
+  registerAppResource,
+  type AppOptions,
+} from './app.js';
 import type { BackendPort } from './backend-port.js';
 import { workspaceIdField } from './shared.js';
-import type { Binding, ResolvedTool } from './tool-def.js';
+import type { Binding, ResolvedTool, ToolDef, ToolIcon } from './tool-def.js';
 import { ALL_TOOLS } from './tools/index.js';
 
 export interface ConfirmGateOptions {
@@ -25,24 +32,51 @@ export interface BuildToolsOptions {
    */
   port?: BackendPort;
   /**
-   * Remote only. Holds every new post for approval and routes comment
-   * replies, private replies and deletions through prepare_inbox_action and
-   * confirm_inbox_action. When absent, the output is identical to 0.6.2.
+   * Remote only. The key that signs prepare_inbox_action / confirm_inbox_action
+   * tokens for comment replies, private replies and deletions. The remote
+   * catalogue holds every post and reply for the user's yes either way;
+   * without a key those two tools are left out (logged once), so comment
+   * replies and deletions are unavailable.
    */
   confirmGate?: ConfirmGateOptions;
+  /**
+   * Remote only. Adds the calendar app: two view-opening entrypoint tools and
+   * the view's analytics call, all hidden from the model, plus the view as a
+   * UI resource (registerCatalogTools). When absent, the output is identical
+   * to a catalog without the app.
+   */
+  app?: AppOptions;
 }
+
+let warnedNoConfirmSecret = false;
 
 /** Resolve the catalog for one binding: filter, flatten binding-variant fields. */
 export function buildTools(options: BuildToolsOptions): ResolvedTool[] {
-  const { binding, withWorkspaceField = false, port, confirmGate } = options;
-  const gated = binding === 'remote' && !!confirmGate;
-  if (gated && !(confirmGate.secret?.length >= 32)) {
+  const { binding, withWorkspaceField = false, port, confirmGate, app } = options;
+  const remote = binding === 'remote';
+  if (remote && confirmGate && !(confirmGate.secret?.length >= 32)) {
     throw new Error('confirmGate.secret must be at least 32 characters.');
   }
+  const secret = remote ? confirmGate?.secret : undefined;
+  if (remote && !secret && !warnedNoConfirmSecret) {
+    warnedNoConfirmSecret = true;
+    console.error(
+      '[postfast-mcp/core] no confirmGate secret: prepare_inbox_action and confirm_inbox_action are left out, so comment replies and deletions are unavailable',
+    );
+  }
+  const appOn = remote && !!app;
+  if (appOn) assertAppOptions(app);
+
+  // Only app tools get the app options; the confirm secret goes to every tool as before.
+  const contextFor = (def: ToolDef) => ({
+    ...(secret ? { confirmSecret: secret } : {}),
+    ...(appOn && def.appOnly ? { app } : {}),
+  });
 
   return ALL_TOOLS.filter((def) => {
     if (def.binding !== 'both' && def.binding !== binding) return false;
-    if (gated ? def.hiddenWhenGated : def.gatedOnly) return false;
+    if (def.needsConfirmSecret && !secret) return false;
+    if (def.appOnly && !appOn) return false;
     if (
       port &&
       def.portMethod &&
@@ -56,26 +90,28 @@ export function buildTools(options: BuildToolsOptions): ResolvedTool[] {
     return true;
   }).map((def) => {
     const inputSchema =
-      typeof def.inputSchema === 'function' ? def.inputSchema(binding, gated) : def.inputSchema;
-    const annotations = gated && def.gatedAnnotations ? def.gatedAnnotations : def.annotations;
+      typeof def.inputSchema === 'function' ? def.inputSchema(binding) : def.inputSchema;
+    const annotations = remote && def.remoteAnnotations ? def.remoteAnnotations : def.annotations;
+    const ctx = contextFor(def);
 
     return {
       name: def.name,
       title: def.title,
       description:
-        typeof def.description === 'function' ? def.description(binding, gated) : def.description,
+        typeof def.description === 'function' ? def.description(binding) : def.description,
       inputSchema:
         withWorkspaceField && def.workspaceScoped !== false
           ? { ...inputSchema, workspaceId: workspaceIdField }
           : inputSchema,
       annotations: { title: def.title, ...annotations },
       _meta: def._meta,
+      ...(def.icons ? { icons: def.icons } : {}),
       portMethod: def.portMethod,
-      // Gated: hand the secret to run(), also for hosts that call tool.run() themselves.
-      run: gated
-        ? (p, args, workspaceId) =>
-            def.run(p, args, workspaceId, { confirmSecret: confirmGate.secret })
+      // Hand the confirm secret and app options to run(), also for hosts that call tool.run() themselves.
+      run: Object.keys(ctx).length
+        ? (p, args, workspaceId) => def.run(p, args, workspaceId, ctx)
         : def.run,
+      ...(def.toResult ? { toResult: def.toResult } : {}),
     };
   });
 }
@@ -112,9 +148,12 @@ export function toolError(message: string): CallToolResult {
 }
 
 /** Run a handler, converting thrown errors into `isError` tool results. */
-export async function runTool(fn: () => Promise<unknown>): Promise<CallToolResult> {
+export async function runTool(
+  fn: () => Promise<unknown>,
+  toResult: (data: unknown) => CallToolResult = toolResult,
+): Promise<CallToolResult> {
   try {
-    return toolResult(await fn());
+    return toResult(await fn());
   } catch (err) {
     return toolError((err as Error).message || 'Tool execution failed.');
   }
@@ -124,14 +163,20 @@ export interface RegisterToolsOptions extends BuildToolsOptions {
   port: BackendPort;
 }
 
-/** Register the resolved catalog for a binding on an MCP server. */
+/**
+ * Register the resolved catalog for a binding on an MCP server. With `app`,
+ * also registers the view as a UI resource and lists the app tools' icons,
+ * but only when a registered tool opens the view (a port without the app
+ * methods registers neither).
+ */
 export function registerCatalogTools(
   server: McpServer,
   options: RegisterToolsOptions,
 ): void {
   const { port } = options;
+  const tools = buildTools(options);
 
-  for (const tool of buildTools(options)) {
+  for (const tool of tools) {
     server.registerTool(
       tool.name,
       {
@@ -145,7 +190,16 @@ export function registerCatalogTools(
         runTool(() => {
           const { workspaceId, ...rest } = args ?? {};
           return tool.run(port, rest, workspaceId as string | undefined);
-        }),
+        }, tool.toResult),
     );
+  }
+
+  const opensView = (tool: ResolvedTool) =>
+    (tool._meta?.ui as { resourceUri?: string } | undefined)?.resourceUri === APP_RESOURCE_URI;
+  if (options.app && tools.some(opensView)) {
+    registerAppResource(server, options.app);
+    const icons = new Map<string, ToolIcon[]>();
+    for (const tool of tools) if (tool.icons) icons.set(tool.name, tool.icons);
+    listToolIcons(server, icons);
   }
 }

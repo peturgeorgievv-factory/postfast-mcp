@@ -8,6 +8,7 @@ Nothing goes out without your say-so. Claude creates every post in PostFast on h
 
 | Skill | What Claude does with it |
 | --- | --- |
+| `get-started` | Checks that PostFast is connected, helps you pick the workspace, lists your social accounts and offers reconnect links for any that stopped working, then suggests a first step. |
 | `schedule-posts` | Checks which accounts are connected, writes each post to fit its network, creates it on hold, shows you the preview, and schedules it after your yes. Also saves drafts and explains failed posts. |
 | `manage-comments` | Finds comments nobody has answered on TikTok, Instagram, Facebook and Threads, drafts replies, and sends each one only after you have seen it and agreed. Hides, restores and deletes comments the same way. |
 | `repurpose-content` | Turns an article, newsletter, transcript or web page into a week of posts for your networks, then schedules them with your approval. |

@@ -4,7 +4,7 @@ import type { ToolDef } from '../tool-def.js';
 
 const CONFIRM_ACTIONS = ['REPLY', 'PRIVATE_REPLY', 'DELETE'] as const;
 
-/** The confirm-gate secret, handed to run() by buildTools() when the gate is on. */
+/** The confirm secret, handed to run() by buildTools() when the host passes confirmGate. */
 function secretOf(ctx?: { confirmSecret?: string }): string {
   if (!ctx?.confirmSecret) {
     throw new Error('The confirm gate is not configured on this server.');
@@ -14,9 +14,8 @@ function secretOf(ctx?: { confirmSecret?: string }): string {
 
 /**
  * Comment replies, Instagram private replies and comment deletions in two
- * steps, for hosts with the confirm gate on (there they replace
- * reply_to_inbox_item, send_inbox_private_reply and set_inbox_item_state
- * DELETE). prepare returns a preview and a signed token and calls nothing.
+ * steps, on the remote binding (where they replace reply_to_inbox_item,
+ * send_inbox_private_reply and set_inbox_item_state DELETE). prepare returns a preview and a signed token and calls nothing.
  * confirm repeats the same values, so the client's approval prompt for the
  * destructive call shows the real reply text, and any change fails the
  * signature. The token is not tied to a user: confirm runs with the caller's
@@ -26,7 +25,7 @@ export const inboxConfirmTools: ToolDef[] = [
   {
     name: 'prepare_inbox_action',
     binding: 'remote',
-    gatedOnly: true,
+    needsConfirmSecret: true,
     title: 'Prepare Comment Reply or Deletion',
     description:
       "Prepare a reply to a comment, an Instagram private reply, or a comment deletion WITHOUT doing it. REPLY posts publicly under the comment; PRIVATE_REPLY sends an Instagram private reply that arrives as a direct message (one per comment, within 7 days; check the item's canPrivateReply); DELETE removes the comment on the platform permanently (not supported on Threads). Before a reply, check the conversation's canReply and maxReplyLength. Returns a preview and a confirmToken. Then show the user which comment it is (its author and text) and exactly what will happen, and wait for their yes in the conversation before calling confirm_inbox_action, even if they already told you what to write. Nothing reaches the platform in this step.",
@@ -72,7 +71,7 @@ export const inboxConfirmTools: ToolDef[] = [
   {
     name: 'confirm_inbox_action',
     binding: 'remote',
-    gatedOnly: true,
+    needsConfirmSecret: true,
     title: 'Confirm Comment Reply or Deletion',
     description:
       'Carry out a reply or deletion prepared with prepare_inbox_action. Pass its confirmToken with the same itemId, action and text (and workspaceId, if you used one); anything different is rejected. Call it only after the user has seen the preview and said yes in the conversation. Replies on Threads cannot be removed through PostFast, private replies cannot be unsent, and deletions cannot be undone. A token expires 15 minutes after it was prepared and works once. Failures return the underlying inbox.* codes (for example replyTooLong, privateReplyAlreadySent, deleteNotSupported).',

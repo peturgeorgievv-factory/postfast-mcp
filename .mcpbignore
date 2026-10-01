@@ -1,6 +1,8 @@
 src/
 *.ts
 !dist/**
+dist/view/
+/view/
 *.map
 tsconfig.json
 .mcp.json
@@ -12,6 +14,7 @@ tsconfig.json
 .git/
 .gitignore
 .mcpregistry_*
+/mcp-publisher
 .changeset/
 .github/
 scripts/

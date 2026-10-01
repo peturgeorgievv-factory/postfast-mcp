@@ -277,14 +277,14 @@ export const postTools: ToolDef[] = [
     name: 'create_posts',
     binding: 'both',
     title: 'Create Posts',
-    description: (binding, gated) =>
-      (gated
+    description: (binding) =>
+      (binding === 'remote'
         ? 'Create social media posts (batch up to 15), held for approval: nothing publishes until approve_posts sets them to APPROVED.'
         : 'Create and schedule social media posts (batch up to 15).') +
       ' Each post targets one social account (socialMediaId from list_accounts). SCHEDULED requires scheduledAt on every post; DRAFT must omit scheduledAt. Scheduling to a disconnected account (connectionStatus DISABLED in list_accounts) is rejected with HTTP 400 "socialMediaDisconnected" — pre-check connectionStatus before calling. Saving as DRAFT to a disconnected account is allowed. TikTok, Instagram, YouTube, and Pinterest require at least one media item EVEN FOR DRAFTS — attach media first (ask the user for an image/video, or generate+upload one, if none was provided). Google Business Profile accepts text-only posts, or one image and no video. A post carries at most 10 media items. Attach media via the key returned by ' +
       `${UPLOAD_TOOLS[binding]}.` +
       ' A Threads post can carry one topic, set with controls.threadsTopicTag; like every control it applies to every post in the call, so put Threads posts with different topics in separate calls.',
-    inputSchema: (binding, gated) => ({
+    inputSchema: (binding) => ({
       posts: jsonParse(
         z
           .array(postItemSchema(binding))
@@ -296,29 +296,31 @@ export const postTools: ToolDef[] = [
         .enum(CREATE_STATUSES)
         .default('SCHEDULED')
         .describe('Post status. SCHEDULED requires scheduledAt on every post.'),
-      approvalStatus: gated
-        ? z
-            .enum(['PENDING_APPROVAL'])
-            .default('PENDING_APPROVAL')
-            .describe(
-              'Posts created here are always held for approval. Publish them with approve_posts after the user confirms.',
-            )
-        : z
-            .enum(CREATE_APPROVAL_STATUSES)
-            .default('APPROVED')
-            .describe('Approval workflow status'),
+      approvalStatus:
+        binding === 'remote'
+          ? z
+              .enum(['PENDING_APPROVAL'])
+              .default('PENDING_APPROVAL')
+              .describe(
+                'Posts created here are always held for approval. Publish them with approve_posts after the user confirms.',
+              )
+          : z
+              .enum(CREATE_APPROVAL_STATUSES)
+              .default('APPROVED')
+              .describe('Approval workflow status'),
       controls: jsonParse(
         controlsSchema
           .optional()
           .describe('Platform-specific controls (shared across all posts in the batch)'),
       ),
     }),
-    // destructive: a SCHEDULED+APPROVED post (both defaults) publishes publicly and
-    // cannot be retracted through our API — delete_post removes our row, not the
-    // platform post. Gated, every post is created held, so the call only writes to
-    // PostFast (removable with delete_post); approve_posts is what publishes.
+    // destructive on stdio: a SCHEDULED+APPROVED post (both defaults) publishes
+    // publicly and cannot be retracted through our API — delete_post removes our
+    // row, not the platform post. On the remote binding every post is created
+    // held, so the call only writes to PostFast (removable with delete_post);
+    // approve_posts is what publishes.
     annotations: { readOnlyHint: false, destructiveHint: true, openWorldHint: true },
-    gatedAnnotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: false },
+    remoteAnnotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: false },
     run: (port, args, workspaceId) =>
       port.createPosts(args as unknown as CreatePostsArgs, workspaceId),
   },
@@ -326,10 +328,8 @@ export const postTools: ToolDef[] = [
     name: 'approve_posts',
     binding: 'remote',
     title: 'Approve Posts',
-    description: (_binding, gated) =>
-      gated
-        ? 'Approve posts so they publish at their scheduled time. This is the only way a post created with create_posts goes out, so show the user exactly what will be posted, where and when, and call this only after they say yes in the conversation, even if they asked you to post it. Can also set PENDING_APPROVAL, REJECTED or NEEDS_WORK. If its scheduled time passed more than 2 hours ago, create the post again with a new time instead of approving it, and delete the old one.'
-        : 'Set the approval status of one or more posts (approval workflow). Typically used to move posts to APPROVED so they can publish, or to PENDING_APPROVAL / REJECTED / NEEDS_WORK.',
+    description:
+      "Approve posts so they publish at their scheduled time. This is the only way a post created with create_posts goes out, so show the user exactly what will be posted, where and when, and call this only after they say yes in the conversation, even if they asked you to post it. Can also set PENDING_APPROVAL, REJECTED or NEEDS_WORK. If its scheduled time passed more than 2 hours ago, don't approve it. Tell the user, and only if they agree, create it again with a new time and delete the old one.",
     inputSchema: {
       postIds: z.array(z.uuid()).min(1).describe('Post ids to update'),
       approvalStatus: z.enum(SET_APPROVAL_STATUSES).describe('New approval status'),
@@ -344,8 +344,11 @@ export const postTools: ToolDef[] = [
     name: 'delete_post',
     binding: 'both',
     title: 'Delete Post',
-    description:
-      'Delete a social media post by id. This removes the post from PostFast — its record, its schedule, and its stored media. It does NOT delete anything from the social platform: a post that has already published stays live there and must be removed on the platform itself. Deleting a SCHEDULED post that has not published yet does prevent it from publishing. The deletion cannot be undone.',
+    description: (binding) =>
+      'Delete a social media post by id. This removes the post from PostFast — its record, its schedule, and its stored media. It does NOT delete anything from the social platform: a post that has already published stays live there and must be removed on the platform itself. Deleting a SCHEDULED post that has not published yet does prevent it from publishing.' +
+      (binding === 'remote'
+        ? " Deleting can't be undone, so show the user which post (account, time, first line) and call this only after they say yes in the conversation."
+        : ' The deletion cannot be undone.'),
     inputSchema: {
       id: z.uuid().describe('Post id to delete'),
     },

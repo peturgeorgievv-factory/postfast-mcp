@@ -1,5 +1,9 @@
 import type {
   AnalyticsResponse,
+  AppAction,
+  AppCalendar,
+  AppEntrypoint,
+  AppPostDetail,
   FollowerHistory,
   GbpLocation,
   PaginatedPosts,
@@ -121,6 +125,30 @@ export interface UploadMediaArgs {
   contentType?: string;
 }
 
+/** One calendar window for the app. */
+export interface AppCalendarArgs {
+  /** ISO 8601; posts whose scheduledAt is at or after this. */
+  from: string;
+  /** ISO 8601; posts whose scheduledAt is at or before this. */
+  to: string;
+  /** Most dated posts to return. */
+  limit: number;
+  /** Most undated drafts to return. */
+  draftsLimit: number;
+  entrypoint: AppEntrypoint;
+  /** True when the open view reloads; false when the app opens. */
+  refresh: boolean;
+}
+
+export interface AppPostArgs {
+  postId: string;
+}
+
+export interface AppActionArgs {
+  action: AppAction;
+  entrypoint?: AppEntrypoint;
+}
+
 export interface LocalUploadResult {
   key: string;
   type: 'IMAGE' | 'VIDEO';
@@ -210,4 +238,9 @@ export interface BackendPort {
 
   // TikTok Commercial Music Library (optional — same staggered-adoption rule).
   listTikTokSounds?(args: ListTikTokSoundsArgs, workspaceId?: string): Promise<unknown>;
+
+  // The calendar app (optional, remote only; same staggered-adoption rule).
+  getAppCalendar?(args: AppCalendarArgs, workspaceId?: string): Promise<AppCalendar>;
+  getAppPost?(args: AppPostArgs, workspaceId?: string): Promise<AppPostDetail>;
+  recordAppAction?(args: AppActionArgs, workspaceId?: string): Promise<unknown>;
 }

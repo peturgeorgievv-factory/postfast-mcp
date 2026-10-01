@@ -268,3 +268,125 @@ export interface PostControls {
   // Threads
   threadsTopicTag?: string;
 }
+
+// The calendar app (BuildToolsOptions.app). What the backend returns for it,
+// and the view model the app tools hand to the view.
+
+/** Where the app was opened: the sidebar (global) or a conversation tab (thread). */
+export type AppEntrypoint = 'global' | 'thread';
+
+/** Buttons in the view the backend records for product analytics. */
+export type AppAction =
+  | 'open_in_postfast'
+  | 'review_in_chat'
+  | 'reconnect'
+  | 'connect_account'
+  | 'new_post_started';
+
+/** A post's status in the app. PROCESSING is a post being published right now. */
+export type AppPostStatus = PostStatus | 'PROCESSING';
+
+/**
+ * One media item in the shape the rest of the API uses (list_posts, the web
+ * app), plus display URLs named as in the web app. The URLs are signed and
+ * expire within minutes; they reach only the view, never the model.
+ */
+export interface AppMediaItem {
+  /** Taken from the stored file, so an imported cover image reads IMAGE. */
+  type: 'IMAGE' | 'VIDEO';
+  key: string;
+  sortOrder: number;
+  coverImageKey: string | null;
+  coverTimestamp: string | null;
+  /** The image, or the video file; null when the file cannot be served. */
+  mediaUrl: string | null;
+  /** A video's cover image; null when there is none. */
+  coverImageUrl: string | null;
+}
+
+/** One account as the backend returns it for the calendar. */
+export interface AppCalendarAccount {
+  id: string;
+  platform: Platform;
+  platformUsername: string | null;
+  displayName: string | null;
+  connectionStatus: ConnectionStatus;
+  disabledReason: DisabledReason | null;
+  /** The profile picture as a signed display URL; null when there is none. */
+  avatarUrl: string | null;
+}
+
+/** One post as the backend returns it for the calendar. Its account is in AppCalendar.accounts. */
+export interface AppCalendarPost {
+  id: string;
+  socialMediaId: string;
+  status: AppPostStatus;
+  approvalStatus: ApprovalStatus;
+  scheduledAt: string | null;
+  publishedAt: string | null;
+  content: string;
+  lastError: { message: string; code: string | null } | null;
+  mediaCount: number;
+  /** The first media item by sortOrder, for the card's thumbnail. */
+  thumbnail: AppMediaItem | null;
+}
+
+/** One post in full, as the backend returns it when the view opens it. */
+export interface AppPostDetail extends Omit<AppCalendarPost, 'thumbnail'> {
+  workspaceId: string;
+  firstComment: string | null;
+  /** Every media item, in sortOrder. */
+  mediaItems: AppMediaItem[];
+}
+
+/** The backend's answer for one calendar window. */
+export interface AppCalendar {
+  workspace: { id: string; name: string };
+  /** Every account in the workspace, including disconnected ones. */
+  accounts: AppCalendarAccount[];
+  /** Posts whose scheduledAt falls in [from, to], oldest first. */
+  posts: AppCalendarPost[];
+  /** Drafts with no scheduledAt, most recently changed first. */
+  drafts: AppCalendarPost[];
+  hasMore: boolean;
+  draftsHasMore: boolean;
+}
+
+/** One account, as the view shows it. */
+export interface AppAccount {
+  id: string;
+  platform: Platform;
+  /** The @handle, else the display name; null when neither is known. */
+  handle: string | null;
+  connectionStatus: ConnectionStatus;
+  disabledReason: DisabledReason | null;
+  avatarUrl: string | null;
+}
+
+/** One post, as the view shows it: the caption is shortened and the web app link added. */
+export interface AppPost extends AppCalendarPost {
+  contentTruncated: boolean;
+  /** Opens this post in the PostFast web app. */
+  openUrl: string;
+}
+
+/** One post in full, as the view shows it when opened. */
+export interface AppPostDetailView extends AppPostDetail {
+  contentTruncated: boolean;
+  openUrl: string;
+}
+
+/** Everything the view renders, delivered in the tool result's `_meta`. */
+export interface AppCalendarView {
+  version: 1;
+  entrypoint: AppEntrypoint;
+  generatedAt: string;
+  window: { from: string; to: string };
+  workspace: { id: string; name: string };
+  accounts: AppAccount[];
+  posts: AppPost[];
+  drafts: AppPost[];
+  hasMore: boolean;
+  draftsHasMore: boolean;
+  links: { posts: string; accounts: string };
+}
