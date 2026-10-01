@@ -1,10 +1,11 @@
 #!/usr/bin/env node
 // Renders the catalog surface a client receives (server instructions +
 // tools/list) through the real SDK: McpServer + registerCatalogTools, listed
-// by a Client over an in-memory transport. The remote modes use the deployed
-// host's options (remote binding + the per-call workspaceId field).
+// by a Client over an in-memory transport. The remote mode uses the deployed
+// host's options (remote binding, the per-call workspaceId field, a confirm
+// secret), so it is what every hosted session gets.
 //
-// Usage: node scripts/surface-snapshot.mjs <stdio|remote|remote-gated> [outDir]
+// Usage: node scripts/surface-snapshot.mjs <stdio|remote> [outDir]
 // Writes <mode>.raw.json (as returned, key order kept, so a parameter-order
 // change shows) and <mode>.json (keys sorted, array order kept). Compare two
 // renders with cmp on both files.
@@ -16,7 +17,7 @@ import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
 import { instructionsFor, registerCatalogTools } from '../dist/core/index.js';
 
-const MODES = ['stdio', 'remote', 'remote-gated'];
+const MODES = ['stdio', 'remote'];
 const mode = process.argv[2];
 const outDir = process.argv[3] ?? '.';
 if (!MODES.includes(mode)) {
@@ -24,8 +25,7 @@ if (!MODES.includes(mode)) {
   process.exit(2);
 }
 
-const binding = mode === 'stdio' ? 'stdio' : 'remote';
-const gated = mode === 'remote-gated';
+const binding = mode;
 
 // Every port method exists (so no portMethod tool is skipped); none is called.
 // `then` stays undefined so nothing mistakes the port for a promise.
@@ -33,13 +33,14 @@ const port = new Proxy({}, { get: (_t, prop) => (prop === 'then' ? undefined : a
 
 const server = new McpServer(
   { name: 'surface-snapshot', version: '0.0.0' },
-  { instructions: gated ? instructionsFor('remote', { gated: true }) : instructionsFor(binding) },
+  { instructions: instructionsFor(binding) },
 );
 registerCatalogTools(server, {
   binding,
   port,
-  ...(binding === 'remote' ? { withWorkspaceField: true } : {}),
-  ...(gated ? { confirmGate: { secret: 'surface-snapshot-fixed-secret-32' } } : {}),
+  ...(binding === 'remote'
+    ? { withWorkspaceField: true, confirmGate: { secret: 'surface-snapshot-fixed-secret-32' } }
+    : {}),
 });
 
 const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();

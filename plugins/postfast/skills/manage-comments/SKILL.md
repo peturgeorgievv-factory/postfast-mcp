@@ -12,7 +12,7 @@ The PostFast inbox holds comments on the user's own posts on TikTok, Instagram, 
 1. **Nothing is sent or deleted without a yes to the exact preview.** A public reply, an Instagram private reply or a deletion goes through `prepare_inbox_action`, which sends nothing and returns a preview. Show the user the preview, wait for their yes in the conversation, and only then call `confirm_inbox_action`. This holds even when the user dictated the reply word for word: they still see the preview and say yes before it is sent. Never prepare and confirm in the same turn.
 2. **Confirm exactly what was previewed.** Pass `confirm_inbox_action` the `confirmToken` with the same `itemId`, `action` and `text`, and the same `workspaceId` only if you passed one to prepare. If the user changes the text, prepare it again and show the new preview.
 3. **The conversation decides whether and how long a reply can be.** Read `canReply`, `maxReplyLength`, `windowState` and `disabledReason` on the conversation and keep to them. Don't assume a network's rules. When `canReply` is false, tell the user why, using `disabledReason`, instead of trying.
-4. **If `prepare_inbox_action` is not among your tools,** the connector is running without its confirmation step on this client. Keep rule 1 anyway: show the exact reply or deletion, wait for a yes, then use the connector's own reply or moderation tool.
+4. **If `prepare_inbox_action` is not among your tools,** replies, private replies and deletions aren't available on this connection. Tell the user and suggest doing it in PostFast instead. Reading, hiding, restoring and sorting comments still work.
 
 ## Find comments to answer
 

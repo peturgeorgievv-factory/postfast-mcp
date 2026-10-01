@@ -1,5 +1,18 @@
 # postfast-mcp
 
+## 0.9.0
+
+### Minor Changes
+
+- Adds an opt-in calendar app for remote hosts (`BuildToolsOptions.app`): a view (an MCP App, one self-contained HTML file) with posts from the last 2 days through the next 14 and undated drafts, opened by two new entrypoint tools (`open_postfast`, `postfast_tab`), plus `get_calendar_post` (a post in full: text, first comment, every media item) and `record_app_action` (the view's analytics). All four are hidden from the model and appear only when the host passes `app`; without it every surface, stdio included, is unchanged. The view never approves, publishes or deletes: those actions go back to the conversation.
+- The remote binding now has a single surface: every post is created held for approval and publishes only through `approve_posts`, and comment replies, private replies and deletions go through `prepare_inbox_action` and `confirm_inbox_action`, each after the user's yes. The ungated remote descriptions, input schemas, annotations and server instructions are removed, and `reply_to_inbox_item` and `send_inbox_private_reply` are stdio-only. Hosts pass `confirmGate` to enable the two confirm tools; without it they are left out and a log line says so. `instructionsFor()` ignores its former `gated` option. `ToolDef` renames `gatedAnnotations` to `remoteAnnotations` and `gatedOnly` to `needsConfirmSecret`, and drops `hiddenWhenGated`. For a host that passed `confirmGate`, this change alone leaves the remote output unchanged; the wording changes are listed under Patch Changes. The stdio surface is unchanged.
+
+### Patch Changes
+
+- The `.mcpb` bundle no longer includes the MCP Registry publisher binary that the release job downloads into the checkout before packing, which cuts the download from about 9.7 MB to about 2.4 MB. The view's HTML entry file stays out of the bundle as well.
+- Remote binding: four more tools wait for the user. `delete_post` (and the server instructions' paragraph on it) shows which post and deletes only after the user says yes. `approve_posts` no longer approves a post more than 2 hours past its time; it tells the user and re-creates the post only if they agree. `generate_connect_link` emails the link only when the user asks and gives the address, and its `sendEmail` field says so too. `set_inbox_item_state` hides or unhides a comment only when the user asks. The stdio surface is unchanged.
+- Remote binding: `upload_media` now tells the model to pass a file the user attached or generated in the conversation as `file` when the app passes files to tools, then base64 bytes, and to ask for a public link only when it can do neither. Apps that attach files to tool calls no longer fall back to asking the user for a link.
+
 ## 0.8.3
 
 ### Patch Changes

@@ -10,14 +10,13 @@ const MEDIA_REQUIRED = ['Instagram', 'Pinterest', 'TikTok', 'YouTube'];
 const MAX_MEDIA_ITEMS = 10;
 const SURFACES = {
   stdio: [buildTools({ binding: 'stdio' }), instructionsFor('stdio')],
-  remote: [buildTools({ binding: 'remote', withWorkspaceField: true }), instructionsFor('remote')],
-  'remote gated': [
+  remote: [
     buildTools({
       binding: 'remote',
       withWorkspaceField: true,
       confirmGate: { secret: 'catalog-media-rules-test-secret-32' },
     }),
-    instructionsFor('remote', { gated: true }),
+    instructionsFor('remote'),
   ],
 };
 const SKILL_FILES = [

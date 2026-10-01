@@ -40,7 +40,7 @@ If an account's `connectionStatus` is DISABLED:
 
 - TikTok, Instagram, Pinterest and YouTube need media, even for a draft. If the user hasn't given any, ask for it before you create anything.
 - Media at a public https URL: `upload_from_url` with `sourceUrl`.
-- A file in the conversation: `upload_media` with the file's bytes as base64 in `data` and its MIME type in `contentType`. This suits images of a few MB. For a video or a large file, ask for a public https link that downloads the file, and use `upload_from_url`.
+- A file in the conversation: `upload_media`. If your app can attach the file to the tool call, pass it as `file`. Otherwise pass its bytes as base64 in `data` with its MIME type in `contentType`, which suits images of a few MB. For a video or a large file you can't attach, ask for a public https link that downloads the file, and use `upload_from_url`.
 - Each upload returns a `media_id`. Pass it as `mediaItems[].key`, with `type` IMAGE or VIDEO to match the file and `sortOrder` from 0. You can use the same `media_id` in several posts.
 
 ### 5. Create the posts, held
@@ -49,7 +49,7 @@ Call `create_posts` with:
 
 - `posts`: one entry per account, each with `socialMediaId`, `content`, and where needed `mediaItems`, `scheduledAt` and `firstComment`. Up to 15 posts per call.
 - `status`: SCHEDULED, with a `scheduledAt` in the future and within a year on every post; or DRAFT, with no `scheduledAt`, to save it in PostFast without a time.
-- `approvalStatus`: `"PENDING_APPROVAL"`. The connector holds posts in Claude anyway; passing it keeps the flow the same on every client.
+- `approvalStatus`: `"PENDING_APPROVAL"`. The connector holds every post until it is approved anyway; passing it makes that explicit.
 - `controls`: the network settings from the platform rules. They apply to every post in the call, so posts that need different settings go in separate calls.
 
 If the call is rejected, the error names the rule, for example `socialMediaDisconnected`, `contentLength.x` or `platformMedia.instagram.mediaRequired`. Fix that post and create it again. Keep the post ids from the result.
@@ -75,7 +75,7 @@ When the user says yes to the preview, call `approve_posts` with the post ids an
 
 - **Changes:** there is no edit. Delete the held post with `delete_post` (its `id`, and the same `workspaceId`), create the new version (step 5), and preview again.
 - **No, or no answer:** leave the posts held. They stay in PostFast unpublished, where the user can review them. Delete them only if the user asks.
-- **Approved after the time has passed:** the post goes out within about a minute if it is less than 2 hours late. Past 2 hours, create it again with a new time and delete the old one.
+- **The time has passed:** approved less than 2 hours late, the post goes out within about a minute. Past 2 hours, don't approve it: tell the user, and only if they agree, create it again with a new time and delete the old one.
 
 ## "Post it now"
 

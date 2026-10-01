@@ -93,9 +93,12 @@ export const accountTools: ToolDef[] = [
     name: 'generate_connect_link',
     binding: 'both',
     title: 'Generate Connect Link',
-    description:
-      'Generate a shareable link for external clients to connect their social accounts to the workspace. Can be scoped to specific platforms and return the user to your own app when done.',
-    inputSchema: {
+    description: (binding) =>
+      'Generate a shareable link for external clients to connect their social accounts to the workspace. Can be scoped to specific platforms and return the user to your own app when done.' +
+      (binding === 'remote'
+        ? ' Email the link (sendEmail) only when the user asks you to and gives the address.'
+        : ''),
+    inputSchema: (binding) => ({
       expiryDays: z
         .number()
         .int()
@@ -103,7 +106,14 @@ export const accountTools: ToolDef[] = [
         .max(30)
         .default(7)
         .describe('Link expiry in days (1-30, default 7)'),
-      sendEmail: z.boolean().default(false).describe('Send the link via email'),
+      sendEmail: z
+        .boolean()
+        .default(false)
+        .describe(
+          binding === 'remote'
+            ? 'Send the link via email. Set it only when the user asks you to and gives the address.'
+            : 'Send the link via email',
+        ),
       email: z
         .email()
         .optional()
@@ -129,7 +139,7 @@ export const accountTools: ToolDef[] = [
         .describe(
           'Your own reference for this link, echoed back unchanged on the return URL. Letters, digits and - . _ ~ : @ only.',
         ),
-    },
+    }),
     // destructive: sendEmail delivers a real email that cannot be recalled, and the
     // minted link grants account-connect access until it expires.
     annotations: { readOnlyHint: false, destructiveHint: true, openWorldHint: true },

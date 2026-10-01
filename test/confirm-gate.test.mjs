@@ -1,5 +1,7 @@
-// Confirm gate (BuildToolsOptions.confirmGate), exercised against the built
-// dist. Run with `npm test`.
+// The remote binding's confirmation rules, exercised against the built dist:
+// posts are held until approve_posts, and comment replies and deletions go
+// through signed prepare/confirm tokens (BuildToolsOptions.confirmGate). The
+// stdio binding keeps direct publishing and replies. Run with `npm test`.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { z } from 'zod';
@@ -35,7 +37,8 @@ function recordingPort({ delayMs = 0, fail } = {}) {
 
 const gatedTools = (port) =>
   buildTools({ binding: 'remote', withWorkspaceField: true, port, confirmGate: { secret: SECRET } });
-const ungatedTools = (port) => buildTools({ binding: 'remote', withWorkspaceField: true, port });
+const remoteWithoutSecret = (port) => buildTools({ binding: 'remote', withWorkspaceField: true, port });
+const stdioTools = (port) => buildTools({ binding: 'stdio', port });
 const tool = (tools, name) => tools.find((t) => t.name === name);
 const prepare = (port, args, ws) => tool(gatedTools(port), 'prepare_inbox_action').run(port, args, ws);
 const confirm = (port, args, ws) => tool(gatedTools(port), 'confirm_inbox_action').run(port, args, ws);
@@ -165,37 +168,51 @@ test('DELETE confirms whether or not the caller echoes a text', async () => {
 
 const POST = { posts: [{ content: 'connector check', socialMediaId: ITEM }], status: 'DRAFT' };
 
-test('gated schemas: create_posts is always held, set_inbox_item_state has no DELETE', () => {
-  const tools = gatedTools(recordingPort().port);
-  const create = tool(tools, 'create_posts');
-  assert.equal(parse(create, { ...POST, approvalStatus: 'APPROVED' }).success, false);
-  assert.equal(parse(create, POST).data.approvalStatus, 'PENDING_APPROVAL');
-  const moderate = tool(tools, 'set_inbox_item_state');
-  assert.equal(parse(moderate, { itemId: ITEM, action: 'DELETE' }).success, false);
-  assert.equal(parse(moderate, { itemId: ITEM, action: 'HIDE' }).success, true);
-  const names = tools.map((t) => t.name);
+test('the remote binding is always gated: create_posts is held, set_inbox_item_state has no DELETE', () => {
+  for (const tools of [gatedTools(recordingPort().port), remoteWithoutSecret(recordingPort().port)]) {
+    const create = tool(tools, 'create_posts');
+    assert.equal(parse(create, { ...POST, approvalStatus: 'APPROVED' }).success, false);
+    assert.equal(parse(create, POST).data.approvalStatus, 'PENDING_APPROVAL');
+    assert.equal(create.annotations.destructiveHint, false);
+    const moderate = tool(tools, 'set_inbox_item_state');
+    assert.equal(parse(moderate, { itemId: ITEM, action: 'DELETE' }).success, false);
+    assert.equal(parse(moderate, { itemId: ITEM, action: 'HIDE' }).success, true);
+    const names = tools.map((t) => t.name);
+    assert.ok(!names.includes('reply_to_inbox_item') && !names.includes('send_inbox_private_reply'));
+    assert.match(tool(tools, 'approve_posts').description, /only after they say yes/);
+  }
+  const names = gatedTools(recordingPort().port).map((t) => t.name);
   assert.equal(names.length, 26);
   assert.deepEqual(names.slice(-2), ['prepare_inbox_action', 'confirm_inbox_action']);
-  assert.ok(!names.includes('reply_to_inbox_item') && !names.includes('send_inbox_private_reply'));
 });
 
-test('ungated behaves like 0.6.2 on the calls that matter', async () => {
+test('without a secret the remote binding stays gated and leaves out only the two confirm tools', () => {
+  const view = (tools) => tools.map((t) => [t.name, t.description, t.annotations, Object.keys(t.inputSchema)]);
+  const withSecret = gatedTools(recordingPort().port);
+  const without = remoteWithoutSecret(recordingPort().port);
+  assert.deepEqual(
+    view(without),
+    view(withSecret.filter((t) => !t.name.endsWith('_inbox_action'))),
+  );
+});
+
+test('stdio keeps direct publishing and direct replies', async () => {
   const { port, calls } = recordingPort();
-  const tools = ungatedTools(port);
+  const tools = stdioTools(port);
   const create = tool(tools, 'create_posts');
   assert.equal(parse(create, { ...POST, approvalStatus: 'APPROVED' }).success, true);
-  await create.run(port, parse(create, POST).data, WS);
+  await create.run(port, parse(create, POST).data);
   assert.equal(calls[0].method, 'createPosts');
   assert.equal(calls[0].args[0].approvalStatus, 'APPROVED');
   calls.length = 0;
-  await tool(tools, 'reply_to_inbox_item').run(port, { itemId: ITEM, text: 'thanks!' }, WS);
-  assert.deepEqual(calls, [{ method: 'replyToInboxItem', args: [{ itemId: ITEM, text: 'thanks!' }, WS] }]);
+  await tool(tools, 'reply_to_inbox_item').run(port, { itemId: ITEM, text: 'thanks!' });
+  assert.deepEqual(calls, [{ method: 'replyToInboxItem', args: [{ itemId: ITEM, text: 'thanks!' }, undefined] }]);
   calls.length = 0;
   const moderate = tool(tools, 'set_inbox_item_state');
   assert.equal(parse(moderate, { itemId: ITEM, action: 'DELETE' }).success, true);
-  await moderate.run(port, { itemId: ITEM, action: 'DELETE' }, WS);
-  assert.deepEqual(calls, [{ method: 'setInboxItemState', args: [{ itemId: ITEM, action: 'DELETE' }, WS] }]);
-  assert.ok(!tools.some((t) => t.name.endsWith('_inbox_action')));
+  await moderate.run(port, { itemId: ITEM, action: 'DELETE' });
+  assert.deepEqual(calls, [{ method: 'setInboxItemState', args: [{ itemId: ITEM, action: 'DELETE' }, undefined] }]);
+  assert.ok(!tools.some((t) => t.name.endsWith('_inbox_action') || t.name === 'approve_posts'));
 });
 
 test('a short secret throws on remote; stdio ignores the gate', () => {
@@ -210,15 +227,62 @@ test('a short secret throws on remote; stdio ignores the gate', () => {
   assert.deepEqual(view(withGate), view(plain));
 });
 
-test('instructions: the gated text swaps exactly three paragraphs', () => {
+test('instructions: remote holds everything for a yes, stdio keeps its own text', () => {
   assert.equal(instructionsFor('remote'), SERVER_INSTRUCTIONS.remote);
+  assert.equal(instructionsFor('remote', { gated: true }), SERVER_INSTRUCTIONS.remote);
   assert.equal(instructionsFor('stdio', { gated: true }), SERVER_INSTRUCTIONS.stdio);
-  const plain = SERVER_INSTRUCTIONS.remote.split('\n\n');
-  const gated = instructionsFor('remote', { gated: true }).split('\n\n');
-  assert.equal(gated.length, plain.length);
-  const swapped = plain.filter((p, i) => p !== gated[i]).map((p) => p.slice(0, 12));
-  assert.deepEqual(swapped, ['Flow: list_a', 'Status & tim', 'Social inbox']);
+  const stdio = SERVER_INSTRUCTIONS.stdio.split('\n\n');
+  const remote = SERVER_INSTRUCTIONS.remote.split('\n\n');
+  assert.equal(remote.length, stdio.length);
+  const differs = stdio.filter((p, i) => p !== remote[i]).map((p) => p.slice(0, 12));
+  assert.deepEqual(differs, ['Flow: list_a', 'The POSTFAST', 'Status & tim', 'delete_post ', 'Social inbox']);
   for (const s of ['ChatGPT', 'few minutes ahead', 'reply_to_inbox_item', 'send_inbox_private_reply']) {
-    assert.ok(!gated.join('\n\n').includes(s), s);
+    assert.ok(!SERVER_INSTRUCTIONS.remote.includes(s), s);
   }
+  for (const s of [
+    'approve_posts only after they say yes',
+    'confirm_inbox_action only after they say yes',
+    'call delete_post only after they say yes',
+  ]) {
+    assert.ok(SERVER_INSTRUCTIONS.remote.includes(s), s);
+  }
+});
+
+// The remote surface tells the model to wait for the user before anything is
+// published, sent, hidden or removed; stdio keeps its own wording.
+const CONSENT = {
+  approve_posts: [
+    /call this only after they say yes in the conversation/,
+    /don't approve it\. Tell the user, and only if they agree, create it again/,
+  ],
+  delete_post: [/call this only after they say yes in the conversation/],
+  prepare_inbox_action: [/wait for their yes in the conversation before calling confirm_inbox_action/],
+  confirm_inbox_action: [/only after the user has seen the preview and said yes in the conversation/],
+  generate_connect_link: [/Email the link \(sendEmail\) only when the user asks you to and gives the address/],
+  set_inbox_item_state: [/Hide or unhide a comment only when the user asks/],
+};
+
+test('remote tool text waits for the user before anything is published, sent, hidden or removed', () => {
+  const tools = gatedTools(recordingPort().port);
+  for (const [name, patterns] of Object.entries(CONSENT)) {
+    for (const pattern of patterns) assert.match(tool(tools, name).description, pattern, name);
+  }
+  assert.match(
+    tool(tools, 'generate_connect_link').inputSchema.sendEmail.description,
+    /only when the user asks you to and gives the address/,
+  );
+  assert.doesNotMatch(tool(tools, 'approve_posts').description, /instead of approving it, and delete the old one/);
+  assert.doesNotMatch(tool(tools, 'delete_post').description, /The deletion cannot be undone/);
+});
+
+test('stdio keeps its own wording for the tools whose remote text asks for the yes', () => {
+  const tools = stdioTools(recordingPort().port);
+  assert.match(tool(tools, 'delete_post').description, /does prevent it from publishing\. The deletion cannot be undone\.$/);
+  assert.equal(tool(tools, 'generate_connect_link').inputSchema.sendEmail.description, 'Send the link via email');
+  for (const name of ['delete_post', 'generate_connect_link', 'set_inbox_item_state']) {
+    for (const phrase of ['say yes', 'only when the user asks']) {
+      assert.ok(!tool(tools, name).description.includes(phrase), `${name}: ${phrase}`);
+    }
+  }
+  assert.ok(!SERVER_INSTRUCTIONS.stdio.includes('call delete_post only after'));
 });
