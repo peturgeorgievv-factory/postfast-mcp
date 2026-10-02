@@ -1,7 +1,7 @@
 {
   "name": "postfast",
   "displayName": "PostFast",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Schedule social media posts, answer comments and review results with PostFast across X, Instagram, Facebook, TikTok, LinkedIn, YouTube, Threads, Pinterest, Bluesky, Telegram and Google Business Profile. Claude fits each post to its network, holds it until you approve it, and shows you every comment reply before it is sent.",
   "author": {
     "name": "PostFast",
