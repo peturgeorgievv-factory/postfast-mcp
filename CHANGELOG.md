@@ -1,5 +1,11 @@
 # postfast-mcp
 
+## 0.10.0
+
+### Minor Changes
+
+- Calendar app: a workspace switcher, a searchable account filter, and a reload when you come back. The calendar payload gains `workspaces`: the connection's workspaces, personal first, then by name, with the one on screen always included. It loads alongside the calendar, is given up after 5 seconds, and is empty when unavailable, so it never blocks or breaks the calendar. The view names the workspace in the messages it sends to the conversation (New post, Review in chat), so posts are made in the workspace on screen, and the "Connect an account" link carries it too. Coming back to a calendar more than a minute old reloads it. No tool definitions change.
+
 ## 0.9.0
 
 ### Minor Changes

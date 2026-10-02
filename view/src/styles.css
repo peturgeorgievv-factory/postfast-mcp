@@ -205,7 +205,7 @@ textarea {
   min-width: 0;
 }
 
-.pf-topbar .pf-select {
+.pf-topbar .pf-picker.is-accounts {
   width: 280px;
 }
 
@@ -239,6 +239,307 @@ textarea {
   line-height: 1.4;
   white-space: nowrap;
   text-overflow: ellipsis;
+}
+
+/* The workspace on screen: a switcher with several workspaces, else its name. */
+
+.pf-brand-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  color: var(--pf-muted-fg);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+/* The workspace keeps its room; the dates give way first. */
+.pf-brand-meta > .pf-picker,
+.pf-brand-meta > .pf-ws-static {
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+.pf-picker.is-workspaces {
+  margin-left: -6px;
+}
+
+.pf-brand-date {
+  flex: 0 100 auto;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.pf-brand-date::before {
+  content: '·';
+  margin-right: 6px;
+}
+
+.pf-ws-static,
+.pf-ws-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  max-width: 100%;
+  color: var(--pf-fg);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.pf-ws-static .icon,
+.pf-ws-trigger .icon {
+  width: 14px;
+  height: 14px;
+  flex: none;
+  color: var(--pf-muted-fg);
+}
+
+.pf-ws-name {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.pf-ws-trigger {
+  min-height: 32px;
+  margin: 0;
+  padding: 0 6px;
+  border: 0;
+  border-radius: var(--pf-radius-sm);
+  background: transparent;
+  font-family: inherit;
+  line-height: 1.2;
+  cursor: var(--cursor-interaction, pointer);
+}
+
+.pf-ws-trigger:hover:not(:disabled) {
+  background: var(--pf-muted);
+}
+
+.pf-ws-trigger:disabled {
+  cursor: default;
+}
+
+/* Touch screens get a full 44px target; a mouse needs less. */
+@media (pointer: coarse) {
+  .pf-ws-trigger {
+    min-height: 44px;
+  }
+}
+
+/* Pickers: the account filter and the workspace switcher. */
+
+.pf-picker {
+  position: relative;
+  display: inline-flex;
+  min-width: 0;
+}
+
+.pf-picker-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 44px;
+  margin: 0;
+  padding: 0 12px 0 8px;
+  border: 1px solid var(--pf-border);
+  border-radius: var(--pf-radius-sm);
+  background: var(--pf-bg);
+  color: var(--pf-fg);
+  font: inherit;
+  font-size: 14px;
+  text-align: left;
+  box-shadow: var(--pf-shadow);
+  cursor: var(--cursor-interaction, pointer);
+}
+
+.pf-picker-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.pf-picker-chevron {
+  flex: none;
+  color: var(--pf-muted-fg);
+  transition: transform 120ms ease;
+}
+
+.pf-picker.is-open .pf-picker-chevron {
+  transform: rotate(180deg);
+}
+
+.pf-picker-lead {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 9999px;
+  background: var(--pf-muted);
+  color: var(--pf-muted-fg);
+}
+
+.pf-picker-lead .icon {
+  width: 16px;
+  height: 16px;
+}
+
+.pf-picker-trigger .pf-avatar,
+.pf-picker-trigger .pf-avatar-img,
+.pf-picker-trigger .pf-avatar-fallback,
+.pf-option .pf-avatar,
+.pf-option .pf-avatar-img,
+.pf-option .pf-avatar-fallback {
+  width: 28px;
+  height: 28px;
+}
+
+.pf-picker-trigger .pf-avatar-fallback .platform-glyph,
+.pf-option .pf-avatar-fallback .platform-glyph {
+  width: 14px;
+  height: 14px;
+}
+
+.pf-picker-trigger .pf-avatar-badge,
+.pf-option .pf-avatar-badge {
+  right: -4px;
+  bottom: -4px;
+  transform: scale(0.75);
+  transform-origin: bottom right;
+}
+
+.pf-popover {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  width: max(100%, 300px);
+  max-width: min(380px, calc(100vw - 32px));
+  max-height: min(420px, calc(100vh - 120px));
+  overflow: hidden;
+  border: 1px solid var(--pf-border);
+  border-radius: var(--pf-radius);
+  background: var(--pf-bg);
+  color: var(--pf-fg);
+  box-shadow:
+    0 12px 32px -12px rgb(15 23 42 / 0.28),
+    0 4px 8px -4px rgb(15 23 42 / 0.12);
+}
+
+.pf-picker.is-accounts .pf-popover {
+  right: 0;
+  left: auto;
+}
+
+.pf-picker-search {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px;
+  border-bottom: 1px solid var(--pf-border);
+}
+
+.pf-picker-search:focus-within {
+  box-shadow: inset 0 -2px 0 var(--pf-ring);
+}
+
+.pf-picker-search .icon {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  color: var(--pf-muted-fg);
+}
+
+.pf-picker-input {
+  flex: 1;
+  min-width: 0;
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: var(--pf-fg);
+  font: inherit;
+  font-size: 14px;
+}
+
+.pf-picker-input::placeholder {
+  color: var(--pf-muted-fg);
+}
+
+.pf-listbox {
+  margin: 0;
+  padding: 4px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  list-style: none;
+}
+
+.pf-listbox:focus-visible {
+  outline: 2px solid var(--pf-ring);
+  outline-offset: -2px;
+}
+
+.pf-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 6px 8px;
+  border-radius: var(--pf-radius-sm);
+  cursor: var(--cursor-interaction, pointer);
+  user-select: none;
+}
+
+.pf-option.is-active {
+  background: var(--pf-muted);
+}
+
+.pf-option-text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.pf-option-label,
+.pf-option-sub {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.pf-option-label {
+  font-size: 14px;
+}
+
+.pf-option-sub {
+  color: var(--pf-muted-fg);
+  font-size: 12px;
+}
+
+.pf-option-check {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  color: var(--pf-link);
+}
+
+.pf-option-empty {
+  padding: 14px 8px;
+  color: var(--pf-muted-fg);
+  font-size: 13px;
+  text-align: center;
 }
 
 .pf-topbar-actions {
@@ -1285,9 +1586,16 @@ textarea {
 /* Narrow: the account filter takes its own row in the header. */
 
 @media (max-width: 760px) {
-  .pf-topbar .pf-select {
+  .pf-topbar .pf-picker.is-accounts {
     order: 3;
     width: 100%;
+  }
+
+  .pf-picker.is-accounts .pf-popover {
+    right: 0;
+    left: 0;
+    width: 100%;
+    max-width: none;
   }
 }
 
@@ -1296,6 +1604,29 @@ textarea {
 @media (max-width: 560px) {
   .pf-topbar h1 {
     font-size: 16px;
+  }
+
+  /* Phones: both pickers open full width just below the header. */
+  .pf-picker {
+    position: static;
+  }
+
+  .pf-picker .pf-popover,
+  .pf-picker.is-accounts .pf-popover {
+    right: calc(12px + var(--safe-right, 0px));
+    left: calc(12px + var(--safe-left, 0px));
+    width: auto;
+    max-width: none;
+    max-height: min(420px, calc(100vh - 160px));
+  }
+
+  .pf-ws-trigger {
+    min-height: 44px;
+  }
+
+  /* Phones: the header is tight, and the day headings already say the dates. */
+  .pf-brand-date {
+    display: none;
   }
 
   .logo-mark {

@@ -377,12 +377,24 @@ export interface AppPostDetailView extends AppPostDetail {
 }
 
 /** Everything the view renders, delivered in the tool result's `_meta`. */
+/** A workspace the calendar view can switch to. */
+export interface AppWorkspace {
+  id: string;
+  name: string;
+}
+
 export interface AppCalendarView {
   version: 1;
   entrypoint: AppEntrypoint;
   generatedAt: string;
   window: { from: string; to: string };
   workspace: { id: string; name: string };
+  /**
+   * Every workspace this connection can show, the current one included, for
+   * the view's switcher: personal first, then by name. Empty when the list
+   * could not be loaded; the view then shows the current workspace only.
+   */
+  workspaces: AppWorkspace[];
   accounts: AppAccount[];
   posts: AppPost[];
   drafts: AppPost[];

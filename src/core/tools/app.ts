@@ -12,6 +12,7 @@ import type {
   AppEntrypoint,
   AppPost,
   AppPostDetailView,
+  AppWorkspace,
 } from '../types.js';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -27,6 +28,10 @@ const CAPTION_CHARS = 280;
 const FULL_TEXT_CHARS = 20_000;
 /** Result size ceiling, far below the 150,000-character limit (see fitBudget). */
 const RESULT_BUDGET_CHARS = 100_000;
+/** The switcher's list is a convenience: cap it, and never wait long for it. */
+const MAX_WORKSPACES = 100;
+const WORKSPACE_NAME_CHARS = 120;
+const WORKSPACES_TIMEOUT_MS = 5_000;
 
 const APP_ACTIONS = [
   'open_in_postfast',
@@ -110,6 +115,64 @@ function fitBudget(view: AppCalendarView): AppCalendarView {
   return view;
 }
 
+/**
+ * The connection's workspaces for the view's switcher, from list_workspaces'
+ * `{ data: [{ id, name, isPersonal }] }`. A failed, slow or unexpected answer
+ * gives [] (no switcher) and never fails the calendar.
+ */
+async function loadWorkspaces(port: BackendPort): Promise<(AppWorkspace & { personal: boolean })[]> {
+  let raw: unknown;
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    raw = await Promise.race([
+      port.listWorkspaces(),
+      new Promise((resolve) => {
+        timer = setTimeout(resolve, WORKSPACES_TIMEOUT_MS, undefined);
+      }),
+    ]);
+  } catch {
+    return [];
+  } finally {
+    clearTimeout(timer);
+  }
+  const rows = Array.isArray(raw) ? raw : (raw as { data?: unknown } | null | undefined)?.data;
+  if (!Array.isArray(rows)) return [];
+  const seen = new Set<string>();
+  const list: (AppWorkspace & { personal: boolean })[] = [];
+  for (const row of rows) {
+    const { id, name, isPersonal } = (row ?? {}) as { id?: unknown; name?: unknown; isPersonal?: unknown };
+    if (typeof id !== 'string' || !id || seen.has(id)) continue;
+    seen.add(id);
+    const label = typeof name === 'string' ? name.trim() : '';
+    list.push({
+      id,
+      name: shorten(label || 'Untitled workspace', WORKSPACE_NAME_CHARS).text,
+      personal: isPersonal === true,
+    });
+    if (list.length === MAX_WORKSPACES) break;
+  }
+  return list;
+}
+
+/** Personal first, then by name; the workspace on screen is always in the list. */
+function switcherList(
+  workspaces: (AppWorkspace & { personal: boolean })[],
+  current: AppWorkspace,
+): AppWorkspace[] {
+  if (!workspaces.length) return [];
+  const list = workspaces.some((w) => w.id === current.id)
+    ? workspaces
+    : [...workspaces, { ...current, personal: false }];
+  return list
+    .sort(
+      (a, b) =>
+        Number(b.personal) - Number(a.personal) ||
+        a.name.localeCompare(b.name, 'en', { sensitivity: 'base' }) ||
+        a.id.localeCompare(b.id),
+    )
+    .map(({ id, name }) => ({ id, name }));
+}
+
 /** Fails loudly on a payload the view could not render, instead of showing an empty calendar. */
 function assertCalendar(calendar: AppCalendar): void {
   const ok =
@@ -136,16 +199,19 @@ async function loadCalendar(
     from: new Date(now - WINDOW_BACK_DAYS * DAY_MS).toISOString(),
     to: new Date(now + WINDOW_AHEAD_DAYS * DAY_MS).toISOString(),
   };
-  const calendar = await port.getAppCalendar(
-    {
-      ...window,
-      limit: POSTS_LIMIT,
-      draftsLimit: DRAFTS_LIMIT,
-      entrypoint,
-      refresh: args.refresh === true,
-    },
-    workspaceId,
-  );
+  const [calendar, workspaces] = await Promise.all([
+    port.getAppCalendar(
+      {
+        ...window,
+        limit: POSTS_LIMIT,
+        draftsLimit: DRAFTS_LIMIT,
+        entrypoint,
+        refresh: args.refresh === true,
+      },
+      workspaceId,
+    ),
+    loadWorkspaces(port),
+  ]);
   assertCalendar(calendar);
   const ws = calendar.workspace;
   return fitBudget({
@@ -154,6 +220,7 @@ async function loadCalendar(
     generatedAt: new Date(now).toISOString(),
     window,
     workspace: { id: ws.id, name: ws.name },
+    workspaces: switcherList(workspaces, { id: ws.id, name: ws.name }),
     accounts: calendar.accounts.map(toAccount),
     posts: calendar.posts.map((post) => toPost(post, app, ws.id)),
     drafts: calendar.drafts.map((post) => toPost(post, app, ws.id)),
@@ -161,7 +228,7 @@ async function loadCalendar(
     draftsHasMore: calendar.draftsHasMore === true,
     links: {
       posts: postsUrl(app, { workspaceId: ws.id }),
-      accounts: `${app.webAppUrl}/dashboard/accounts`,
+      accounts: `${app.webAppUrl}/dashboard/accounts?${new URLSearchParams({ workspaceId: ws.id })}`,
     },
   });
 }

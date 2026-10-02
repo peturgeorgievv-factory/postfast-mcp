@@ -108,8 +108,19 @@ function postDetail(extra = {}) {
   return { ...base, workspaceId: WS, firstComment: 'Link in bio!', mediaItems: items, ...extra };
 }
 
+const PERSONAL = '00000000-0000-4000-8000-0000000000aa';
+const CLIENT = '00000000-0000-4000-8000-0000000000bb';
+/** list_workspaces' answer: the connection's workspaces, in the backend's order. */
+const WORKSPACES = {
+  data: [
+    { id: CLIENT, name: 'zeta Client', isPersonal: false },
+    { id: WS, name: 'Acme', isPersonal: false },
+    { id: PERSONAL, name: 'Personal', isPersonal: true },
+  ],
+};
+
 /** A port answering the app methods from `payload` and recording every call. */
-function appPort(payload = calendar(), { fail, detail = postDetail() } = {}) {
+function appPort(payload = calendar(), { fail, detail = postDetail(), workspaces = WORKSPACES } = {}) {
   const calls = [];
   const port = new Proxy(
     {},
@@ -121,6 +132,10 @@ function appPort(payload = calendar(), { fail, detail = postDetail() } = {}) {
           if (fail) throw new Error(fail);
           if (method === 'getAppCalendar') return structuredClone(payload);
           if (method === 'getAppPost') return structuredClone(detail);
+          if (method === 'listWorkspaces') {
+            if (typeof workspaces === 'function') return workspaces();
+            return structuredClone(workspaces);
+          }
           return { ok: true };
         };
       },
@@ -288,9 +303,9 @@ test('open_postfast: the view reaches only _meta; the model sees counts', async 
   const result = await client.callTool({ name: 'open_postfast', arguments: {} });
   assert.equal(result.isError, undefined);
 
-  assert.equal(calls.length, 1);
-  const [{ method, args }] = calls;
-  assert.equal(method, 'getAppCalendar');
+  // The calendar and, alongside it, the switcher's workspace list.
+  assert.deepEqual(calls.map((c) => c.method).sort(), ['getAppCalendar', 'listWorkspaces']);
+  const { args } = calls.find((c) => c.method === 'getAppCalendar');
   const [request, workspaceId] = args;
   assert.equal(workspaceId, undefined);
   assert.deepEqual(
@@ -314,6 +329,16 @@ test('open_postfast: the view reaches only _meta; the model sees counts', async 
   assert.equal(view.version, 1);
   assert.equal(view.entrypoint, 'global');
   assert.deepEqual(view.workspace, { id: WS, name: 'Acme' });
+  // Personal first, then by name, case-insensitively.
+  assert.deepEqual(view.workspaces, [
+    { id: PERSONAL, name: 'Personal' },
+    { id: WS, name: 'Acme' },
+    { id: CLIENT, name: 'zeta Client' },
+  ]);
+  // Other workspaces' names reach the view only, never the model.
+  for (const s of [...strings(result.content), ...strings(result.structuredContent)]) {
+    assert.doesNotMatch(s, /zeta Client|Personal/);
+  }
   assert.deepEqual(
     view.accounts.map((a) => a.handle),
     ['brand1', 'Acme News', null],
@@ -335,8 +360,66 @@ test('open_postfast: the view reaches only _meta; the model sees counts', async 
   assert.equal(open(view.drafts[0]).tab, 'draft');
   assert.deepEqual(view.links, {
     posts: `${APP.webAppUrl}/dashboard/posts?workspaceId=${WS}`,
-    accounts: `${APP.webAppUrl}/dashboard/accounts`,
+    accounts: `${APP.webAppUrl}/dashboard/accounts?workspaceId=${WS}`,
   });
+  await client.close();
+});
+
+test('the switcher list: the workspace on screen is always in it; odd rows are dropped', async () => {
+  const many = Array.from({ length: 130 }, (_, i) => ({ id: `ws-${String(i).padStart(3, '0')}`, name: `W ${i}` }));
+  const cases = [
+    // The current workspace is missing from the list: it is added.
+    [{ data: [{ id: CLIENT, name: 'Client', isPersonal: false }] }, ['Acme', 'Client']],
+    // A bare array; duplicates, missing ids and non-object rows are dropped; an empty name gets a label.
+    [
+      [{ id: WS, name: 'Acme' }, { id: WS, name: 'Acme again' }, { name: 'no id' }, null, 42, { id: CLIENT, name: '  ' }],
+      ['Acme', 'Untitled workspace'],
+    ],
+    // Capped at 100 from the backend's list, plus the workspace on screen.
+    [{ data: many }, null],
+  ];
+  for (const [answer, names] of cases) {
+    const { port } = appPort(calendar(), { workspaces: answer });
+    const client = await connect(remote(port));
+    const view = viewOf(await client.callTool({ name: 'open_postfast', arguments: {} }));
+    if (names) assert.deepEqual(view.workspaces.map((w) => w.name), names);
+    else {
+      assert.equal(view.workspaces.length, 101);
+      assert.ok(view.workspaces.some((w) => w.id === WS));
+    }
+    await client.close();
+  }
+});
+
+test('a failing or unexpected workspace list leaves the switcher out, never the calendar', async () => {
+  for (const workspaces of [
+    () => Promise.reject(new Error('gateway down')),
+    { ok: true },
+    { data: 'nope' },
+    null,
+  ]) {
+    const { port } = appPort(calendar(), { workspaces });
+    const client = await connect(remote(port));
+    const result = await client.callTool({ name: 'open_postfast', arguments: {} });
+    assert.equal(result.isError, undefined);
+    const view = viewOf(result);
+    assert.deepEqual(view.workspaces, []);
+    assert.equal(view.posts.length, 4);
+    await client.close();
+  }
+});
+
+test('a workspace list that hangs is given up after 5 seconds', async (t) => {
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  const { port } = appPort(calendar(), { workspaces: () => new Promise(() => {}) });
+  const client = await connect(remote(port));
+  const pending = client.callTool({ name: 'open_postfast', arguments: {} });
+  // Let the call reach the race before moving the clock.
+  for (let i = 0; i < 20; i++) await new Promise((resolve) => setImmediate(resolve));
+  t.mock.timers.tick(5_000);
+  const view = viewOf(await pending);
+  assert.deepEqual(view.workspaces, []);
+  assert.equal(view.posts.length, 4);
   await client.close();
 });
 

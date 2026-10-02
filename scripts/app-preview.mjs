@@ -23,7 +23,7 @@ const MCP_PORT = Number(process.env.PORT ?? 3001);
 const MEDIA_PORT = Number(process.env.MEDIA_PORT ?? 3002);
 const MEDIA = `http://localhost:${MEDIA_PORT}`;
 const APP = { mediaOrigin: MEDIA, domain: `http://localhost:${MCP_PORT}`, webAppUrl: 'https://app.postfa.st' };
-const SCENARIOS = ['full', 'no-accounts', 'no-posts', 'error', 'no-detail'];
+const SCENARIOS = ['full', 'no-accounts', 'no-posts', 'error', 'no-detail', 'many', 'single'];
 const WORKSPACE = { id: '7a1c2b3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d', name: 'Northwind Coffee' };
 
 const HOUR = 3_600_000;
@@ -192,31 +192,156 @@ function fullCalendar() {
 }
 
 const strip = ({ _full, ...rest }) => rest;
+const stripCalendar = (c) => ({ ...c, posts: c.posts.map(strip), drafts: c.drafts.map(strip) });
+
+// More workspaces for the switcher. Each calendar numbers its posts in its own
+// range, so a post id finds the right post across workspaces.
+const OTHER = {
+  personal: { id: uuid(900), name: 'Personal', isPersonal: true },
+  lopema: { id: uuid(901), name: 'Lopema Real Estate — client portfolio, listings and open houses', isPersonal: false },
+  empty: { id: uuid(902), name: 'Empty workspace', isPersonal: false },
+  paused: { id: uuid(903), name: 'Paused Client', isPersonal: false },
+};
+
+const makeAccount = (i, platform, username, displayName, avatar = null, disabled = false) => ({
+  id: uuid(i),
+  platform,
+  platformUsername: username,
+  displayName,
+  connectionStatus: disabled ? 'DISABLED' : 'CONNECTED',
+  disabledReason: disabled ? 'TOKEN_REVOKED' : null,
+  avatarUrl: avatar ? `${MEDIA}/avatars/${avatar}.svg` : null,
+});
+
+function personalCalendar() {
+  n = 500;
+  const me = makeAccount(910, 'X', 'petar_dev', 'Petar', 'a1');
+  const sky = makeAccount(911, 'BLUESKY', 'petar.bsky.social', 'Petar');
+  return {
+    workspace: { id: OTHER.personal.id, name: OTHER.personal.name },
+    accounts: [me, sky],
+    posts: [
+      post(me, { scheduledAt: at(1, 9), content: 'Shipping the calendar today.' }),
+      post(sky, { scheduledAt: at(3, 11), content: 'Weekend reading list: three posts on MCP apps.' }),
+    ],
+    drafts: [post(me, { status: 'DRAFT', content: 'A thread on building MCP apps.', media: images('cups', 3) })],
+    hasMore: false,
+    draftsHasMore: false,
+  };
+}
+
+function lopemaCalendar() {
+  n = 600;
+  const insta = makeAccount(920, 'INSTAGRAM', 'lopemaestate', 'Lopema', 'a4');
+  const threads = makeAccount(921, 'THREADS', 'lopemaestate', 'Lopema');
+  return {
+    workspace: { id: OTHER.lopema.id, name: OTHER.lopema.name },
+    accounts: [insta, threads],
+    posts: [
+      post(insta, { scheduledAt: at(2, 10), content: 'Open house this Saturday: three bedrooms and a garden.', media: images('market', 4) }),
+    ],
+    drafts: [],
+    hasMore: false,
+    draftsHasMore: false,
+  };
+}
+
+const emptyCalendar = () => ({
+  workspace: { id: OTHER.empty.id, name: OTHER.empty.name },
+  accounts: [],
+  posts: [],
+  drafts: [],
+  hasMore: false,
+  draftsHasMore: false,
+});
+
+// The "many" scenario: 30 workspaces and 40 accounts, some named in Cyrillic.
+const KINDS = ['Bakery', 'Gym', 'Studio', 'Florist', 'Dental', 'Hotel'];
+const MANY_WORKSPACES = [
+  { ...WORKSPACE, isPersonal: false },
+  { id: uuid(1001), name: 'Personal', isPersonal: true },
+  { id: uuid(1002), name: 'Кафе София', isPersonal: false },
+  { id: uuid(1003), name: 'Петър Георгиев', isPersonal: false },
+  ...Array.from({ length: 26 }, (_, i) => ({
+    id: uuid(1004 + i),
+    name: `Client ${String(i + 4).padStart(2, '0')} — ${KINDS[i % KINDS.length]}`,
+    isPersonal: false,
+  })),
+];
+const PLATFORMS = ['INSTAGRAM', 'FACEBOOK', 'X', 'LINKEDIN', 'TIKTOK', 'YOUTUBE', 'THREADS', 'BLUESKY', 'PINTEREST', 'TELEGRAM'];
+
+function manyCalendar(workspace) {
+  n = 700;
+  const list = Array.from({ length: 40 }, (_, i) => {
+    const platform = PLATFORMS[i % PLATFORMS.length];
+    if (i === 3) return makeAccount(1100 + i, 'GOOGLE_BUSINESS_PROFILE', null, 'Петър Георгиев', 'a2');
+    if (i === 7) return makeAccount(1100 + i, 'FACEBOOK', null, 'Кафе София', 'a5');
+    return makeAccount(1100 + i, platform, `brand${String(i).padStart(2, '0')}.${platform.toLowerCase()}`, `Brand ${i}`, i % 3 ? 'a6' : null, i === 9);
+  });
+  return {
+    workspace: { id: workspace.id, name: workspace.name },
+    accounts: list,
+    posts: list.slice(0, 8).map((a, i) =>
+      post(a, { scheduledAt: at(i % 5, 9 + i), content: `Planned post ${i + 1} for ${a.displayName}.`, media: i % 2 ? image('latte') : [] }),
+    ),
+    drafts: [post(list[3], { status: 'DRAFT', content: 'Чернова: есенно меню.' })],
+    hasMore: false,
+    draftsHasMore: false,
+  };
+}
 
 function calendarFor(scenario) {
   const full = fullCalendar();
-  const calendar = { ...full, posts: full.posts.map(strip), drafts: full.drafts.map(strip) };
+  const calendar = stripCalendar(full);
   if (scenario === 'no-accounts') return { ...calendar, accounts: [], posts: [], drafts: [] };
   if (scenario === 'no-posts') return { ...calendar, posts: [], drafts: [] };
   return calendar;
 }
 
 function findPost(id) {
-  const full = fullCalendar();
-  return [...full.posts, ...full.drafts].find((p) => p.id === id);
+  for (const calendar of [fullCalendar(), personalCalendar(), lopemaCalendar(), manyCalendar(WORKSPACE)]) {
+    const found = [...calendar.posts, ...calendar.drafts].find((p) => p.id === id);
+    if (found) return { post: found, workspaceId: calendar.workspace.id };
+  }
+  return undefined;
 }
 
 /** getAppPost: the post in full, every media item included. */
 function postDetailFor(id) {
   const found = findPost(id);
-  if (!found) throw new Error('Post not found.');
-  const { _full, thumbnail: _thumbnail, ...rest } = found;
-  return { ...rest, workspaceId: WORKSPACE.id, firstComment: _full.firstComment, mediaItems: _full.mediaItems };
+  if (!found) throw new Error('This post no longer exists. (socialPost.notFound)');
+  const { _full, thumbnail: _thumbnail, ...rest } = found.post;
+  return { ...rest, workspaceId: found.workspaceId, firstComment: _full.firstComment, mediaItems: _full.mediaItems };
+}
+
+/** getAppCalendar for one workspace of a scenario; unknown workspaces are refused. */
+function workspaceCalendar(scenario, workspaceId) {
+  const ws = workspaceId ?? WORKSPACE.id;
+  if (scenario === 'many') {
+    const workspace = MANY_WORKSPACES.find((w) => w.id === ws);
+    if (!workspace) throw new Error('You are not a member of this workspace. (workspace.notMember)');
+    return stripCalendar(manyCalendar(workspace));
+  }
+  if (ws === WORKSPACE.id) return calendarFor(scenario);
+  if (ws === OTHER.personal.id) return stripCalendar(personalCalendar());
+  if (ws === OTHER.lopema.id) return stripCalendar(lopemaCalendar());
+  if (ws === OTHER.empty.id) return emptyCalendar();
+  if (ws === OTHER.paused.id) {
+    throw new Error('This workspace has no active plan. (subscription.required)');
+  }
+  throw new Error('You are not a member of this workspace. (workspace.notMember)');
+}
+
+/** list_workspaces as the gateway answers it. */
+function workspacesFor(scenario) {
+  if (scenario === 'single') return { data: [{ ...WORKSPACE, isPersonal: false }] };
+  if (scenario === 'many') return { data: MANY_WORKSPACES };
+  return { data: [{ ...WORKSPACE, isPersonal: false }, ...Object.values(OTHER)] };
 }
 
 /** list_posts by id, as the gateway answers it: keys only, no display URLs. */
 function listPostsFor(ids = []) {
-  const data = ids.map(findPost).filter(Boolean).map((p) => {
+  const data = ids.map(findPost).filter(Boolean).map(({ post: p }) => {
     const { _full, thumbnail: _thumbnail, ...rest } = p;
     return { ...rest, firstComment: _full.firstComment, mediaItems: _full.mediaItems.map(({ type, key, sortOrder }) => ({ type, key, sortOrder })) };
   });
@@ -235,8 +360,9 @@ function portFor(scenario) {
           console.log(`[${scenario}] ${String(method)} ${JSON.stringify(args ?? {})} ws=${workspaceId ?? 'default'}`);
           if (method === 'getAppCalendar') {
             if (scenario === 'error') throw new Error('Missing scope: posts:read. Reconnect PostFast and allow reading posts.');
-            return calendarFor(scenario);
+            return workspaceCalendar(scenario, workspaceId);
           }
+          if (method === 'listWorkspaces') return workspacesFor(scenario);
           if (method === 'getAppPost') return postDetailFor(args.postId);
           if (method === 'listPosts') return listPostsFor(args.ids);
           if (method === 'generateConnectLink') return { connectUrl: 'https://app.postfa.st/connect?token=preview' };
