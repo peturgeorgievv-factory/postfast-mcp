@@ -30,6 +30,7 @@ import {
   wallTimeToDate,
 } from './format';
 import { glyph, logoMark, platformGlyph, platformName, type GlyphName } from './icons';
+import { matchesSearch } from './search';
 
 const CALENDAR_META_KEY = 'postfast/calendar';
 const POST_META_KEY = 'postfast/post';
@@ -41,8 +42,21 @@ const NOTICE_MS = 6_000;
 const DAYS_BACK = 2;
 const DAYS_AHEAD = 14;
 const MAX_TEXT = 5_000;
+/** Coming back to a calendar older than this reloads it (posts made in the chat meanwhile). */
+const RETURN_REFRESH_MS = 60_000;
+/** The workspace switcher gets a search box from this many workspaces on. */
+const SEARCH_WORKSPACES_FROM = 7;
 
 type Tone = 'success' | 'error' | 'info';
+
+type PickerKind = 'accounts' | 'workspaces';
+
+/** The open account filter or workspace switcher: its search text and highlighted row. */
+interface PickerState {
+  kind: PickerKind;
+  query: string;
+  active: number;
+}
 
 /** An opened post: the card's data at once, the full post once it loads. */
 interface DetailState {
@@ -79,6 +93,9 @@ const state = {
   compose: emptyCompose(),
   scrollToToday: true,
   scrollToTop: false,
+  picker: undefined as PickerState | undefined,
+  /** The workspace being opened from the switcher. */
+  switchingTo: undefined as string | undefined,
 };
 
 function emptyCompose(): ComposeState {
@@ -168,6 +185,7 @@ function acceptResult(result: CallToolResult | undefined, keepOnError: boolean):
     reject('The calendar received data it cannot show. Try again in a moment.');
     return;
   }
+  if (!Array.isArray(view.workspaces)) view.workspaces = [];
   state.view = view;
   state.loadedAt = Date.now();
   state.status = 'ready';
@@ -232,9 +250,60 @@ function refreshIfStale(): void {
   }
 }
 
+/**
+ * Coming back to the calendar (its tab or frame regains focus): reload when the
+ * data is over a minute old, so posts made in the chat meanwhile show up.
+ */
+function refreshOnReturn(): void {
+  if (
+    state.view &&
+    state.status === 'ready' &&
+    state.page === 'calendar' &&
+    !state.picker &&
+    !state.refreshing &&
+    Date.now() - state.loadedAt > RETURN_REFRESH_MS
+  ) {
+    void reload('refresh');
+  }
+}
+
 document.addEventListener('visibilitychange', () => {
-  if (document.visibilityState === 'visible') refreshIfStale();
+  if (document.visibilityState !== 'visible') return;
+  refreshIfStale();
+  refreshOnReturn();
 });
+window.addEventListener('focus', refreshOnReturn);
+
+/** Opens another workspace from the switcher; on failure the current one stays. */
+async function switchWorkspace(id: string): Promise<void> {
+  const view = state.view;
+  if (!view || state.refreshing) return;
+  const target = view.workspaces.find((w) => w.id === id);
+  if (!target || target.id === view.workspace.id) return;
+  state.refreshing = true;
+  state.switchingTo = id;
+  render();
+  try {
+    const result = await app.callServerTool({ name: entryTool(), arguments: { workspaceId: id } });
+    const next = (result._meta as Record<string, unknown> | undefined)?.[CALENDAR_META_KEY];
+    if (result.isError || !isCalendarView(next)) {
+      const reason = result.isError ? textOf(result) : 'the calendar received data it cannot show.';
+      notify('error', `Couldn't open ${target.name}: ${reason || 'PostFast refused the request.'}`);
+      return;
+    }
+    state.filter = 'all';
+    state.page = 'calendar';
+    state.scrollToTop = true;
+    state.scrollToToday = true;
+    acceptResult(result, true);
+  } catch (err) {
+    notify('error', `Couldn't reach PostFast: ${messageOf(err)}`);
+  } finally {
+    state.refreshing = false;
+    state.switchingTo = undefined;
+    render();
+  }
+}
 
 /** Product analytics through the backend; failures are ignored and never shown. */
 function record(action: AppAction): void {
@@ -309,8 +378,10 @@ function reviewInChat(post: AppPost): Promise<void> {
     const account = accountOf(post);
     const when = parseDate(post.scheduledAt);
     const tz = timeZone();
+    const workspace = state.view?.workspace;
     const text =
       `Show me my PostFast post ${post.id}` +
+      (workspace ? ` in the workspace "${workspace.name}" (workspaceId ${workspace.id})` : '') +
       (account ? ` on ${accountLabel(account)}` : '') +
       (when ? `, scheduled for ${formatPostTime(when, tz, locale())} (${tz})` : '') +
       ", with its full text and media, and ask whether I approve it. Don't approve or change it until I say yes.";
@@ -460,6 +531,11 @@ function retryDetail(): void {
 
 document.addEventListener('keydown', (event) => {
   if (event.key !== 'Escape' || event.defaultPrevented) return;
+  if (state.picker) {
+    event.preventDefault();
+    closePicker(true);
+    return;
+  }
   if (state.page === 'post') closePost();
   else if (state.page === 'compose' && !state.compose.sending) closeCompose();
 });
@@ -481,11 +557,17 @@ function closeCompose(): void {
   render();
 }
 
-function composeMessage(accounts: AppAccount[], text: string, when: Date | null): string {
+function composeMessage(
+  workspace: { id: string; name: string },
+  accounts: AppAccount[],
+  text: string,
+  when: Date | null,
+): string {
   const tz = timeZone();
   const list = accounts.map((a) => `${accountLabel(a)} (socialMediaId ${a.id})`).join('; ');
   return [
     'Help me create a new post in PostFast.',
+    `Workspace: ${workspace.name} (workspaceId ${workspace.id}). Use this workspaceId on every call.`,
     `Accounts: ${list}.`,
     text ? `Text: ${text}` : 'Text: not written yet. Ask me what the post is about, then draft it.',
     when
@@ -530,7 +612,7 @@ async function submitCompose(): Promise<void> {
       return;
     }
   }
-  const text = composeMessage(accounts, compose.text.trim(), when);
+  const text = composeMessage(view.workspace, accounts, compose.text.trim(), when);
   compose.sending = true;
   compose.error = undefined;
   render();
@@ -565,10 +647,26 @@ async function submitCompose(): Promise<void> {
 const root = document.getElementById('app') as HTMLElement;
 
 function render(): void {
-  const focusedId = document.activeElement instanceof HTMLElement ? document.activeElement.id : '';
+  const active = document.activeElement;
+  const focusedId = active instanceof HTMLElement ? active.id : '';
+  // Text fields keep their caret across a redraw (a notice can redraw while you type).
+  const caret =
+    active instanceof HTMLInputElement || active instanceof HTMLTextAreaElement
+      ? selectionOf(active)
+      : undefined;
   const scrollY = window.scrollY;
   root.replaceChildren(...page());
-  if (focusedId) document.getElementById(focusedId)?.focus({ preventScroll: true });
+  if (focusedId) {
+    const el = document.getElementById(focusedId);
+    el?.focus({ preventScroll: true });
+    if (caret && (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement)) {
+      try {
+        el.setSelectionRange(caret[0], caret[1]);
+      } catch {
+        // Date and similar inputs have no text selection.
+      }
+    }
+  }
   if (state.restoreScroll !== undefined) {
     window.scrollTo(0, state.restoreScroll);
     state.restoreScroll = undefined;
@@ -590,6 +688,16 @@ function render(): void {
     }
   } else {
     window.scrollTo(0, scrollY);
+  }
+}
+
+function selectionOf(field: HTMLInputElement | HTMLTextAreaElement): [number, number] | undefined {
+  try {
+    return field.selectionStart === null || field.selectionEnd === null
+      ? undefined
+      : [field.selectionStart, field.selectionEnd];
+  } catch {
+    return undefined;
   }
 }
 
@@ -647,7 +755,6 @@ function button(
 function topBar(): HTMLElement {
   const view = state.view;
   const title = view?.entrypoint === 'thread' ? 'PostFast Calendar' : 'Content Calendar';
-  const subtitle = view ? `${view.workspace.name} · ${windowLabel()}` : 'PostFast';
   return h(
     'header',
     { class: 'pf-topbar' },
@@ -655,9 +762,21 @@ function topBar(): HTMLElement {
       'div',
       { class: 'pf-brand' },
       logoMark(),
-      h('div', { class: 'pf-brand-text' }, h('h1', {}, title), h('p', { class: 'pf-brand-sub' }, subtitle)),
+      h(
+        'div',
+        { class: 'pf-brand-text' },
+        h('h1', {}, title),
+        view && state.status === 'ready'
+          ? h(
+              'div',
+              { class: 'pf-brand-meta' },
+              workspaceControl(view),
+              h('span', { class: 'pf-brand-date' }, windowLabel()),
+            )
+          : h('p', { class: 'pf-brand-sub' }, 'PostFast'),
+      ),
     ),
-    view && view.accounts.length && state.status === 'ready' ? accountFilter(view) : null,
+    view && view.accounts.length && state.status === 'ready' ? accountPicker(view) : null,
     view
       ? h(
           'div',
@@ -1139,28 +1258,299 @@ function daySection(
   );
 }
 
-function accountFilter(view: AppCalendarView): HTMLElement {
-  const select = h(
-    'select',
+// ---------------------------------------------------------------------------
+// Pickers: the account filter and the workspace switcher. A button opens a
+// list; typing in its search box filters the list in place, so the box keeps
+// its focus and caret. Selection, Escape and clicks outside close it.
+
+interface PickerItem {
+  id: string;
+  label: string;
+  sub?: string;
+  /** What the search box matches: label, handle and network. */
+  search: string;
+  leading?: () => Node;
+}
+
+const PICKER_TRIGGERS: Record<PickerKind, string> = {
+  accounts: 'account-filter',
+  workspaces: 'workspace-switcher',
+};
+
+function pickerItems(kind: PickerKind): PickerItem[] {
+  const view = state.view;
+  if (!view) return [];
+  if (kind === 'workspaces') {
+    return view.workspaces.map((w) => ({ id: w.id, label: w.name, search: w.name }));
+  }
+  return [
     {
-      id: 'account-filter',
-      'aria-label': 'Filter by account',
-      onchange: (event: Event) => {
-        state.filter = (event.target as HTMLSelectElement).value;
-        render();
-      },
+      id: 'all',
+      label: `All accounts (${view.accounts.length})`,
+      search: 'all accounts',
+      leading: () => h('span', { class: 'pf-picker-lead' }, glyph('users')),
     },
-    h('option', { value: 'all' }, `All accounts (${view.accounts.length})`),
-    ...view.accounts.map((a) =>
-      h(
-        'option',
-        { value: a.id },
-        `${accountLabel(a)}${a.connectionStatus === 'DISABLED' ? ' (disconnected)' : ''}`,
-      ),
+    ...view.accounts.map((a) => {
+      const network = platformName(a.platform);
+      const name = a.handle ? handleText(a.handle) : network;
+      const disconnected = a.connectionStatus === 'DISABLED';
+      return {
+        id: a.id,
+        label: name,
+        sub: disconnected ? `${network} · disconnected` : network,
+        search: `${name} ${a.handle ?? ''} ${network}${disconnected ? ' disconnected' : ''}`,
+        leading: () => avatar(a, a.platform),
+      };
+    }),
+  ];
+}
+
+const filteredItems = (kind: PickerKind, query: string) =>
+  pickerItems(kind).filter((item) => matchesSearch(item.search, query));
+
+const selectedId = (kind: PickerKind) => (kind === 'accounts' ? state.filter : state.view?.workspace.id);
+
+function togglePicker(kind: PickerKind, searchable: boolean): void {
+  if (state.picker?.kind === kind) {
+    closePicker(true);
+    return;
+  }
+  const selected = selectedId(kind);
+  const active = Math.max(0, pickerItems(kind).findIndex((item) => item.id === selected));
+  state.picker = { kind, query: '', active };
+  render();
+  document.getElementById(searchable ? `${kind}-search` : `${kind}-listbox`)?.focus({ preventScroll: true });
+  document.getElementById(`${kind}-opt-${active}`)?.scrollIntoView({ block: 'nearest' });
+}
+
+function closePicker(focusTrigger: boolean): void {
+  const kind = state.picker?.kind;
+  if (!kind) return;
+  state.picker = undefined;
+  render();
+  if (focusTrigger) document.getElementById(PICKER_TRIGGERS[kind])?.focus({ preventScroll: true });
+}
+
+function choose(kind: PickerKind, id: string): void {
+  if (kind === 'accounts') {
+    state.filter = id;
+    closePicker(true);
+    return;
+  }
+  if (!state.view || id === state.view.workspace.id) {
+    closePicker(true);
+    return;
+  }
+  closePicker(false);
+  void switchWorkspace(id);
+}
+
+/** Highlights a row without redrawing the list. */
+function markActive(kind: PickerKind, index: number): void {
+  if (!state.picker) return;
+  state.picker.active = index;
+  const list = document.getElementById(`${kind}-listbox`);
+  list?.querySelectorAll('.pf-option').forEach((el, i) => el.classList.toggle('is-active', i === index));
+  document.getElementById(`${kind}-opt-${index}`)?.scrollIntoView({ block: 'nearest' });
+  (document.getElementById(`${kind}-search`) ?? list)?.setAttribute('aria-activedescendant', `${kind}-opt-${index}`);
+}
+
+function optionNode(kind: PickerKind, item: PickerItem, index: number, selected: boolean, active: boolean): HTMLElement {
+  const option = h(
+    'li',
+    {
+      id: `${kind}-opt-${index}`,
+      role: 'option',
+      class: active ? 'pf-option is-active' : 'pf-option',
+      'aria-selected': selected ? 'true' : 'false',
+    },
+    item.leading ? item.leading() : null,
+    h(
+      'span',
+      { class: 'pf-option-text' },
+      h('span', { class: 'pf-option-label' }, item.label),
+      item.sub ? h('span', { class: 'pf-option-sub' }, item.sub) : null,
     ),
+    selected ? glyph('check', 'icon pf-option-check') : null,
   );
-  select.value = state.filter;
-  return h('div', { class: 'pf-select' }, select, glyph('chevronDown'));
+  // Keeps the focus in the search box; the click selects.
+  option.addEventListener('pointerdown', (event) => event.preventDefault());
+  option.addEventListener('click', () => choose(kind, item.id));
+  option.addEventListener('pointermove', () => {
+    if (state.picker?.active !== index) markActive(kind, index);
+  });
+  return option;
+}
+
+function fillList(kind: PickerKind, list: HTMLElement, focusTarget: HTMLElement): void {
+  const picker = state.picker;
+  if (!picker) return;
+  const items = filteredItems(kind, picker.query);
+  picker.active = items.length ? Math.min(Math.max(picker.active, 0), items.length - 1) : -1;
+  const selected = selectedId(kind);
+  list.replaceChildren(
+    ...(items.length
+      ? items.map((item, i) => optionNode(kind, item, i, item.id === selected, i === picker.active))
+      : [
+          h(
+            'li',
+            { class: 'pf-option-empty', role: 'presentation' },
+            kind === 'accounts' ? 'No accounts match.' : 'No workspaces match.',
+          ),
+        ]),
+  );
+  if (picker.active >= 0) focusTarget.setAttribute('aria-activedescendant', `${kind}-opt-${picker.active}`);
+  else focusTarget.removeAttribute('aria-activedescendant');
+}
+
+function pickerKey(event: KeyboardEvent, kind: PickerKind, list: HTMLElement, focusTarget: HTMLElement): void {
+  const picker = state.picker;
+  if (!picker) return;
+  const count = filteredItems(kind, picker.query).length;
+  switch (event.key) {
+    case 'ArrowDown':
+    case 'ArrowUp': {
+      event.preventDefault();
+      if (count) markActive(kind, (picker.active + (event.key === 'ArrowDown' ? 1 : -1) + count) % count);
+      return;
+    }
+    case 'Home':
+    case 'End':
+      // In the search box these move the caret.
+      if (focusTarget === list && count) {
+        event.preventDefault();
+        markActive(kind, event.key === 'Home' ? 0 : count - 1);
+      }
+      return;
+    case 'Enter': {
+      event.preventDefault();
+      const item = filteredItems(kind, picker.query)[picker.active];
+      if (item) choose(kind, item.id);
+      return;
+    }
+    case 'Escape':
+      event.preventDefault();
+      event.stopPropagation();
+      closePicker(true);
+      return;
+    case 'Tab':
+      closePicker(false);
+      return;
+  }
+}
+
+function picker(
+  kind: PickerKind,
+  trigger: HTMLButtonElement,
+  options: { label: string; searchable: boolean; placeholder: string },
+): HTMLElement {
+  const open = state.picker?.kind === kind;
+  const listId = `${kind}-listbox`;
+  trigger.setAttribute('aria-haspopup', 'listbox');
+  trigger.setAttribute('aria-expanded', open ? 'true' : 'false');
+  trigger.setAttribute('aria-controls', listId);
+  trigger.addEventListener('click', () => togglePicker(kind, options.searchable));
+  const wrap = h('div', { class: `pf-picker is-${kind}${open ? ' is-open' : ''}` }, trigger);
+  if (!open || !state.picker) return wrap;
+
+  const list = h('ul', { class: 'pf-listbox', id: listId, role: 'listbox', 'aria-label': options.label });
+  const panel = h('div', { class: 'pf-popover' });
+  let focusTarget: HTMLElement = list;
+  if (options.searchable) {
+    const input = h('input', {
+      id: `${kind}-search`,
+      class: 'pf-picker-input',
+      type: 'text',
+      placeholder: options.placeholder,
+      autocomplete: 'off',
+      spellcheck: 'false',
+      role: 'combobox',
+      'aria-autocomplete': 'list',
+      'aria-expanded': 'true',
+      'aria-controls': listId,
+      'aria-label': options.placeholder,
+    });
+    input.value = state.picker.query;
+    input.addEventListener('input', () => {
+      if (!state.picker) return;
+      state.picker.query = input.value;
+      state.picker.active = 0;
+      fillList(kind, list, input);
+    });
+    focusTarget = input;
+    panel.append(h('div', { class: 'pf-picker-search' }, glyph('search'), input));
+  } else {
+    list.tabIndex = -1;
+  }
+  focusTarget.addEventListener('keydown', (event) => pickerKey(event, kind, list, focusTarget));
+  fillList(kind, list, focusTarget);
+  panel.append(list);
+  wrap.append(panel);
+  return wrap;
+}
+
+// A click outside an open picker closes it. In the capture phase, so the click
+// still reaches what it was aimed at.
+document.addEventListener(
+  'click',
+  (event) => {
+    if (state.picker && !(event.target instanceof Element && event.target.closest('.pf-picker'))) {
+      closePicker(false);
+    }
+  },
+  true,
+);
+
+function accountPicker(view: AppCalendarView): HTMLElement {
+  const selected = view.accounts.find((a) => a.id === state.filter);
+  const label = selected ? accountLabel(selected) : `All accounts (${view.accounts.length})`;
+  const trigger = h(
+    'button',
+    {
+      type: 'button',
+      class: 'pf-picker-trigger',
+      id: 'account-filter',
+      'aria-label': `Filter by account: ${selected ? label : 'all accounts'}`,
+    },
+    selected ? avatar(selected, selected.platform) : h('span', { class: 'pf-picker-lead' }, glyph('users')),
+    h('span', { class: 'pf-picker-label' }, label),
+    glyph('chevronDown', 'icon pf-picker-chevron'),
+  );
+  return picker('accounts', trigger, { label: 'Accounts', searchable: true, placeholder: 'Search accounts' });
+}
+
+/** The workspace on screen: a switcher when the connection has several, else its name. */
+function workspaceControl(view: AppCalendarView): HTMLElement {
+  const name = view.workspace.name;
+  if (view.workspaces.length < 2) {
+    return h(
+      'span',
+      { class: 'pf-ws-static', title: `Workspace: ${name}` },
+      glyph('briefcase'),
+      h('span', { class: 'pf-ws-name' }, name),
+    );
+  }
+  const switching = state.switchingTo ? view.workspaces.find((w) => w.id === state.switchingTo) : undefined;
+  const trigger = h(
+    'button',
+    {
+      type: 'button',
+      class: 'pf-ws-trigger',
+      id: 'workspace-switcher',
+      title: 'Switch workspace',
+      disabled: state.refreshing,
+      'aria-busy': switching ? 'true' : undefined,
+      'aria-label': switching ? `Opening ${switching.name}` : `Workspace: ${name}. Switch workspace`,
+    },
+    switching ? glyph('spinner', 'icon pf-spin') : glyph('briefcase'),
+    h('span', { class: 'pf-ws-name' }, switching ? switching.name : name),
+    glyph('chevronDown', 'icon pf-picker-chevron'),
+  );
+  return picker('workspaces', trigger, {
+    label: 'Workspaces',
+    searchable: view.workspaces.length >= SEARCH_WORKSPACES_FROM,
+    placeholder: 'Search workspaces',
+  });
 }
 
 function summaryBar(visible: AppPost[]): HTMLElement {

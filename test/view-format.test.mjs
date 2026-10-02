@@ -108,3 +108,23 @@ test('safeUrl allows https, and http only on loopback', () => {
     assert.equal(safeUrl(value), null, String(value));
   }
 });
+
+const { matchesSearch, normalizeSearch } = await import('../view/src/search.ts');
+
+test('search: lowercase, no accents, single spaces; other scripts kept', () => {
+  assert.equal(normalizeSearch('  Café   Crème '), 'cafe creme');
+  assert.equal(normalizeSearch('Петър  Георгиев'), 'петър георгиев');
+  assert.equal(normalizeSearch('ŁÓDŹ'), 'łodz');
+});
+
+test('search: every word must appear, in any order, across the text', () => {
+  const account = '@kohifit kohifit Instagram';
+  assert.equal(matchesSearch(account, ''), true);
+  assert.equal(matchesSearch(account, '   '), true);
+  assert.equal(matchesSearch(account, 'KOHI'), true);
+  assert.equal(matchesSearch(account, '@kohi'), true);
+  assert.equal(matchesSearch(account, 'instagram kohi'), true);
+  assert.equal(matchesSearch(account, 'kohi tiktok'), false);
+  assert.equal(matchesSearch('Петър Георгиев Google Business Profile', 'петър'), true);
+  assert.equal(matchesSearch('Lopema Real Estate', 'lopéma'), true);
+});
