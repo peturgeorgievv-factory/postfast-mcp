@@ -8,8 +8,10 @@ import assert from 'node:assert/strict';
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import yaml from 'js-yaml';
 import { ALL_TOOLS, buildTools, instructionsFor } from '../dist/core/index.js';
 
+const PLUGINS = fileURLToPath(new URL('../plugins/', import.meta.url));
 const PLUGIN = fileURLToPath(new URL('../plugins/postfast/', import.meta.url));
 const SKILLS = join(PLUGIN, 'skills');
 const RULES = join(SKILLS, 'schedule-posts', 'references', 'platform-rules.md');
@@ -113,12 +115,10 @@ test('the directory listing has its icon and PostFast links', () => {
 test('each skill is named for its folder, fits the size limits and its files exist', () => {
   for (const dir of readdirSync(SKILLS)) {
     const text = read(join(SKILLS, dir, 'SKILL.md'));
-    const front = /^---\n([\s\S]*?)\n---\n/.exec(text)?.[1];
-    assert.ok(front, `${dir}: no frontmatter`);
-    const field = (key) => new RegExp(`^${key}: (.+)$`, 'm').exec(front)?.[1];
-    assert.equal(field('name'), dir);
+    const meta = frontmatter(join(SKILLS, dir, 'SKILL.md'));
+    assert.equal(meta.name, dir);
     assert.match(dir, /^[a-z0-9]+(?:-[a-z0-9]+)*$/);
-    const description = field('description') ?? '';
+    const description = typeof meta.description === 'string' ? meta.description : '';
     assert.ok(description.length > 0 && description.length <= 1024, `${dir}: description`);
     assert.ok(text.split('\n').length < 500, `${dir}: SKILL.md is 500 lines or more`);
     for (const [, path] of text.matchAll(/`((?:\.\.\/[a-z0-9-]+\/)?references\/[\w./-]+)`/g)) {
@@ -135,6 +135,82 @@ test('the skills name no client app, so every client package can ship them', () 
   }
   // Negative control: the pattern catches a client name in running text.
   assert.ok(CLIENTS.test('The connector holds posts in Claude anyway.'));
+});
+
+/** A skill's frontmatter as a strict YAML loader reads it; throws where such loaders do. */
+function frontmatter(path) {
+  const front = /^---\n([\s\S]*?)\n---\n/.exec(read(path))?.[1];
+  assert.ok(front, `${relative(PLUGINS, path)}: no frontmatter`);
+  return yaml.load(front);
+}
+
+/**
+ * A link to a page that starts an upgrade, subscription or purchase on a
+ * PostFast site: pricing, plans, sign-up, register or checkout, or any URL
+ * carrying a plan. Skills may tell people to sign in to an existing account.
+ */
+function isCommerceLink(href) {
+  let url;
+  try {
+    url = new URL(href);
+  } catch {
+    return false;
+  }
+  if (!/(^|\.)postfa\.st$/.test(url.hostname)) return false;
+  return (
+    /\/(?:pricing|plans?|register|sign-?up|checkout|subscribe|upgrade|billing)(?:\/|$)/i.test(url.pathname) ||
+    url.searchParams.has('plan')
+  );
+}
+
+/** An invitation to sign up or create an account, followed by a PostFast link in the same sentence. */
+const SIGN_UP_INVITE = /\b(?:sign[ -]?up|create (?:one|an account|a (?:new )?account)|register)\b[^.\n]*https?:\/\/[^\s)]*postfa\.st/i;
+
+test('every plugin skill has frontmatter a strict YAML loader accepts and links to no pricing or sign-up page', () => {
+  const files = readdirSync(PLUGINS, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory() && existsSync(join(PLUGINS, entry.name, 'skills')))
+    .flatMap((entry) => filesUnder(join(PLUGINS, entry.name, 'skills')));
+  const skills = files.filter((path) => path.endsWith('SKILL.md'));
+  assert.ok(skills.length >= 5, `found ${skills.length} skills`);
+  for (const path of skills) {
+    let meta;
+    assert.doesNotThrow(() => {
+      meta = frontmatter(path);
+    }, `${relative(PLUGINS, path)}: frontmatter is not valid YAML`);
+    assert.equal(typeof meta?.name, 'string', `${relative(PLUGINS, path)}: name`);
+    assert.equal(typeof meta?.description, 'string', `${relative(PLUGINS, path)}: description`);
+  }
+  for (const path of files.filter((p) => p.endsWith('.md'))) {
+    const text = read(path);
+    for (const [href] of text.matchAll(/https?:\/\/[^\s)`"'<>\]]+/g)) {
+      assert.ok(!isCommerceLink(href), `${relative(PLUGINS, path)} links to ${href}`);
+    }
+    const invite = SIGN_UP_INVITE.exec(text);
+    assert.equal(invite, null, `${relative(PLUGINS, path)} invites a sign-up: "${invite?.[0]}"`);
+  }
+
+  // Negative controls: the loader rejects an unquoted ": " in a value, and
+  // the link check catches pricing and sign-up pages but not other pages.
+  assert.throws(() => yaml.load('name: x\ndescription: Set up PostFast and check that it works: connect it.'));
+  assert.equal(
+    yaml.load('description: "Set up PostFast and check that it works: connect it."').description,
+    'Set up PostFast and check that it works: connect it.',
+  );
+  for (const href of [
+    'https://postfa.st/pricing',
+    'https://postfa.st/es/pricing',
+    'https://app.postfa.st/register?plan=pro',
+    'https://postfa.st/signup',
+    'https://app.postfa.st/checkout/123',
+  ]) {
+    assert.ok(isCommerceLink(href), href);
+  }
+  for (const href of ['https://postfa.st', 'https://app.postfa.st/dashboard/accounts', 'https://help.postfa.st/pricing-faq']) {
+    assert.ok(!isCommerceLink(href), href);
+  }
+  assert.match('they can create one at https://postfa.st and connect their accounts', SIGN_UP_INVITE);
+  assert.doesNotMatch("Don't link to sign-up, plans or pricing.", SIGN_UP_INVITE);
+  assert.doesNotMatch('connects accounts in the PostFast app (https://app.postfa.st)', SIGN_UP_INVITE);
 });
 
 test('platform limits are stated once, in the shared platform rules', () => {

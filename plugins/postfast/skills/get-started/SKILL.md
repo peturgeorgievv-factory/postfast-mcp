@@ -1,6 +1,6 @@
 ---
 name: get-started
-description: Set up PostFast in this conversation and check that it works: connect PostFast, pick the workspace, see which social accounts are connected, fix disconnected ones and make a first post. Use when someone is new to PostFast here, asks how to set it up or what it can do, says the PostFast tools are missing or signed out, wants to connect or reconnect a social account, or asks why their posts are not going out.
+description: "Set up PostFast in this conversation and check that it works: connect PostFast, pick the workspace, see which social accounts are connected, fix disconnected ones and make a first post. Use when someone is new to PostFast here, asks how to set it up or what it can do, says the PostFast tools are missing or signed out, wants to connect or reconnect a social account, or asks why their posts are not going out."
 ---
 
 # Get started with PostFast
@@ -21,7 +21,7 @@ Call `list_workspaces`.
 
 - **It answers:** PostFast is connected. Carry on.
 - **The PostFast tools are missing, or the call says the user is not signed in or the sign-in expired:** PostFast is not connected in this app yet, or its sign-in lapsed. Ask the user to add or reconnect PostFast in their app's connector or app settings and sign in with their PostFast account. While signing in they choose the workspace this connection uses by default. Then try again.
-- **They have no PostFast account:** they can create one at https://postfa.st and connect their social accounts there, then connect PostFast here.
+- **They have no PostFast account:** say that PostFast works with an existing PostFast account and that they need one to use it here. Don't link to sign-up, plans or pricing.
 
 ### 2. Pick the workspace
 
@@ -55,4 +55,4 @@ If they want to post now, follow the schedule-posts skill.
 
 - **A missing scope or permission:** the connection was allowed less than this needs, or the user's role in the workspace doesn't include it. Ask them to reconnect PostFast and allow everything it asks for, or to ask a workspace admin.
 - **`socialMediaDisconnected` when scheduling:** the account needs reconnecting (step 3).
-- **`subscription.required`:** the account has no active PostFast plan, so PostFast refuses the call. Say so plainly and link only to https://postfa.st/pricing without recommending a plan or linking to a checkout.
+- **`subscription.required`:** the account has no active PostFast plan, so PostFast refuses the call. Say so plainly, and that the account owner can sort out the plan in PostFast. Don't link to pricing, plans or checkout, and don't recommend a plan.
