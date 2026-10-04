@@ -63,7 +63,7 @@ test('the remote surface matches its snapshot', async () => {
   // The snapshot is the confirm-gated surface.
   const { tools, instructions } = JSON.parse(pinned);
   const names = tools.map((t) => t.name);
-  assert.equal(names.length, 26);
+  assert.equal(names.length, 27);
   assert.ok(names.includes('prepare_inbox_action') && names.includes('confirm_inbox_action'));
   assert.ok(!names.includes('reply_to_inbox_item') && !names.includes('send_inbox_private_reply'));
   assert.match(instructions, /approve_posts only after they say yes/);

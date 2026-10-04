@@ -1,5 +1,11 @@
 # postfast-mcp
 
+## 0.11.0
+
+### Minor Changes
+
+- `list_posts` gains a `socialMediaIds` filter: only posts on these accounts (ids from `list_accounts`, max 100), AND-ed with the other filters. A new `delete_posts` tool deletes up to 100 posts in one call and returns `{ deletedIds, notFoundIds }`, where `notFoundIds` are the ids that don't exist in the workspace. Like `delete_post`, it removes posts from PostFast only, never from the social platform, and on the remote binding it waits for the user's yes. The server instructions' paragraph on deleting covers both tools. `delete_posts` is registered after the confirm tools, so the existing tools on every surface keep their positions. Its `BackendPort.deletePosts()` method is optional: a host whose adapter does not implement it yet skips the tool, with a log line, and keeps deploying. The stdio adapter calls `POST /social-posts/bulk-delete`, and its error for an HTTP 429 now ends with the API's `Retry-After` delay ("Retry after 37s.").
+
 ## 0.10.1
 
 ### Patch Changes

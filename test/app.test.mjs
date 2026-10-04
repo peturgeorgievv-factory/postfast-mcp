@@ -187,7 +187,7 @@ test('without the app option no binding lists the app tools', () => {
   ];
   assert.deepEqual(
     surfaces.map((tools) => tools.length),
-    [24, 24, 26, 24],
+    [25, 25, 27, 25],
   );
   for (const tools of surfaces) {
     assert.ok(!names(tools).some((name) => APP_TOOLS.includes(name)));
@@ -518,7 +518,7 @@ test('a port without the app methods registers no app tool and no resource', asy
   try {
     const client = await connect(remote(port));
     const { tools } = await client.listTools();
-    assert.equal(tools.length, 26);
+    assert.equal(tools.length, 27);
     assert.equal(client.getServerCapabilities().resources, undefined);
     await client.close();
   } finally {
@@ -530,8 +530,8 @@ test('a port without the app methods registers no app tool and no resource', asy
 test('the app tools come after the whole remote surface, confirm tools included', async () => {
   const client = await connect(remote(appPort().port));
   const { tools } = await client.listTools();
-  assert.equal(tools.length, 30);
-  assert.deepEqual(names(tools).slice(24, 26), ['prepare_inbox_action', 'confirm_inbox_action']);
+  assert.equal(tools.length, 31);
+  assert.deepEqual(names(tools).slice(24, 27), ['prepare_inbox_action', 'confirm_inbox_action', 'delete_posts']);
   assert.deepEqual(names(tools).slice(-APP_TOOLS.length), APP_TOOLS);
   await client.close();
 });

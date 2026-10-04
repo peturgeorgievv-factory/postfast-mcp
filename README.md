@@ -135,9 +135,10 @@ Ask your AI assistant things like:
 | Tool | Description |
 |------|-------------|
 | `list_accounts` | List connected social media accounts (each with `connectionStatus` — `CONNECTED`/`DISABLED` — `disabledReason`, `followerCount`/`followerCountUpdatedAt`, and `inboxCapable`) |
-| `list_posts` | List posts with filters (specific IDs, platform, status, date range); each post carries its key settings in `controls` (Threads topic, Instagram/Facebook format, TikTok draft flag, YouTube privacy) |
+| `list_posts` | List posts with filters (specific IDs, accounts, platform, status, date range); each post carries its key settings in `controls` (Threads topic, Instagram/Facebook format, TikTok draft flag, YouTube privacy) |
 | `create_posts` | Create and schedule posts (batch, up to 15) |
 | `delete_post` | Delete a post from PostFast by ID (does not remove an already-published post from the platform) |
+| `delete_posts` | Delete up to 100 posts from PostFast in one call; returns `deletedIds` and `notFoundIds` (does not remove already-published posts from the platform) |
 | `upload_media` | Upload a local file and get a media key (handles the full flow) |
 | `get_upload_urls` | Get signed URLs to upload media files |
 | `list_pinterest_boards` | Get Pinterest boards for an account |

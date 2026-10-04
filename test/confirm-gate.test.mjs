@@ -182,8 +182,9 @@ test('the remote binding is always gated: create_posts is held, set_inbox_item_s
     assert.match(tool(tools, 'approve_posts').description, /only after they say yes/);
   }
   const names = gatedTools(recordingPort().port).map((t) => t.name);
-  assert.equal(names.length, 26);
-  assert.deepEqual(names.slice(-2), ['prepare_inbox_action', 'confirm_inbox_action']);
+  assert.equal(names.length, 27);
+  // Later tools append: the confirm tools keep their published positions.
+  assert.deepEqual(names.slice(24), ['prepare_inbox_action', 'confirm_inbox_action', 'delete_posts']);
 });
 
 test('without a secret the remote binding stays gated and leaves out only the two confirm tools', () => {
@@ -223,7 +224,7 @@ test('a short secret throws on remote; stdio ignores the gate', () => {
   const view = (tools) => tools.map((t) => [t.name, t.description, t.annotations, t._meta, t.run]);
   const plain = buildTools({ binding: 'stdio' });
   const withGate = buildTools({ binding: 'stdio', confirmGate: { secret: 'short' } });
-  assert.equal(withGate.length, 24);
+  assert.equal(withGate.length, 25);
   assert.deepEqual(view(withGate), view(plain));
 });
 
@@ -242,7 +243,7 @@ test('instructions: remote holds everything for a yes, stdio keeps its own text'
   for (const s of [
     'approve_posts only after they say yes',
     'confirm_inbox_action only after they say yes',
-    'call delete_post only after they say yes',
+    'call delete_post or delete_posts only after they say yes',
   ]) {
     assert.ok(SERVER_INSTRUCTIONS.remote.includes(s), s);
   }
@@ -256,6 +257,7 @@ const CONSENT = {
     /don't approve it\. Tell the user, and only if they agree, create it again/,
   ],
   delete_post: [/call this only after they say yes in the conversation/],
+  delete_posts: [/show the user every post you are about to delete .* call this only after they say yes in the conversation/],
   prepare_inbox_action: [/wait for their yes in the conversation before calling confirm_inbox_action/],
   confirm_inbox_action: [/only after the user has seen the preview and said yes in the conversation/],
   generate_connect_link: [/Email the link \(sendEmail\) only when the user asks you to and gives the address/],
@@ -273,16 +275,19 @@ test('remote tool text waits for the user before anything is published, sent, hi
   );
   assert.doesNotMatch(tool(tools, 'approve_posts').description, /instead of approving it, and delete the old one/);
   assert.doesNotMatch(tool(tools, 'delete_post').description, /The deletion cannot be undone/);
+  assert.doesNotMatch(tool(tools, 'delete_posts').description, /The deletion cannot be undone/);
 });
 
 test('stdio keeps its own wording for the tools whose remote text asks for the yes', () => {
   const tools = stdioTools(recordingPort().port);
   assert.match(tool(tools, 'delete_post').description, /does prevent it from publishing\. The deletion cannot be undone\.$/);
+  assert.match(tool(tools, 'delete_posts').description, /listed once each\. The deletion cannot be undone\.$/);
   assert.equal(tool(tools, 'generate_connect_link').inputSchema.sendEmail.description, 'Send the link via email');
-  for (const name of ['delete_post', 'generate_connect_link', 'set_inbox_item_state']) {
+  for (const name of ['delete_post', 'delete_posts', 'generate_connect_link', 'set_inbox_item_state']) {
     for (const phrase of ['say yes', 'only when the user asks']) {
       assert.ok(!tool(tools, name).description.includes(phrase), `${name}: ${phrase}`);
     }
   }
-  assert.ok(!SERVER_INSTRUCTIONS.stdio.includes('call delete_post only after'));
+  const stdioDelete = SERVER_INSTRUCTIONS.stdio.split('\n\n').find((p) => p.startsWith('delete_post '));
+  assert.ok(stdioDelete.includes('delete_posts') && !stdioDelete.includes('say yes'), stdioDelete);
 });

@@ -18,7 +18,7 @@ These steps use the PostFast connector's tools. PostFast holds each post you cre
 
 ### 1. Pick the workspace
 
-Call `list_workspaces`. With one workspace, carry on and leave `workspaceId` out. With several, use the one the user names or ask which, then pass its `id` as `workspaceId` on every call that follows, including `approve_posts`, `delete_post` and `list_posts` in later turns. Leaving it out uses the workspace the user connected, where a post from another workspace isn't found: `delete_post` then answers `deleted: false` and `list_posts` returns nothing.
+Call `list_workspaces`. With one workspace, carry on and leave `workspaceId` out. With several, use the one the user names or ask which, then pass its `id` as `workspaceId` on every call that follows, including `approve_posts`, `delete_post`, `delete_posts` and `list_posts` in later turns. Leaving it out uses the workspace the user connected, where a post from another workspace isn't found: `delete_post` then answers `deleted: false`, `delete_posts` lists it in `notFoundIds`, and `list_posts` returns nothing.
 
 ### 2. Pick the accounts
 
@@ -83,7 +83,7 @@ PostFast has no publish-now. Schedule the post about 5 minutes ahead and say so 
 
 ## Check, fix or remove posts
 
-- `list_posts` filters by `statuses` (DRAFT, SCHEDULED, PUBLISHED, FAILED), `platforms`, `from` and `to`, or `ids`, up to 50 per page.
+- `list_posts` filters by `statuses` (DRAFT, SCHEDULED, PUBLISHED, FAILED), `platforms`, accounts (`socialMediaIds`, the `id`s from `list_accounts`), `from` and `to`, or `ids`, up to 50 per page.
 - A FAILED post has a `lastError`. MISSED_DISCONNECTED means its account was disconnected when it was due: reconnect the account (step 2), then create the post again. MISSED_NOT_PUBLISHED means it passed its time by more than 2 hours without going out. Other errors are usually media the network refused.
 - Each post shows its settings in `controls`. Only the field for the post's own network means anything; the others can hold defaults.
-- `delete_post` removes a post from PostFast and stops a scheduled post from going out. It does not remove a post that was already published: that stays on the network until the user deletes it there, so say so. Deleting can't be undone, so confirm first.
+- `delete_post` removes a post from PostFast and stops a scheduled post from going out. To remove several, pass up to 100 ids to `delete_posts` in one call; it returns `deletedIds` and `notFoundIds`. Neither removes a post that was already published: that stays on the network until the user deletes it there, so say so. Deleting can't be undone, so confirm first: list every post you are about to delete.

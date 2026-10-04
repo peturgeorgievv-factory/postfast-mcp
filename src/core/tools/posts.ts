@@ -240,7 +240,7 @@ export const postTools: ToolDef[] = [
     binding: 'both',
     title: 'List Posts',
     description:
-      'List social media posts with optional filters for specific IDs, platform, status, and date range. Failed or missed posts carry a lastError { message, code }; codes include MISSED_DISCONNECTED (the account was disconnected when the post was due — reconnect, then retry) and MISSED_NOT_PUBLISHED (passed its scheduled time plus a 2h grace window without publishing). Each post also carries controls { threadsTopicTag, instagramPublishType, facebookContentType, tiktokIsDraft, youtubePrivacy }, each null when unset. Only the field for the post\'s own platform (its account\'s platform in list_accounts) is meaningful: posts created through the API store every platform\'s defaults, so the other fields can be non-null.',
+      'List social media posts with optional filters for specific IDs, accounts, platform, status, and date range. Failed or missed posts carry a lastError { message, code }; codes include MISSED_DISCONNECTED (the account was disconnected when the post was due — reconnect, then retry) and MISSED_NOT_PUBLISHED (passed its scheduled time plus a 2h grace window without publishing). Each post also carries controls { threadsTopicTag, instagramPublishType, facebookContentType, tiktokIsDraft, youtubePrivacy }, each null when unset. Only the field for the post\'s own platform (its account\'s platform in list_accounts) is meaningful: posts created through the API store every platform\'s defaults, so the other fields can be non-null.',
     inputSchema: {
       page: z.number().int().min(0).default(0).describe('Page number (0-based)'),
       limit: z
@@ -255,6 +255,11 @@ export const postTools: ToolDef[] = [
         .max(100)
         .optional()
         .describe('Fetch only these post ids (workspace-scoped; max 100; AND-ed with other filters)'),
+      socialMediaIds: z
+        .array(z.uuid())
+        .max(100)
+        .optional()
+        .describe('Only posts on these accounts (ids from list_accounts; max 100; AND-ed with other filters)'),
       platforms: z.array(z.enum(PLATFORMS)).optional().describe('Filter by platforms'),
       statuses: z
         .array(z.enum(POST_STATUSES))
@@ -385,5 +390,36 @@ export const postTools: ToolDef[] = [
     annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
     run: (port, args, workspaceId) =>
       port.getPostAnalytics(args as unknown as AnalyticsArgs, workspaceId),
+  },
+];
+
+/**
+ * Bulk deletion. Registered after the confirm tools (see tools/index.ts) so the
+ * published order of every surface only grows at the end. Carries portMethod,
+ * so a host whose adapter predates it skips the tool instead of shipping a
+ * broken one.
+ */
+export const bulkPostTools: ToolDef[] = [
+  {
+    name: 'delete_posts',
+    binding: 'both',
+    title: 'Delete Posts',
+    description: (binding) =>
+      "Delete several social media posts by id in one call (up to 100; use delete_post for a single post). This removes each post from PostFast — its record, its schedule, and its stored media. It does NOT delete anything from the social platform: a post that has already published stays live there and must be removed on the platform itself. Deleting a SCHEDULED post that has not published yet does prevent it from publishing. Returns { deletedIds, notFoundIds }; notFoundIds are the ids that don't exist in this workspace, listed once each." +
+      (binding === 'remote'
+        ? " Deleting can't be undone, so show the user every post you are about to delete (account, time, first line) and call this only after they say yes in the conversation."
+        : ' The deletion cannot be undone.'),
+    inputSchema: {
+      ids: z.array(z.uuid()).min(1).max(100).describe('Post ids to delete (max 100)'),
+    },
+    // Same hints as delete_post: PostFast records only, no platform call.
+    annotations: {
+      readOnlyHint: false,
+      destructiveHint: true,
+      idempotentHint: true,
+      openWorldHint: false,
+    },
+    portMethod: 'deletePosts',
+    run: (port, args, workspaceId) => port.deletePosts!(args.ids as string[], workspaceId),
   },
 ];

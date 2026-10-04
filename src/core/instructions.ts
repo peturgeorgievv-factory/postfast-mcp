@@ -47,9 +47,9 @@ Note: list_pinterest_boards / list_youtube_playlists / list_gbp_locations take t
 
 const FAILED = `Failed posts carry lastError — usually a disconnected account (reconnect, then retry) or platform-rejected media.`;
 
-const DELETE_POST = `delete_post removes a post from PostFast only — it never deletes an already-published post from the social platform. Say so when a user asks to delete something that has already gone out.`;
+const DELETE_POST = `delete_post (one post) and delete_posts (up to 100 in one call) remove posts from PostFast only — they never delete an already-published post from the social platform. Say so when a user asks to delete something that has already gone out.`;
 
-const REMOTE_DELETE_POST = `${DELETE_POST} Deleting can't be undone, so show the user which post (account, time, first line) and call delete_post only after they say yes in the conversation.`;
+const REMOTE_DELETE_POST = `${DELETE_POST} Deleting can't be undone, so show the user which posts (account, time, first line) and call delete_post or delete_posts only after they say yes in the conversation.`;
 
 const STDIO_INSTRUCTIONS = [
   INTRO,

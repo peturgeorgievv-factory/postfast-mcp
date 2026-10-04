@@ -2,7 +2,7 @@ import { accountTools } from './accounts.js';
 import { appTools } from './app.js';
 import { inboxConfirmTools } from './inbox-confirm.js';
 import { inboxTools } from './inbox.js';
-import { postTools } from './posts.js';
+import { bulkPostTools, postTools } from './posts.js';
 import { tiktokTools } from './tiktok.js';
 import { uploadTools } from './uploads.js';
 import { workspaceTools } from './workspaces.js';
@@ -12,7 +12,8 @@ import type { ToolDef } from '../tool-def.js';
  * Every PostFast tool, in registration order. The order filtered to a binding
  * must stay a superset-append of the published order — clients and their
  * prompts see it, so existing tools keep their positions and new waves go
- * at the end.
+ * at the end, before the app tools: those stay last, so turning the app on
+ * only appends.
  */
 export const ALL_TOOLS: ToolDef[] = [
   ...postTools,
@@ -22,5 +23,6 @@ export const ALL_TOOLS: ToolDef[] = [
   ...inboxTools,
   ...tiktokTools,
   ...inboxConfirmTools,
+  ...bulkPostTools,
   ...appTools,
 ];

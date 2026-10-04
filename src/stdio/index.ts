@@ -9,7 +9,7 @@ import { RestAdapter } from './rest-adapter.js';
 const server = new McpServer(
   {
     name: 'postfast',
-    version: '0.10.1',
+    version: '0.11.0',
   },
   { instructions: instructionsFor('stdio') },
 );
