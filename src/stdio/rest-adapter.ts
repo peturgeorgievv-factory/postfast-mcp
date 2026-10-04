@@ -101,6 +101,12 @@ export class RestAdapter implements BackendPort {
         message = text;
       }
 
+      // A 429 carries the seconds to wait; pass them on so the caller backs off.
+      const retryAfter = response.headers.get('retry-after');
+      if (response.status === 429 && retryAfter && /^\d+$/.test(retryAfter)) {
+        message += ` Retry after ${retryAfter}s.`;
+      }
+
       throw new Error(`PostFast API error (${response.status}): ${message}`);
     }
 
@@ -165,6 +171,7 @@ export class RestAdapter implements BackendPort {
       page: String(args.page),
       limit: String(args.limit),
       ids: args.ids?.join(','),
+      socialMediaIds: args.socialMediaIds?.join(','),
       platforms: args.platforms?.join(','),
       statuses: args.statuses?.join(','),
       from: args.from,
@@ -187,6 +194,10 @@ export class RestAdapter implements BackendPort {
 
   deletePost(id: string): Promise<unknown> {
     return this.request('DELETE', `/social-posts/${id}`);
+  }
+
+  deletePosts(ids: string[]): Promise<unknown> {
+    return this.post('/social-posts/bulk-delete', { ids });
   }
 
   getPostAnalytics(args: AnalyticsArgs): Promise<unknown> {

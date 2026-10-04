@@ -19,6 +19,7 @@ export interface ListPostsArgs {
   page: number;
   limit: number;
   ids?: string[];
+  socialMediaIds?: string[];
   platforms?: string[];
   statuses?: string[];
   from?: string;
@@ -243,4 +244,10 @@ export interface BackendPort {
   getAppCalendar?(args: AppCalendarArgs, workspaceId?: string): Promise<AppCalendar>;
   getAppPost?(args: AppPostArgs, workspaceId?: string): Promise<AppPostDetail>;
   recordAppAction?(args: AppActionArgs, workspaceId?: string): Promise<unknown>;
+
+  // Bulk post deletion (optional — same staggered-adoption rule).
+  deletePosts?(
+    ids: string[],
+    workspaceId?: string,
+  ): Promise<{ deletedIds: string[]; notFoundIds: string[] } | unknown>;
 }
