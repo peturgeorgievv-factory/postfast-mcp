@@ -130,7 +130,7 @@ export const accountTools: ToolDef[] = [
         .max(2000)
         .optional()
         .describe(
-          'Where the connect page offers to send the user once connecting finishes, with status, platform, accountId and externalId on the query string. Must be https (http is accepted only on localhost).',
+          'Where the connect page offers to send the user once connecting finishes, with status, platform, accountId and externalId on the query string, plus accountIds (every account connected, comma-separated) after a Facebook or LinkedIn page step. For Facebook, accountId is the first chosen Page. Must be https (http is accepted only on localhost).',
         ),
       externalId: z
         .string()
