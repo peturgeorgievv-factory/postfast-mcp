@@ -1,6 +1,6 @@
 {
   "name": "postfast-mcp",
-  "version": "0.11.0",
+  "version": "0.11.1",
   "mcpName": "io.github.peturgeorgievv-factory/postfast-mcp",
   "description": "MCP server for the PostFast API — schedule and manage social media posts via AI tools",
   "type": "module",
@@ -60,7 +60,7 @@
     "@modelcontextprotocol/ext-apps": "1.7.5",
     "@openai/mcp-extensions": "0.1.0",
     "@types/node": "^22.19.21",
-    "js-yaml": "4.3.1",
+    "js-yaml": "4.3.2",
     "typescript": "^5.9.3",
     "vite": "8.3.1",
     "vite-plugin-singlefile": "2.3.3"

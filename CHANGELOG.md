@@ -1,5 +1,11 @@
 # postfast-mcp
 
+## 0.11.1
+
+### Patch Changes
+
+- Dependency refresh, with no change to any tool, schema or instruction. The lockfile moves the MCP SDK's transitive dependencies to patched versions (fast-uri 3.1.8, ip-address 10.7.3, hono 4.13.13, @hono/node-server 1.19.17, qs 6.16.0, body-parser 2.3.0), so the `.mcpb` bundle, which is built from the lockfile, ships them. Fresh npm installs already resolve these within the existing version ranges. The js-yaml dev dependency moves to 4.3.2.
+
 ## 0.11.0
 
 ### Minor Changes
