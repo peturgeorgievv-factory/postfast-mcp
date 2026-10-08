@@ -21,6 +21,7 @@ If any PostFast tool call fails with an authentication/401 error, tell the user:
    - Use `upload_media` with the local file path — it handles getting a signed URL, uploading, and returning a `key` and `type` (IMAGE or VIDEO)
    - Supported formats: JPEG, PNG, GIF, WebP (images), MP4, WebM, MOV (video)
    - Size limits: 10MB images, 250MB video, 60MB documents (PDF/DOC/DOCX/PPT/PPTX)
+   - YouTube captions: upload the `.srt` or `.vtt` file the same way. It comes back with type `CAPTION`; its key goes in `controls.youtubeCaptionKey` (see YouTube below), never in `mediaItems`
 
 3. **Create posts** — Call `create_posts` with:
    - `socialMediaId`: account ID from step 1
@@ -77,6 +78,9 @@ If any PostFast tool call fails with an authentication/401 error, tell the user:
 - `youtubeContainsSyntheticMedia`: boolean, default false — discloses that the video contains realistic altered or synthetic (AI) content. Sent to YouTube only when true; set at creation only
 - `youtubePlaylistId`: playlist ID (use `list_youtube_playlists` to find it)
 - `youtubeThumbnailKey`: S3 media key for custom video thumbnail (upload via `upload_media` or `get_upload_urls`; JPEG/PNG recommended, max 2MB, min 640px wide, 1280x720 ideal; requires phone-verified YouTube channel)
+- `youtubeLanguage`: the video's language as a BCP-47 code (`en`, `en-GB`, `es`, `es-419`, `fr-CA`, `pt-BR`, `zh-Hans`, …). Sets both the video language (what is spoken) and the title and description language on YouTube, and is the language of the captions. An unknown code is rejected
+- `youtubeCaptionKey`: the key of an uploaded `.srt` or `.vtt` caption file (upload it with `upload_media` before creating the post), added as the video's caption track in `youtubeLanguage`, which it requires. One caption track per post. The file must be a timed SRT or WebVTT file in plain UTF-8, max 10MB; a transcript without timings doesn't work. YouTube's automatic captions stay listed separately as "(auto-generated)". If adding the captions fails, the video still publishes without them
+- Controls apply to every post in a `create_posts` call, so videos in different languages, each with its own caption file, need one call per video
 
 ### Pinterest
 - `pinterestBoardId`: **required** — use `list_pinterest_boards` to get the `boardId`

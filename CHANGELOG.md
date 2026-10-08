@@ -1,5 +1,16 @@
 # postfast-mcp
 
+## 0.12.0
+
+### Minor Changes
+
+- YouTube video language and caption files:
+
+  - `create_posts` gains two YouTube controls, which its schema used to drop. `youtubeLanguage` is the video's language as a BCP-47 code (`en`, `en-GB`, `es-419`, `pt-BR`, `zh-Hans`, …). It sets YouTube's Video language and its Title and description language, and an unknown code is rejected. `youtubeCaptionKey` is the key of an uploaded `.srt` or `.vtt` file, added after the upload as the video's caption track in that language. It requires `youtubeLanguage` and gives one track per post; the file must be timed SRT or WebVTT, UTF-8, at most 10 MB. If adding the captions fails, the video still publishes. Both descriptions say that controls apply to every post in a call, so videos in different languages need separate calls.
+  - The upload tools take caption files (`application/x-subrip` for `.srt`, `text/vtt` for `.vtt`) and say that a `CAPTION` result goes in `controls.youtubeCaptionKey`, never in `mediaItems`. `upload_from_url` adds that a caption link must point to the file itself, since a share page doesn't work. The stdio `upload_media` maps local `.srt` and `.vtt` files to those types and returns type `CAPTION`; `get_upload_urls` takes them with a count of 1.
+  - The server instructions' YouTube line names both controls.
+  - `postfast-mcp/core` exports `CAPTION_MIME_TYPES`, `uploadTypeFor()` and the `UploadType` type, and `LocalUploadResult.type` can be `CAPTION`. On the remote binding, caption uploads work once the host's `uploadMedia` and `uploadFromUrl` accept the two caption types and return `CAPTION` for them.
+
 ## 0.11.1
 
 ### Patch Changes

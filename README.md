@@ -181,7 +181,7 @@ When creating posts, you can pass platform-specific settings via the `controls` 
 | **Instagram** | `instagramPublishType` (TIMELINE/STORY/REEL), `instagramTrialReelStrategy` (MANUAL/SS_PERFORMANCE — trial reel shown to non-followers; Reels only, no collaborators), `instagramPostToGrid`, `instagramCollaborators`, `instagramLocationId`/`instagramLocationName` (geotag from `search_places`), `instagramIsAiGenerated` (adds the "AI info" label; set at creation only) |
 | **Facebook** | `facebookContentType` (POST/REEL/STORY), `facebookAllowComments`, `facebookPrivacy`, `facebookCarouselMainLink`, `facebookCarouselShowEndCard`, `facebookReelsCollaborators`, `facebookTargetCountries` (ISO alpha-2, max 25), `facebookPlaceId`/`facebookPlaceName` (geotag from `search_places`) |
 | **TikTok** | `tiktokTitle` (photo posts, max 90 chars), `tiktokMusicSoundId`/`tiktokMusicSoundName` (Commercial Music Library sound from `list_tiktok_sounds`; photo, carousel and video posts — on video it plays at 50% volume over the original audio at 50%; exclusive with `tiktokAutoAddMusic`), `tiktokIsDraft`, `tiktokAllowComments`, `tiktokAllowDuet`, `tiktokAllowStitch`, `tiktokBrandOrganic`, `tiktokBrandContent`, `tiktokAutoAddMusic` (photo/carousel posts), `tiktokIsAigc`, `tiktokPrivacy` (deprecated — account default applies) |
-| **YouTube** | `youtubeTitle`, `youtubePrivacy` (PUBLIC/PRIVATE/UNLISTED), `youtubeTags`, `youtubeCategoryId`, `youtubeIsShort`, `youtubeMadeForKids`, `youtubeContainsSyntheticMedia` (altered/synthetic content disclosure; set at creation only), `youtubePlaylistId`, `youtubeThumbnailKey` |
+| **YouTube** | `youtubeTitle`, `youtubePrivacy` (PUBLIC/PRIVATE/UNLISTED), `youtubeTags`, `youtubeCategoryId`, `youtubeIsShort`, `youtubeMadeForKids`, `youtubeContainsSyntheticMedia` (altered/synthetic content disclosure; set at creation only), `youtubePlaylistId`, `youtubeThumbnailKey`, `youtubeLanguage` (BCP-47 code such as `en-GB` or `pt-BR`; sets the video language and the title and description language), `youtubeCaptionKey` (an uploaded `.srt`/`.vtt` file, added as the video's caption track in `youtubeLanguage`, which it requires) |
 | **Pinterest** | `pinterestBoardId` (required), `pinterestLink` |
 | **LinkedIn** | `linkedinAttachmentKey`, `linkedinAttachmentTitle` |
 | **Threads** | `threadsTopicTag` (the post's topic: one topic, not a list; 1-50 chars, no `.` or `&`; takes precedence over a #hashtag in the content, which then stays plain text. Like every control it applies to every post in the call, so use separate calls for different topics) |
@@ -196,7 +196,7 @@ The `upload_media` tool handles the full flow in a single call:
 3. Uploads the file
 4. Returns a `key` and `type` ready to use in `create_posts`
 
-Supported formats: JPEG, PNG, GIF, WebP, MP4, WebM, MOV
+Supported formats: JPEG, PNG, GIF, WebP, MP4, WebM, MOV, plus SRT and VTT caption files for YouTube. A caption file comes back with type `CAPTION`: pass its key as `controls.youtubeCaptionKey`, never in `mediaItems`.
 
 You can also use `get_upload_urls` directly if you need more control over the upload process.
 

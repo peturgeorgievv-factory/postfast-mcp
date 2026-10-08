@@ -12,6 +12,7 @@ import type {
   Platform,
   SignedUploadUrl,
   SocialAccount,
+  UploadType,
   YouTubePlaylist,
 } from './types.js';
 
@@ -152,7 +153,7 @@ export interface AppActionArgs {
 
 export interface LocalUploadResult {
   key: string;
-  type: 'IMAGE' | 'VIDEO';
+  type: UploadType;
   contentType: string;
 }
 
