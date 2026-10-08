@@ -179,7 +179,7 @@ for (const binding of ['stdio', 'remote']) {
     }
     if (binding === 'stdio') {
       const urls = tool(tools, 'get_upload_urls').inputSchema.properties;
-      assert.equal(urls.count.description, 'Number of upload URLs (1-8 for images, 1 for videos and caption files)');
+      assert.equal(urls.count.description, 'Number of upload URLs (1-8 for images, 1 for videos, caption files and documents)');
     } else {
       for (const name of ['upload_media', 'upload_from_url']) {
         const contentType = tool(tools, name).inputSchema.properties.contentType.description;
@@ -187,7 +187,7 @@ for (const binding of ['stdio', 'remote']) {
         assert.match(contentType, /text\/vtt for (?:a )?\.vtt/, name);
       }
       // A share page would be stored as the caption, since the model sets the type itself.
-      assert.match(tool(tools, 'upload_from_url').description, /For a caption file, link to the file itself; a share page doesn't work\./);
+      assert.match(tool(tools, 'upload_from_url').description, /For a caption file or a document, link to the file itself; a share page doesn't work\./);
     }
   });
 }
@@ -224,7 +224,7 @@ test('uploadTypeFor: images and videos for mediaItems, .srt and .vtt as CAPTION'
     'text/vtt; charset=utf-8': 'CAPTION',
     ' Application/X-SubRip ': 'CAPTION',
     'text/plain': undefined,
-    'application/pdf': undefined,
+    'application/zip': undefined,
     'application/octet-stream': undefined,
     '': undefined,
   };

@@ -9,10 +9,15 @@ import type { ToolDef } from '../tool-def.js';
 
 const MEDIA_MIME_TYPES = [...IMAGE_MIME_TYPES, ...VIDEO_MIME_TYPES].join(', ');
 /** Every type the upload tools take, as their descriptions list them. */
-const SUPPORTED_TYPES = `${MEDIA_MIME_TYPES}, and for caption files application/x-subrip (.srt) and text/vtt (.vtt)`;
+const SUPPORTED_TYPES =
+  `${MEDIA_MIME_TYPES}; for caption files application/x-subrip (.srt) and text/vtt (.vtt); ` +
+  'for LinkedIn documents application/pdf (.pdf), application/msword (.doc), application/vnd.openxmlformats-officedocument.wordprocessingml.document (.docx), application/vnd.ms-powerpoint (.ppt) and application/vnd.openxmlformats-officedocument.presentationml.presentation (.pptx)';
 /** Where an upload that comes back as CAPTION goes in create_posts. */
 const CAPTION_RESULT =
   'A CAPTION media_id (an .srt or .vtt caption file) goes in controls.youtubeCaptionKey, never in mediaItems.';
+/** Where an upload that comes back as DOCUMENT goes in create_posts. */
+const DOCUMENT_RESULT =
+  'A DOCUMENT media_id (a PDF, Word or PowerPoint file) goes in controls.linkedinAttachmentKey, never in mediaItems.';
 
 /**
  * `upload_media` exists on BOTH bindings but is a different tool on each:
@@ -26,7 +31,7 @@ export const uploadTools: ToolDef[] = [
     binding: 'stdio',
     title: 'Get Upload URLs',
     description:
-      'Get signed upload URLs for media and caption files. Upload your file to the returned URL via PUT, then use the key in create_posts mediaItems; the key of a caption file (.srt or .vtt) goes in controls.youtubeCaptionKey instead, never in mediaItems.',
+      'Get signed upload URLs for media, caption files and LinkedIn documents. Upload your file to the returned URL via PUT, then use the key in create_posts mediaItems; the key of a caption file (.srt or .vtt) goes in controls.youtubeCaptionKey instead, never in mediaItems; the key of a document (.pdf, .doc, .docx, .ppt or .pptx) goes in controls.linkedinAttachmentKey instead, never in mediaItems.',
     inputSchema: {
       contentType: z
         .string()
@@ -37,7 +42,7 @@ export const uploadTools: ToolDef[] = [
         .min(1)
         .max(8)
         .default(1)
-        .describe('Number of upload URLs (1-8 for images, 1 for videos and caption files)'),
+        .describe('Number of upload URLs (1-8 for images, 1 for videos, caption files and documents)'),
     },
     annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: true },
     run: (port, args, workspaceId) =>
@@ -48,7 +53,7 @@ export const uploadTools: ToolDef[] = [
     binding: 'stdio',
     title: 'Upload Media',
     description:
-      'Upload a local file to PostFast and get back a media key for use in create_posts. Handles the full flow: detects content type, gets a signed URL, uploads the file, and returns the key and type. Images and videos come back as IMAGE or VIDEO, for mediaItems; an .srt or .vtt caption file comes back as CAPTION, and its key goes in controls.youtubeCaptionKey, never in mediaItems.',
+      'Upload a local file to PostFast and get back a media key for use in create_posts. Handles the full flow: detects content type, gets a signed URL, uploads the file, and returns the key and type. Images and videos come back as IMAGE or VIDEO, for mediaItems; an .srt or .vtt caption file comes back as CAPTION, and its key goes in controls.youtubeCaptionKey, never in mediaItems; a .pdf, .doc, .docx, .ppt or .pptx document comes back as DOCUMENT, and its key goes in controls.linkedinAttachmentKey, never in mediaItems.',
     inputSchema: {
       filePath: z
         .string()
@@ -62,16 +67,16 @@ export const uploadTools: ToolDef[] = [
     binding: 'remote',
     title: 'Upload Media From URL',
     description:
-      `Fetch media from a public https URL and store it for use in create_posts. Returns { media_id, type }; pass an IMAGE or VIDEO media_id as a mediaItems[].key. ${CAPTION_RESULT} ` +
+      `Fetch media from a public https URL and store it for use in create_posts. Returns { media_id, type }; pass an IMAGE or VIDEO media_id as a mediaItems[].key. ${CAPTION_RESULT} ${DOCUMENT_RESULT} ` +
       'Use this when the media is already at a public https URL, such as a CDN or hosted image.' +
-      ` Redirects are followed (each hop is SSRF-validated); the URL must be public https and within the size limit. For a caption file, link to the file itself; a share page doesn't work. Supported types: ${SUPPORTED_TYPES}.`,
+      ` Redirects are followed (each hop is SSRF-validated); the URL must be public https and within the size limit. For a caption file or a document, link to the file itself; a share page doesn't work. Supported types: ${SUPPORTED_TYPES}.`,
     inputSchema: {
       sourceUrl: z.url().describe('Public https URL of the media to upload'),
       contentType: z
         .string()
         .optional()
         .describe(
-          "MIME type override. If omitted, the source's Content-Type is used. Set it for a caption file: application/x-subrip for .srt, text/vtt for .vtt.",
+          "MIME type override. If omitted, the source's Content-Type is used. Set it for a caption file: application/x-subrip for .srt, text/vtt for .vtt. Set it for a document only if the source sends a generic type such as application/octet-stream, e.g. application/pdf for .pdf.",
         ),
     },
     annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: true },
@@ -83,8 +88,8 @@ export const uploadTools: ToolDef[] = [
     binding: 'remote',
     title: 'Upload Media',
     description:
-      "Upload an image, video or caption file for use in create_posts. If the media is already at a public https URL, use upload_from_url instead. If the user attached or generated the file in this conversation and your app passes files to tools, pass it as `file`; the app fills it in. Otherwise pass the file's bytes as base64 in `data` with its MIME type in `contentType`. Only if you can do neither, ask the user for a public https link and use upload_from_url. Returns { media_id, type }; use an IMAGE or VIDEO media_id as a mediaItems[].key. " +
-      `${CAPTION_RESULT} Supported types: ${SUPPORTED_TYPES}.`,
+      "Upload an image, video, caption file or document for use in create_posts. If the media is already at a public https URL, use upload_from_url instead. If the user attached or generated the file in this conversation and your app passes files to tools, pass it as `file`; the app fills it in. Otherwise pass the file's bytes as base64 in `data` with its MIME type in `contentType`. Only if you can do neither, ask the user for a public https link and use upload_from_url. Returns { media_id, type }; use an IMAGE or VIDEO media_id as a mediaItems[].key. " +
+      `${CAPTION_RESULT} ${DOCUMENT_RESULT} Supported types: ${SUPPORTED_TYPES}.`,
     inputSchema: {
       file: z
         .object({
@@ -105,7 +110,7 @@ export const uploadTools: ToolDef[] = [
         .string()
         .optional()
         .describe(
-          'MIME type for base64 data (e.g. image/png; application/x-subrip for an .srt caption file, text/vtt for a .vtt one). Required with data.',
+          'MIME type for base64 data (e.g. image/png; application/x-subrip for an .srt caption file, text/vtt for a .vtt one; application/pdf for a PDF). Required with data.',
         ),
     },
     annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: true },

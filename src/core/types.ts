@@ -70,8 +70,11 @@ export interface ReadablePostControls {
   youtubePrivacy: 'PUBLIC' | 'PRIVATE' | 'UNLISTED' | null;
 }
 
-/** What an uploaded file is for: IMAGE and VIDEO keys go in mediaItems, a CAPTION key in controls.youtubeCaptionKey. */
-export type UploadType = 'IMAGE' | 'VIDEO' | 'CAPTION';
+/**
+ * What an uploaded file is for: IMAGE and VIDEO keys go in mediaItems, a CAPTION
+ * key in controls.youtubeCaptionKey, a DOCUMENT key in controls.linkedinAttachmentKey.
+ */
+export type UploadType = 'IMAGE' | 'VIDEO' | 'CAPTION' | 'DOCUMENT';
 
 export interface MediaItem {
   key: string;

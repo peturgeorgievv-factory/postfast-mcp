@@ -29,6 +29,14 @@ const CAPTION_KEY_SOURCE: Record<Binding, string> = {
     'the media_id (file/<uuid>.srt or .vtt) that upload_media or upload_from_url returns for an .srt or .vtt caption file (contentType application/x-subrip or text/vtt)',
 };
 
+/** Where a linkedinAttachmentKey comes from on each binding. */
+const DOCUMENT_KEY_SOURCE: Record<Binding, string> = {
+  stdio:
+    "the key (file/<uuid>.pdf, .doc, .docx, .ppt or .pptx) that upload_media returns for a local document, or that get_upload_urls returns for the document's contentType (e.g. application/pdf)",
+  remote:
+    'the media_id (file/<uuid>.pdf, .doc, .docx, .ppt or .pptx) that upload_media or upload_from_url returns as type DOCUMENT',
+};
+
 const mediaItemSchema = (binding: Binding) =>
   z.object({
     key: z
@@ -243,8 +251,18 @@ const controlsSchema = (binding: Binding) =>
       ),
     pinterestLink: z.string().optional(),
     // LinkedIn
-    linkedinAttachmentKey: z.string().optional(),
-    linkedinAttachmentTitle: z.string().optional(),
+    linkedinAttachmentKey: z
+      .string()
+      .optional()
+      .describe(
+        `A document for LinkedIn posts: a PDF, Word or PowerPoint file, at most 60 MB, which LinkedIn shows in the post as pages readers swipe through. Pass ${DOCUMENT_KEY_SOURCE[binding]}. Upload the file before this call, and never put its key in mediaItems. A LinkedIn post has either this document or mediaItems, never both: a post with both fails to publish. Set linkedinAttachmentTitle with it. Used only by LinkedIn posts; applies to every LinkedIn post in this call, so a LinkedIn post with images, a video or a different document needs its own create_posts call.`,
+      ),
+    linkedinAttachmentTitle: z
+      .string()
+      .optional()
+      .describe(
+        'The title shown with the linkedinAttachmentKey document in the LinkedIn post; without one, the post shows the title "Document". Used only with linkedinAttachmentKey.',
+      ),
     // Threads
     threadsTopicTag: z
       .string()

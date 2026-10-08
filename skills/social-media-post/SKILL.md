@@ -22,6 +22,7 @@ If any PostFast tool call fails with an authentication/401 error, tell the user:
    - Supported formats: JPEG, PNG, GIF, WebP (images), MP4, WebM, MOV (video)
    - Size limits: 10MB images, 250MB video, 60MB documents (PDF/DOC/DOCX/PPT/PPTX)
    - YouTube captions: upload the `.srt` or `.vtt` file the same way. It comes back with type `CAPTION`; its key goes in `controls.youtubeCaptionKey` (see YouTube below), never in `mediaItems`
+   - LinkedIn documents: upload the `.pdf`, `.doc`, `.docx`, `.ppt` or `.pptx` file the same way. It comes back with type `DOCUMENT`; its key goes in `controls.linkedinAttachmentKey` (see LinkedIn below), never in `mediaItems`
 
 3. **Create posts** — Call `create_posts` with:
    - `socialMediaId`: account ID from step 1
@@ -102,8 +103,8 @@ If any PostFast tool call fails with an authentication/401 error, tell the user:
 - Content max: 1,500 chars. Media: optional, at most 1 image, no video. Standard posts expire after 6 months; EVENT/OFFER posts expire at end date.
 
 ### LinkedIn
-- `linkedinAttachmentKey`: S3 key for document attachment (for document posts)
-- `linkedinAttachmentTitle`: display title for the document (default "Document")
+- `linkedinAttachmentKey`: the key of an uploaded PDF, Word or PowerPoint file (upload it with `upload_media` before creating the post; type `DOCUMENT`), shown in the post as pages readers swipe through
+- `linkedinAttachmentTitle`: the document's title (default "Document"); set it whenever you attach a document
 - Cannot mix documents with regular image/video media
 - Supported document formats: PDF, DOC, DOCX, PPT, PPTX (max 60MB)
 

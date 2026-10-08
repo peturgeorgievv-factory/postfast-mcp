@@ -1,5 +1,15 @@
 # postfast-mcp
 
+## 0.13.0
+
+### Minor Changes
+
+- LinkedIn document posts:
+
+  - The upload tools take PDF, Word and PowerPoint files (`application/pdf`, `application/msword`, `application/vnd.openxmlformats-officedocument.wordprocessingml.document`, `application/vnd.ms-powerpoint`, `application/vnd.openxmlformats-officedocument.presentationml.presentation`). Such a file comes back as type `DOCUMENT`, and the tools say that its key goes in `controls.linkedinAttachmentKey`, never in `mediaItems`. The upload tools used to refuse these types, so a model had no way to get a key for `linkedinAttachmentKey` and published the post as text only. `upload_from_url` now says that a link to a document, like one to a caption file, must point to the file itself. The stdio `upload_media` maps local `.pdf`, `.doc`, `.docx`, `.ppt` and `.pptx` files, and `get_upload_urls` takes them with a count of 1.
+  - `create_posts` describes `linkedinAttachmentKey` and `linkedinAttachmentTitle`, which had no descriptions. The key is an uploaded PDF, Word or PowerPoint file of at most 60 MB, which LinkedIn shows as pages to swipe through. A post can't carry both the document and `mediaItems`, and a post with both fails to publish. Without a title, the post shows "Document". The LinkedIn line of the server instructions says the same.
+  - Core exports `DOCUMENT_MIME_TYPES`, and `uploadTypeFor()` returns `DOCUMENT` for these types. A host that classifies uploads with it accepts documents with no change of its own.
+
 ## 0.12.1
 
 ### Patch Changes
