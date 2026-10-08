@@ -21,6 +21,14 @@ const UPLOAD_TOOLS: Record<Binding, string> = {
   remote: 'upload_from_url / upload_media',
 };
 
+/** Where a youtubeCaptionKey comes from on each binding. */
+const CAPTION_KEY_SOURCE: Record<Binding, string> = {
+  stdio:
+    'the key (file/<uuid>.srt or .vtt) that upload_media returns for a local .srt or .vtt file, or that get_upload_urls returns for contentType application/x-subrip (.srt) or text/vtt (.vtt)',
+  remote:
+    'the media_id (file/<uuid>.srt or .vtt) that upload_media or upload_from_url returns for an .srt or .vtt caption file (contentType application/x-subrip or text/vtt)',
+};
+
 const mediaItemSchema = (binding: Binding) =>
   z.object({
     key: z
@@ -63,176 +71,190 @@ const postItemSchema = (binding: Binding) =>
   });
 
 /** Platform-specific controls — shared across every post in the batch. */
-const controlsSchema = z.object({
-  // X/Twitter
-  xRetweetUrl: z.string().optional(),
-  // TikTok
-  tiktokPrivacy: z
-    .enum(['PUBLIC', 'MUTUAL_FRIENDS', 'FOLLOWER_OF_CREATOR', 'ONLY_ME'])
-    .optional()
-    .describe(
-      'Deprecated. TikTok videos use the account default privacy (no per-post control) and photos default to public; use a draft for private posts.',
-    ),
-  tiktokIsDraft: z.boolean().optional(),
-  tiktokAllowComments: z.boolean().optional(),
-  tiktokAllowDuet: z.boolean().optional(),
-  tiktokAllowStitch: z.boolean().optional(),
-  tiktokBrandOrganic: z.boolean().optional(),
-  tiktokBrandContent: z.boolean().optional(),
-  tiktokAutoAddMusic: z
-    .boolean()
-    .optional()
-    .describe(
-      'Let TikTok add a recommended sound. Photo/carousel posts only (ignored on videos). Mutually exclusive with tiktokMusicSoundId (sending both is rejected).',
-    ),
-  tiktokIsAigc: z
-    .boolean()
-    .optional()
-    .describe(
-      "Declare the post as AI-generated content (videos and photo posts). Instagram's equivalent is instagramIsAiGenerated, YouTube's is youtubeContainsSyntheticMedia.",
-    ),
-  tiktokTitle: z
-    .string()
-    .max(90)
-    .optional()
-    .describe(
-      'Title for TikTok photo posts (max 90 chars; photo posts only). When set, the full post content becomes the description; without it, content auto-splits on the first newline into title + description.',
-    ),
-  tiktokMusicSoundId: z
-    .string()
-    .max(128)
-    .optional()
-    .describe(
-      "Commercial Music Library sound id from list_tiktok_sounds. TikTok photo, carousel and video posts. On videos the track plays at 50% volume over the video's original audio at 50%, like the TikTok app; there are no volume or trim controls. Mutually exclusive with tiktokAutoAddMusic (sending both is rejected). Not applied when tiktokIsDraft is true. Omit for no sound.",
-    ),
-  tiktokMusicSoundName: z
-    .string()
-    .max(256)
-    .optional()
-    .describe(
-      "Display label for the chosen sound, e.g. 'Ok I Like It — Milky Chance'. Stored for the composer UI only; set it whenever tiktokMusicSoundId is set.",
-    ),
-  // Instagram
-  instagramPostToGrid: z.boolean().optional(),
-  instagramPublishType: z.enum(['TIMELINE', 'STORY', 'REEL']).optional(),
-  instagramTrialReelStrategy: z
-    .enum(['MANUAL', 'SS_PERFORMANCE'])
-    .optional()
-    .describe(
-      'Publish as an Instagram trial reel — shown only to non-followers until it graduates to your followers. MANUAL: you graduate it yourself in the Instagram app. SS_PERFORMANCE: Instagram graduates it automatically if it performs well. Requires instagramPublishType REEL (otherwise rejected with HTTP 400 "instagram.trialReelOnlyForReels") and cannot be combined with instagramCollaborators ("instagram.trialReelNoCollaborators"). Omit for a normal reel.',
-    ),
-  instagramCollaborators: z.array(z.string()).optional(),
-  instagramLocationId: z
-    .string()
-    .optional()
-    .describe(
-      'Geotag a single-media IG post — a numeric Facebook Page id with location data from search_places (same id as facebookPlaceId). Image/video/reel/story only, NOT carousels.',
-    ),
-  instagramLocationName: z
-    .string()
-    .max(255)
-    .optional()
-    .describe(
-      'Display-only place label from search_places (stored for your portal; never sent to Meta)',
-    ),
-  instagramIsAiGenerated: z
-    .boolean()
-    .optional()
-    .describe(
-      "Adds Instagram's 'AI info' label to the post — set it when the image or video was AI-generated. Applies to images, reels, stories and carousels; on a carousel it labels the whole post, not individual slides. Set at creation only: the label cannot be added or removed after publishing. TikTok's equivalent is tiktokIsAigc, YouTube's is youtubeContainsSyntheticMedia.",
-    ),
-  // YouTube
-  youtubePrivacy: z.enum(['PUBLIC', 'PRIVATE', 'UNLISTED']).optional(),
-  youtubeTags: z.array(z.string()).optional(),
-  youtubeCategoryId: z.string().optional(),
-  youtubeIsShort: z.boolean().optional(),
-  youtubeMadeForKids: z.boolean().optional(),
-  youtubeContainsSyntheticMedia: z
-    .boolean()
-    .optional()
-    .describe(
-      "Discloses that the video contains realistic altered or synthetic (AI) content. Sent to YouTube only when true. Set at creation only. Instagram's equivalent is instagramIsAiGenerated, TikTok's is tiktokIsAigc.",
-    ),
-  youtubeTitle: z.string().optional(),
-  youtubePlaylistId: z
-    .string()
-    .optional()
-    .describe('YouTube playlist id — the playlistId field from list_youtube_playlists'),
-  youtubeThumbnailKey: z
-    .string()
-    .optional()
-    .describe(
-      'Media key for a custom YouTube thumbnail (image, max 2MB, min 640px wide, 1280x720 recommended)',
-    ),
-  // Facebook
-  facebookContentType: z.enum(['POST', 'REEL', 'STORY']).optional(),
-  facebookAllowComments: z.boolean().optional(),
-  facebookPrivacy: z
-    .enum(['PUBLIC', 'FRIENDS_OF_FRIENDS', 'FRIENDS', 'SELF'])
-    .optional(),
-  facebookCarouselMainLink: z.string().optional(),
-  facebookCarouselShowEndCard: z.boolean().optional(),
-  facebookReelsCollaborators: z.array(z.string()).optional(),
-  facebookTargetCountries: z
-    .array(z.string().length(2))
-    .max(25)
-    .optional()
-    .describe(
-      'Limit who can see a Facebook FEED post by country — ISO 3166-1 alpha-2 codes (case-insensitive), max 25. Audience gating (hidden from everyone else), feed posts only — not Reels/Stories/video.',
-    ),
-  facebookPlaceId: z
-    .string()
-    .optional()
-    .describe(
-      'Geotag a Facebook FEED post — a numeric Facebook Page id with location data from search_places (same id as instagramLocationId). Feed posts only (text/photo/carousel) — not Reels/Stories/video.',
-    ),
-  facebookPlaceName: z
-    .string()
-    .max(255)
-    .optional()
-    .describe(
-      'Display-only place label from search_places (stored for your portal; never sent to Meta)',
-    ),
-  // Google Business Profile
-  gbpLocationId: z
-    .string()
-    .optional()
-    .describe('GBP location resource name — the locationId field from list_gbp_locations'),
-  gbpTopicType: z.enum(['STANDARD', 'EVENT', 'OFFER']).optional().describe('Post type'),
-  gbpCallToActionType: z
-    .enum(['BOOK', 'ORDER', 'LEARN_MORE', 'SIGN_UP', 'CALL', 'SHOP'])
-    .optional(),
-  gbpCallToActionUrl: z
-    .string()
-    .optional()
-    .describe('CTA button URL (not needed for CALL, ignored for OFFER)'),
-  gbpEventTitle: z.string().optional().describe('Title for EVENT/OFFER posts (max 58 chars)'),
-  gbpEventStartDate: z.string().optional().describe('Start date for EVENT/OFFER (ISO 8601)'),
-  gbpEventEndDate: z.string().optional().describe('End date for EVENT/OFFER (ISO 8601)'),
-  gbpOfferCouponCode: z.string().optional().describe('Coupon code (OFFER only)'),
-  gbpOfferRedeemUrl: z.string().optional().describe('Redemption URL (OFFER only)'),
-  gbpOfferTerms: z.string().optional().describe('Terms and conditions (OFFER only)'),
-  // Pinterest
-  pinterestBoardId: z
-    .string()
-    .optional()
-    .describe(
-      "Pinterest board id — the boardId field from list_pinterest_boards (NOT the account's socialMediaId)",
-    ),
-  pinterestLink: z.string().optional(),
-  // LinkedIn
-  linkedinAttachmentKey: z.string().optional(),
-  linkedinAttachmentTitle: z.string().optional(),
-  // Threads
-  threadsTopicTag: z
-    .string()
-    .min(1)
-    .max(50)
-    .optional()
-    .describe(
-      "Threads topic for the post: one topic, not a list; 1-50 characters, no '.' or '&'. Takes precedence over a #hashtag in the post content, which then stays plain text. Used only by Threads posts; applies to every post in this call, so use separate calls for different topics. Omit for no topic.",
-    ),
-});
+const controlsSchema = (binding: Binding) =>
+  z.object({
+    // X/Twitter
+    xRetweetUrl: z.string().optional(),
+    // TikTok
+    tiktokPrivacy: z
+      .enum(['PUBLIC', 'MUTUAL_FRIENDS', 'FOLLOWER_OF_CREATOR', 'ONLY_ME'])
+      .optional()
+      .describe(
+        'Deprecated. TikTok videos use the account default privacy (no per-post control) and photos default to public; use a draft for private posts.',
+      ),
+    tiktokIsDraft: z.boolean().optional(),
+    tiktokAllowComments: z.boolean().optional(),
+    tiktokAllowDuet: z.boolean().optional(),
+    tiktokAllowStitch: z.boolean().optional(),
+    tiktokBrandOrganic: z.boolean().optional(),
+    tiktokBrandContent: z.boolean().optional(),
+    tiktokAutoAddMusic: z
+      .boolean()
+      .optional()
+      .describe(
+        'Let TikTok add a recommended sound. Photo/carousel posts only (ignored on videos). Mutually exclusive with tiktokMusicSoundId (sending both is rejected).',
+      ),
+    tiktokIsAigc: z
+      .boolean()
+      .optional()
+      .describe(
+        "Declare the post as AI-generated content (videos and photo posts). Instagram's equivalent is instagramIsAiGenerated, YouTube's is youtubeContainsSyntheticMedia.",
+      ),
+    tiktokTitle: z
+      .string()
+      .max(90)
+      .optional()
+      .describe(
+        'Title for TikTok photo posts (max 90 chars; photo posts only). When set, the full post content becomes the description; without it, content auto-splits on the first newline into title + description.',
+      ),
+    tiktokMusicSoundId: z
+      .string()
+      .max(128)
+      .optional()
+      .describe(
+        "Commercial Music Library sound id from list_tiktok_sounds. TikTok photo, carousel and video posts. On videos the track plays at 50% volume over the video's original audio at 50%, like the TikTok app; there are no volume or trim controls. Mutually exclusive with tiktokAutoAddMusic (sending both is rejected). Not applied when tiktokIsDraft is true. Omit for no sound.",
+      ),
+    tiktokMusicSoundName: z
+      .string()
+      .max(256)
+      .optional()
+      .describe(
+        "Display label for the chosen sound, e.g. 'Ok I Like It — Milky Chance'. Stored for the composer UI only; set it whenever tiktokMusicSoundId is set.",
+      ),
+    // Instagram
+    instagramPostToGrid: z.boolean().optional(),
+    instagramPublishType: z.enum(['TIMELINE', 'STORY', 'REEL']).optional(),
+    instagramTrialReelStrategy: z
+      .enum(['MANUAL', 'SS_PERFORMANCE'])
+      .optional()
+      .describe(
+        'Publish as an Instagram trial reel — shown only to non-followers until it graduates to your followers. MANUAL: you graduate it yourself in the Instagram app. SS_PERFORMANCE: Instagram graduates it automatically if it performs well. Requires instagramPublishType REEL (otherwise rejected with HTTP 400 "instagram.trialReelOnlyForReels") and cannot be combined with instagramCollaborators ("instagram.trialReelNoCollaborators"). Omit for a normal reel.',
+      ),
+    instagramCollaborators: z.array(z.string()).optional(),
+    instagramLocationId: z
+      .string()
+      .optional()
+      .describe(
+        'Geotag a single-media IG post — a numeric Facebook Page id with location data from search_places (same id as facebookPlaceId). Image/video/reel/story only, NOT carousels.',
+      ),
+    instagramLocationName: z
+      .string()
+      .max(255)
+      .optional()
+      .describe(
+        'Display-only place label from search_places (stored for your portal; never sent to Meta)',
+      ),
+    instagramIsAiGenerated: z
+      .boolean()
+      .optional()
+      .describe(
+        "Adds Instagram's 'AI info' label to the post — set it when the image or video was AI-generated. Applies to images, reels, stories and carousels; on a carousel it labels the whole post, not individual slides. Set at creation only: the label cannot be added or removed after publishing. TikTok's equivalent is tiktokIsAigc, YouTube's is youtubeContainsSyntheticMedia.",
+      ),
+    // YouTube
+    youtubePrivacy: z.enum(['PUBLIC', 'PRIVATE', 'UNLISTED']).optional(),
+    youtubeTags: z.array(z.string()).optional(),
+    youtubeCategoryId: z.string().optional(),
+    youtubeIsShort: z.boolean().optional(),
+    youtubeMadeForKids: z.boolean().optional(),
+    youtubeContainsSyntheticMedia: z
+      .boolean()
+      .optional()
+      .describe(
+        "Discloses that the video contains realistic altered or synthetic (AI) content. Sent to YouTube only when true. Set at creation only. Instagram's equivalent is instagramIsAiGenerated, TikTok's is tiktokIsAigc.",
+      ),
+    youtubeTitle: z.string().optional(),
+    youtubePlaylistId: z
+      .string()
+      .optional()
+      .describe('YouTube playlist id — the playlistId field from list_youtube_playlists'),
+    youtubeThumbnailKey: z
+      .string()
+      .optional()
+      .describe(
+        'Media key for a custom YouTube thumbnail (image, max 2MB, min 640px wide, 1280x720 recommended)',
+      ),
+    youtubeLanguage: z
+      .string()
+      .max(35)
+      .optional()
+      .describe(
+        `The video's language as a BCP-47 code, e.g. en, en-GB, es, es-419, fr, fr-CA, pt-BR or zh-Hans. Sets both YouTube's Video language (what is spoken) and its Title and description language, and is the language of the youtubeCaptionKey captions. An unknown code is rejected with HTTP 400 "youtubeLanguage.invalid". Used only by YouTube posts; applies to every post in this call, so put videos in different languages in separate calls.`,
+      ),
+    youtubeCaptionKey: z
+      .string()
+      .optional()
+      .describe(
+        `Captions for the video: ${CAPTION_KEY_SOURCE[binding]}. Upload the file before this call, and never put its key in mediaItems. It becomes the video's caption track in the language set by youtubeLanguage, which is required with it (otherwise HTTP 400 "youtubeCaptionKey.languageRequired"); one caption track per post. The file must be a timed SRT or WebVTT file (each caption with its start --> end time), plain UTF-8 text, at most 10 MB; a transcript without timings doesn't work. YouTube's automatic captions stay listed separately as "(auto-generated)". If adding the captions fails, the video still publishes, without them. Used only by YouTube posts; applies to every post in this call, so each video with its own caption file needs its own create_posts call.`,
+      ),
+    // Facebook
+    facebookContentType: z.enum(['POST', 'REEL', 'STORY']).optional(),
+    facebookAllowComments: z.boolean().optional(),
+    facebookPrivacy: z
+      .enum(['PUBLIC', 'FRIENDS_OF_FRIENDS', 'FRIENDS', 'SELF'])
+      .optional(),
+    facebookCarouselMainLink: z.string().optional(),
+    facebookCarouselShowEndCard: z.boolean().optional(),
+    facebookReelsCollaborators: z.array(z.string()).optional(),
+    facebookTargetCountries: z
+      .array(z.string().length(2))
+      .max(25)
+      .optional()
+      .describe(
+        'Limit who can see a Facebook FEED post by country — ISO 3166-1 alpha-2 codes (case-insensitive), max 25. Audience gating (hidden from everyone else), feed posts only — not Reels/Stories/video.',
+      ),
+    facebookPlaceId: z
+      .string()
+      .optional()
+      .describe(
+        'Geotag a Facebook FEED post — a numeric Facebook Page id with location data from search_places (same id as instagramLocationId). Feed posts only (text/photo/carousel) — not Reels/Stories/video.',
+      ),
+    facebookPlaceName: z
+      .string()
+      .max(255)
+      .optional()
+      .describe(
+        'Display-only place label from search_places (stored for your portal; never sent to Meta)',
+      ),
+    // Google Business Profile
+    gbpLocationId: z
+      .string()
+      .optional()
+      .describe('GBP location resource name — the locationId field from list_gbp_locations'),
+    gbpTopicType: z.enum(['STANDARD', 'EVENT', 'OFFER']).optional().describe('Post type'),
+    gbpCallToActionType: z
+      .enum(['BOOK', 'ORDER', 'LEARN_MORE', 'SIGN_UP', 'CALL', 'SHOP'])
+      .optional(),
+    gbpCallToActionUrl: z
+      .string()
+      .optional()
+      .describe('CTA button URL (not needed for CALL, ignored for OFFER)'),
+    gbpEventTitle: z.string().optional().describe('Title for EVENT/OFFER posts (max 58 chars)'),
+    gbpEventStartDate: z.string().optional().describe('Start date for EVENT/OFFER (ISO 8601)'),
+    gbpEventEndDate: z.string().optional().describe('End date for EVENT/OFFER (ISO 8601)'),
+    gbpOfferCouponCode: z.string().optional().describe('Coupon code (OFFER only)'),
+    gbpOfferRedeemUrl: z.string().optional().describe('Redemption URL (OFFER only)'),
+    gbpOfferTerms: z.string().optional().describe('Terms and conditions (OFFER only)'),
+    // Pinterest
+    pinterestBoardId: z
+      .string()
+      .optional()
+      .describe(
+        "Pinterest board id — the boardId field from list_pinterest_boards (NOT the account's socialMediaId)",
+      ),
+    pinterestLink: z.string().optional(),
+    // LinkedIn
+    linkedinAttachmentKey: z.string().optional(),
+    linkedinAttachmentTitle: z.string().optional(),
+    // Threads
+    threadsTopicTag: z
+      .string()
+      .min(1)
+      .max(50)
+      .optional()
+      .describe(
+        "Threads topic for the post: one topic, not a list; 1-50 characters, no '.' or '&'. Takes precedence over a #hashtag in the post content, which then stays plain text. Used only by Threads posts; applies to every post in this call, so use separate calls for different topics. Omit for no topic.",
+      ),
+  });
 
 export const postTools: ToolDef[] = [
   {
@@ -314,7 +336,7 @@ export const postTools: ToolDef[] = [
               .default('APPROVED')
               .describe('Approval workflow status'),
       controls: jsonParse(
-        controlsSchema
+        controlsSchema(binding)
           .optional()
           .describe('Platform-specific controls (shared across all posts in the batch)'),
       ),

@@ -1,8 +1,11 @@
 // The stdio REST adapter over a stubbed fetch: what reaches the PostFast API
-// for the post filters and the bulk delete, and how an API error reads.
-// Run with `npm test`.
+// for the post filters, the bulk delete and local uploads, and how an API
+// error reads. Run with `npm test`.
 import { afterEach, beforeEach, test } from 'node:test';
 import assert from 'node:assert/strict';
+import { mkdtempSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { RestAdapter } from '../dist/stdio/rest-adapter.js';
 
 const A = '11111111-1111-4111-8111-111111111111';
@@ -89,4 +92,48 @@ test('a 429 error ends with the Retry-After delay when the API sends one', async
   await assert.rejects(api.deletePosts([A]), {
     message: 'PostFast API error (400): Each id must be a valid UUID',
   });
+});
+
+test('uploadLocalFile sends .srt and .vtt files as captions and returns type CAPTION', async () => {
+  const dir = mkdtempSync(join(tmpdir(), 'postfast-upload-'));
+  const files = {
+    'talk.srt': ['application/x-subrip', 'CAPTION', '1\r\n00:00:01,000 --> 00:00:03,500\r\nHoy es 3 de octubre.\r\n'],
+    'talk.VTT': ['text/vtt', 'CAPTION', 'WEBVTT\n\n00:01.000 --> 00:03.500\nAté amanhã!\n'],
+    // Controls: images and videos classify as before.
+    'photo.PNG': ['image/png', 'IMAGE', 'png-bytes'],
+    'clip.mov': ['video/quicktime', 'VIDEO', 'mov-bytes'],
+  };
+  const sent = [];
+  globalThis.fetch = async (url, init) => {
+    sent.push({ url: String(url), method: init.method, headers: init.headers, body: init.body });
+    return String(url).startsWith('https://api.example.test/')
+      ? json([{ key: `file/${A}.srt`, signedUrl: 'https://r2.example.test/put?sig=1' }])
+      : new Response(null, { status: 200 });
+  };
+  const api = new RestAdapter();
+
+  for (const [name, [contentType, type, text]] of Object.entries(files)) {
+    sent.length = 0;
+    const path = join(dir, name);
+    writeFileSync(path, text);
+    assert.deepEqual(await api.uploadLocalFile(path), { key: `file/${A}.srt`, type, contentType }, name);
+    const [mint, put] = sent;
+    assert.equal(sent.length, 2, name);
+    assert.deepEqual(
+      [mint.url, mint.method, mint.headers['pf-api-key'], JSON.parse(mint.body)],
+      ['https://api.example.test/file/get-signed-upload-urls', 'POST', 'pf-test-key', { contentType, count: 1 }],
+      name,
+    );
+    // The file goes to the signed URL as is, typed, and without the API key.
+    assert.deepEqual([put.url, put.method, put.headers], ['https://r2.example.test/put?sig=1', 'PUT', { 'Content-Type': contentType }], name);
+    assert.equal(Buffer.from(put.body).toString('utf8'), text, name);
+  }
+
+  // Anything else is refused before any request, and the message lists the caption extensions.
+  sent.length = 0;
+  writeFileSync(join(dir, 'notes.txt'), 'plain transcript');
+  await assert.rejects(api.uploadLocalFile(join(dir, 'notes.txt')), {
+    message: 'Unsupported file extension ".txt". Supported: .jpg, .jpeg, .png, .gif, .webp, .mp4, .webm, .mov, .srt, .vtt',
+  });
+  assert.equal(sent.length, 0);
 });

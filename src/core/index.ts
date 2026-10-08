@@ -23,6 +23,7 @@ export {
 } from './build-tools.js';
 export { SERVER_INSTRUCTIONS, instructionsFor } from './instructions.js';
 export {
+  CAPTION_MIME_TYPES,
   CREATE_APPROVAL_STATUSES,
   CREATE_STATUSES,
   IMAGE_MIME_TYPES,
@@ -31,6 +32,7 @@ export {
   SET_APPROVAL_STATUSES,
   VIDEO_MIME_TYPES,
   jsonParse,
+  uploadTypeFor,
   workspaceIdField,
 } from './shared.js';
 export type {

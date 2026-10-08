@@ -18,7 +18,8 @@ import type {
   SetInboxItemStateArgs,
   UploadUrlsArgs,
 } from '../core/backend-port.js';
-import type { SignedUploadUrl } from '../core/types.js';
+import { uploadTypeFor } from '../core/shared.js';
+import type { SignedUploadUrl, UploadType } from '../core/types.js';
 
 const DEFAULT_BASE_URL = 'https://api.postfa.st';
 
@@ -31,17 +32,20 @@ const MIME_MAP: Record<string, string> = {
   '.mp4': 'video/mp4',
   '.webm': 'video/webm',
   '.mov': 'video/quicktime',
+  '.srt': 'application/x-subrip',
+  '.vtt': 'text/vtt',
 };
 
-function detectContentType(filePath: string): string {
+function detectContentType(filePath: string): { contentType: string; type: UploadType } {
   const ext = extname(filePath).toLowerCase();
-  const mime = MIME_MAP[ext];
-  if (!mime) {
+  const contentType = MIME_MAP[ext];
+  const type = contentType && uploadTypeFor(contentType);
+  if (!type) {
     throw new Error(
       `Unsupported file extension "${ext}". Supported: ${Object.keys(MIME_MAP).join(', ')}`,
     );
   }
-  return mime;
+  return { contentType, type };
 }
 
 /** The stdio bin's BackendPort: the public PostFast REST API over pf-api-key. */
@@ -217,8 +221,7 @@ export class RestAdapter implements BackendPort {
   }
 
   async uploadLocalFile(filePath: string): Promise<LocalUploadResult> {
-    const contentType = detectContentType(filePath);
-    const isVideo = contentType.startsWith('video/');
+    const { contentType, type } = detectContentType(filePath);
 
     const [uploadUrl] = await this.post<SignedUploadUrl[]>(
       '/file/get-signed-upload-urls',
@@ -239,11 +242,7 @@ export class RestAdapter implements BackendPort {
       );
     }
 
-    return {
-      key: uploadUrl.key,
-      type: isVideo ? 'VIDEO' : 'IMAGE',
-      contentType,
-    };
+    return { key: uploadUrl.key, type, contentType };
   }
 
   uploadFromUrl(): Promise<unknown> {

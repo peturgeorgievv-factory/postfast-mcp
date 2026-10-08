@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import type { UploadType } from './types.js';
 
 export const PLATFORMS = [
   'FACEBOOK',
@@ -34,6 +35,22 @@ export const IMAGE_MIME_TYPES = [
   'image/webp',
 ] as const;
 export const VIDEO_MIME_TYPES = ['video/mp4', 'video/webm', 'video/quicktime'] as const;
+/** Caption files (.srt, .vtt) for controls.youtubeCaptionKey; never mediaItems. */
+export const CAPTION_MIME_TYPES = ['application/x-subrip', 'text/vtt'] as const;
+
+/**
+ * What an upload is for, by MIME type (parameters and case ignored): IMAGE and
+ * VIDEO keys go in mediaItems, a CAPTION key in controls.youtubeCaptionKey.
+ * Undefined for a type the upload tools don't take.
+ */
+export function uploadTypeFor(contentType: string): UploadType | undefined {
+  const mime = contentType.split(';')[0].trim().toLowerCase();
+  const isIn = (list: readonly string[]) => list.includes(mime);
+  if (isIn(IMAGE_MIME_TYPES)) return 'IMAGE';
+  if (isIn(VIDEO_MIME_TYPES)) return 'VIDEO';
+  if (isIn(CAPTION_MIME_TYPES)) return 'CAPTION';
+  return undefined;
+}
 
 /** Some MCP clients stringify complex params — parse them back before validation. */
 export function jsonParse<T extends z.ZodTypeAny>(schema: T) {

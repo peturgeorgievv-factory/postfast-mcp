@@ -70,6 +70,9 @@ export interface ReadablePostControls {
   youtubePrivacy: 'PUBLIC' | 'PRIVATE' | 'UNLISTED' | null;
 }
 
+/** What an uploaded file is for: IMAGE and VIDEO keys go in mediaItems, a CAPTION key in controls.youtubeCaptionKey. */
+export type UploadType = 'IMAGE' | 'VIDEO' | 'CAPTION';
+
 export interface MediaItem {
   key: string;
   type: 'IMAGE' | 'VIDEO';
@@ -238,6 +241,8 @@ export interface PostControls {
   youtubeTitle?: string;
   youtubePlaylistId?: string;
   youtubeThumbnailKey?: string;
+  youtubeLanguage?: string;
+  youtubeCaptionKey?: string;
   // Facebook
   facebookContentType?: 'POST' | 'REEL' | 'STORY';
   facebookAllowComments?: boolean;
