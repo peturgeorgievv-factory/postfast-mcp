@@ -1,5 +1,11 @@
 # postfast-mcp
 
+## 0.12.1
+
+### Patch Changes
+
+- Stdio errors now carry the API's reason. The API answers many errors with a code in `message` and the explanation in `description`, and the stdio server showed only the code: a model saw `media.invalidMedia` without "(not a timed UTF-8 SRT or WebVTT file)", or `youtubeLanguage.invalid` without the suggested codes. The description now follows the code ("PostFast API error (400): media.invalidMedia — Invalid media files: …"), and a 429 still ends with the Retry-After hint. The lockfile moves proxy-addr to 2.0.8 (GHSA-jqcg-44mw-7w3h), so the `.mcpb` bundle ships the fixed version; the stdio server never loads it. No tool, schema or instruction changes.
+
 ## 0.12.0
 
 ### Minor Changes
