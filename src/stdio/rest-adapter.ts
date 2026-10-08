@@ -101,6 +101,10 @@ export class RestAdapter implements BackendPort {
       try {
         const json = JSON.parse(text);
         message = json.message ?? json.error ?? text;
+        // The API's `message` is often a code (media.invalidMedia); the reason is in `description`.
+        if (typeof json.description === 'string' && json.description && json.description !== message) {
+          message += ` — ${json.description}`;
+        }
       } catch {
         message = text;
       }

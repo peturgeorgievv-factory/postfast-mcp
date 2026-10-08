@@ -137,3 +137,29 @@ test('uploadLocalFile sends .srt and .vtt files as captions and returns type CAP
   });
   assert.equal(sent.length, 0);
 });
+
+test("an error carries the API's reason after its code", async () => {
+  const api = new RestAdapter();
+  const invalid = {
+    statusCode: 400,
+    message: 'media.invalidMedia',
+    error: 'BAD_REQUEST',
+    description: `Invalid media files: file/${A}.srt (not a timed UTF-8 SRT or WebVTT file)`,
+  };
+  reply = () => json(invalid, { status: 400 });
+  await assert.rejects(api.createPosts({ posts: [], status: 'DRAFT', approvalStatus: 'APPROVED' }), {
+    message: `PostFast API error (400): media.invalidMedia — Invalid media files: file/${A}.srt (not a timed UTF-8 SRT or WebVTT file)`,
+  });
+
+  // The 429 hint still comes last.
+  reply = () => json({ ...invalid, statusCode: 429, message: 'throttle.tooManyRequests', description: 'Slow down.' }, { status: 429, headers: { 'Retry-After': '5' } });
+  await assert.rejects(api.listPosts({ page: 0, limit: 20 }), {
+    message: 'PostFast API error (429): throttle.tooManyRequests — Slow down. Retry after 5s.',
+  });
+
+  // A reason equal to the message, an empty one or a non-string one adds nothing.
+  for (const description of ['media.invalidMedia', '', { nested: true }]) {
+    reply = () => json({ ...invalid, description }, { status: 400 });
+    await assert.rejects(api.deletePosts([A]), { message: 'PostFast API error (400): media.invalidMedia' });
+  }
+});
