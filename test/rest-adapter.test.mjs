@@ -94,11 +94,14 @@ test('a 429 error ends with the Retry-After delay when the API sends one', async
   });
 });
 
-test('uploadLocalFile sends .srt and .vtt files as captions and returns type CAPTION', async () => {
+test('uploadLocalFile sends caption files and documents with their own types', async () => {
   const dir = mkdtempSync(join(tmpdir(), 'postfast-upload-'));
   const files = {
     'talk.srt': ['application/x-subrip', 'CAPTION', '1\r\n00:00:01,000 --> 00:00:03,500\r\nHoy es 3 de octubre.\r\n'],
     'talk.VTT': ['text/vtt', 'CAPTION', 'WEBVTT\n\n00:01.000 --> 00:03.500\nAté amanhã!\n'],
+    'prompts.pdf': ['application/pdf', 'DOCUMENT', '%PDF-1.7 seven pages'],
+    'Deck.PPTX': ['application/vnd.openxmlformats-officedocument.presentationml.presentation', 'DOCUMENT', 'pptx-bytes'],
+    'brief.docx': ['application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'DOCUMENT', 'docx-bytes'],
     // Controls: images and videos classify as before.
     'photo.PNG': ['image/png', 'IMAGE', 'png-bytes'],
     'clip.mov': ['video/quicktime', 'VIDEO', 'mov-bytes'],
@@ -129,11 +132,11 @@ test('uploadLocalFile sends .srt and .vtt files as captions and returns type CAP
     assert.equal(Buffer.from(put.body).toString('utf8'), text, name);
   }
 
-  // Anything else is refused before any request, and the message lists the caption extensions.
+  // Anything else is refused before any request, and the message lists every extension.
   sent.length = 0;
   writeFileSync(join(dir, 'notes.txt'), 'plain transcript');
   await assert.rejects(api.uploadLocalFile(join(dir, 'notes.txt')), {
-    message: 'Unsupported file extension ".txt". Supported: .jpg, .jpeg, .png, .gif, .webp, .mp4, .webm, .mov, .srt, .vtt',
+    message: 'Unsupported file extension ".txt". Supported: .jpg, .jpeg, .png, .gif, .webp, .mp4, .webm, .mov, .srt, .vtt, .pdf, .doc, .docx, .ppt, .pptx',
   });
   assert.equal(sent.length, 0);
 });

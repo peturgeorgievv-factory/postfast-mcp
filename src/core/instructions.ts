@@ -41,7 +41,7 @@ const CONTROLS = `Platform-specific options go in the controls object, e.g.:
 - Instagram: controls.instagramPublishType = TIMELINE | STORY | REEL.
 - Facebook: controls.facebookContentType = POST | REEL | STORY. controls.facebookTargetCountries limits who can see a FEED post by country (ISO 3166-1 alpha-2, max 25; not Reels/Stories).
 - Geotag a place (Facebook/Instagram): call search_places, then pass a returned id as controls.facebookPlaceId (Facebook feed posts only — not Reels/Stories/video) and/or controls.instagramLocationId (Instagram single media only — not carousels). One id works for both.
-- LinkedIn: attach a document via controls.linkedinAttachmentKey.
+- LinkedIn: to attach a PDF, Word or PowerPoint document (shown as pages readers swipe through), upload it, then pass its key as controls.linkedinAttachmentKey (never in mediaItems, and not with images or a video on the same post) and its title as controls.linkedinAttachmentTitle.
 - X: controls.xRetweetUrl reposts an existing tweet (content/media are ignored).
 Note: list_pinterest_boards / list_youtube_playlists / list_gbp_locations take the account's socialMediaId; each returned item has BOTH an internal id and the platform id (boardId / playlistId / locationId) — pass the PLATFORM id to controls, not the internal id or the account id.`;
 

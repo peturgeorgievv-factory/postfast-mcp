@@ -34,6 +34,11 @@ const MIME_MAP: Record<string, string> = {
   '.mov': 'video/quicktime',
   '.srt': 'application/x-subrip',
   '.vtt': 'text/vtt',
+  '.pdf': 'application/pdf',
+  '.doc': 'application/msword',
+  '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  '.ppt': 'application/vnd.ms-powerpoint',
+  '.pptx': 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
 };
 
 function detectContentType(filePath: string): { contentType: string; type: UploadType } {

@@ -1,7 +1,7 @@
 {
   "name": "postfast",
   "displayName": "PostFast",
-  "version": "0.12.1",
+  "version": "0.13.0",
   "description": "Schedule, manage and analyze social media posts with PostFast from Cursor, across X, Instagram, Facebook, TikTok, LinkedIn, YouTube, Threads, Pinterest, Bluesky, Telegram and Google Business Profile. Bundles the PostFast MCP server and skills for posting and for the comments inbox. Asks for your PostFast API key at install: in PostFast, open API in the sidebar and click Generate API Key.",
   "author": {
     "name": "PostFast",
@@ -29,7 +29,7 @@
   "mcpServers": {
     "postfast": {
       "command": "npx",
-      "args": ["-y", "postfast-mcp@0.12.1"],
+      "args": ["-y", "postfast-mcp@0.13.0"],
       "env": {
         "POSTFAST_API_KEY": "${POSTFAST_API_KEY}"
       }
