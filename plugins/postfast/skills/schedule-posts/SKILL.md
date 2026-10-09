@@ -39,9 +39,9 @@ If an account's `connectionStatus` is DISABLED:
 ### 4. Add media
 
 - TikTok, Instagram, Pinterest and YouTube need media, even for a draft. If the user hasn't given any, ask for it before you create anything.
-- Media at a public https URL: `upload_from_url` with `sourceUrl`.
+- A file at a public https URL: `upload_from_url` with `sourceUrl`. For a caption file or a document, link to the file itself; a share page doesn't work.
 - A file in the conversation: `upload_media`. If your app can attach the file to the tool call, pass it as `file`. Otherwise pass its bytes as base64 in `data` with its MIME type in `contentType`, which suits images of a few MB. For a video or a large file you can't attach, ask for a public https link that downloads the file, and use `upload_from_url`.
-- Each upload returns a `media_id`. Pass it as `mediaItems[].key`, with `type` IMAGE or VIDEO to match the file and `sortOrder` from 0. You can use the same `media_id` in several posts.
+- Each upload returns a `media_id` and its `type`. Pass an IMAGE or VIDEO one as `mediaItems[].key`, with that `type` and `sortOrder` from 0. A CAPTION one (an .srt or .vtt file) goes in `controls.youtubeCaptionKey` and a DOCUMENT one (a PDF, Word or PowerPoint file) in `controls.linkedinAttachmentKey`, never in `mediaItems`; the platform rules cover both. You can use the same `media_id` in several posts.
 
 ### 5. Create the posts, held
 
@@ -67,7 +67,7 @@ Show every post as it will go out, then ask for a yes. For example:
 >
 > Reply **yes** to schedule both, or tell me what to change.
 
-Give the full text, the media, and the settings that change what people see, such as Reel or feed, a Threads topic or a Pinterest board. A draft needs no approval: say it is saved in PostFast and has no time yet.
+Give the full text, the media, and the settings that change what people see, such as Reel or feed, a Threads topic, a Pinterest board, a LinkedIn document and its title, or YouTube captions. A draft needs no approval: say it is saved in PostFast and has no time yet.
 
 ### 7. Approve after the yes
 

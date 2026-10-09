@@ -33,7 +33,7 @@ The plugin uses the PostFast connector, the same one listed in the Claude direct
 - The plugin is instructions plus a reference to one connector: PostFast, at `https://mcp.postfa.st/mcp`. It runs no code of its own and stores nothing.
 - Claude reads your PostFast workspaces, connected accounts, posts, comments and analytics through the connector.
 - Claude sends PostFast what you ask it to act on: post text, media, times, target accounts and network settings; comment replies and moderation you approve; and approvals of posts you confirm. PostFast then publishes to the networks you connected.
-- When you give Claude a link to an image or video, PostFast's server downloads the file from that link. When you ask for an account reconnect link to be emailed, PostFast sends that email.
+- When you give Claude a link to an image, a video, a caption file or a document, PostFast's server downloads the file from that link. When you ask for an account reconnect link to be emailed, PostFast sends that email.
 - When you ask Claude to repurpose a web page, Claude reads it with its own tools. The plugin sends it nowhere else.
 - Sign-in is OAuth with your PostFast account. Read PostFast's [privacy policy](https://postfa.st/privacy).
 

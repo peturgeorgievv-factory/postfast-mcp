@@ -33,30 +33,32 @@ Media is required on TikTok, Instagram, Pinterest and YouTube (one video), even 
 | Instagram | Up to 10 items in total, images and videos mixed |
 | YouTube | 1 video, no images |
 | Facebook | Up to 10 images, or 1 video |
-| LinkedIn | Up to 10 images, or 1 video |
+| LinkedIn | Up to 10 images, or 1 video, or 1 document (see LinkedIn below) |
 | Threads | Up to 10 items in total, images and videos mixed |
 | Pinterest | Up to 5 images, or 1 video |
 | Google Business Profile | 1 image, no video |
 | Bluesky | Up to 10 images, or 1 video |
 | Telegram | Up to 10 items in total, at most 3 of them videos |
 
-- Where the table says "or", a post carries images or a video, not both.
-- File types: JPEG, PNG, GIF and WebP images; MP4, WebM and MOV videos.
+- Where the table says "or", a post carries only one of them, never a mix.
+- File types: JPEG, PNG, GIF and WebP images; MP4, WebM and MOV videos; .srt and .vtt caption files for YouTube; PDF, Word (.doc, .docx) and PowerPoint (.ppt, .pptx) documents for LinkedIn. Caption files and documents never go in `mediaItems`: they go in `youtubeCaptionKey` and `linkedinAttachmentKey` (see below).
 - Set each `mediaItems[].type` to IMAGE or VIDEO to match the uploaded file; a mismatch is rejected. `sortOrder` (from 0) sets the order of a carousel.
 - Videos can be up to 250 MB (Telegram 50 MB, Bluesky 100 MB).
 - A custom video cover is an uploaded image passed as `coverImageKey`, on Instagram Reels, Facebook Reels, Pinterest video pins and TikTok videos.
 
 ## Settings per network
 
-Settings go in `controls`. One `create_posts` call shares its `controls` across every post in it, so put posts that need different settings, such as an Instagram Reel and an Instagram feed post, or two Threads topics, in separate calls.
+Settings go in `controls`. One `create_posts` call shares its `controls` across every post in it, so put posts that need different settings, such as an Instagram Reel and an Instagram feed post, or two Threads topics, in separate calls. Not every setting is listed here; `create_posts` names them all in `controls`.
 
 - **Pinterest**: `pinterestBoardId` is required to schedule (a draft can go without it). It is a board's `boardId` from `list_pinterest_boards`, not the account id. `pinterestLink` sets where the pin leads.
 - **Google Business Profile**: `gbpLocationId` is required to schedule (a draft can go without it). It is the `locationId` from `list_gbp_locations`. `gbpTopicType` is STANDARD, EVENT or OFFER; EVENT and OFFER need `gbpEventTitle` (up to 58) and `gbpEventStartDate` / `gbpEventEndDate`. A call-to-action button takes `gbpCallToActionType` (BOOK, ORDER, LEARN_MORE, SIGN_UP, CALL or SHOP) and `gbpCallToActionUrl` (not needed for CALL, ignored on OFFER). Offers can carry `gbpOfferCouponCode`, `gbpOfferRedeemUrl` and `gbpOfferTerms`.
-- **YouTube**: `youtubeTitle`, `youtubePrivacy` (PUBLIC, PRIVATE or UNLISTED), `youtubeIsShort` (on by default), `youtubeTags`, `youtubeMadeForKids`, and `youtubePlaylistId`, which is the `playlistId` from `list_youtube_playlists`. A custom thumbnail is an uploaded image passed as `youtubeThumbnailKey` (up to 2 MB, at least 640 pixels wide; 1280x720 works best).
+- **YouTube**: `youtubeTitle`, `youtubePrivacy` (PUBLIC, PRIVATE or UNLISTED), `youtubeIsShort` (on by default), `youtubeTags`, `youtubeMadeForKids`, and `youtubePlaylistId`, which is the `playlistId` from `list_youtube_playlists`. A custom thumbnail is an uploaded image passed as `youtubeThumbnailKey` (up to 2 MB, at least 640 pixels wide; 1280x720 works best). `youtubeLanguage` is the video's language as a BCP-47 code, such as en, en-GB or pt-BR; it sets both the language spoken and the title and description language.
+- **YouTube captions**: an uploaded .srt or .vtt file passed as `youtubeCaptionKey` becomes the video's caption track, in the language set by `youtubeLanguage`, which it needs. It must be a timed SRT or WebVTT file (each caption with its start and end time) in plain UTF-8, up to 10 MB; a transcript without timings is refused when you create the post. If adding the captions fails, the video still publishes, without them. One call takes one caption file, so each video with its own caption file goes in its own call.
 - **Instagram**: `instagramPublishType` is TIMELINE, STORY or REEL. `instagramTrialReelStrategy` (MANUAL or SS_PERFORMANCE) makes a Reel a trial reel shown first to non-followers; it needs REEL and can't be combined with `instagramCollaborators`.
 - **Facebook**: `facebookContentType` is POST, REEL or STORY. `facebookTargetCountries` limits who sees a feed post to up to 25 countries (two-letter codes); it doesn't apply to Reels or Stories.
 - **TikTok**: `tiktokTitle` titles a photo post (up to 90). A sound from `list_tiktok_sounds` goes in `tiktokMusicSoundId`, with its label in `tiktokMusicSoundName`; it works on photo and video posts, not together with `tiktokAutoAddMusic`, and not on a post sent as a TikTok draft (`tiktokIsDraft`). `tiktokAllowComments`, `tiktokAllowDuet` and `tiktokAllowStitch` switch those features. `tiktokPrivacy` is deprecated: videos use the account's default and photo posts are public.
 - **Threads**: `threadsTopicTag` sets the post's topic: one topic, 1 to 50 characters, with no `.` or `&`. It takes precedence over a #hashtag in the text, which then stays plain text.
+- **LinkedIn**: a document (a PDF, Word or PowerPoint file, up to 60 MB) is an uploaded file passed as `linkedinAttachmentKey`, with its title in `linkedinAttachmentTitle`; without a title the post shows "Document". LinkedIn shows it as pages readers swipe through. A post with a document can't also carry images or a video: one with both fails to publish. The document goes on every LinkedIn post in the call, so a LinkedIn post with other media or another document needs its own call.
 - **X**: `xRetweetUrl` reposts an existing post; the text and media of the new post are ignored.
 - **Place tags**: find the place with `search_places`. Its id works as `facebookPlaceId` (Facebook feed posts only, not Reels, Stories or videos) and as `instagramLocationId` (Instagram posts with a single image or video, not carousels).
 - **First comment**: `firstComment` is posted right after the post goes out, on X, Instagram, Facebook, YouTube, Threads and TikTok (up to 1,200 on TikTok).
