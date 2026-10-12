@@ -1,5 +1,11 @@
 # postfast-mcp
 
+## 0.13.1
+
+### Patch Changes
+
+- Instagram posts can carry at most 5 hashtags, the limit Instagram's Help Center gives. The Instagram line of the server instructions now says so on both bindings, and the directory plugin's platform rules state the same limit. No tool or schema changes.
+
 ## 0.13.0
 
 ### Minor Changes

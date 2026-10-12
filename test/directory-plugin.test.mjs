@@ -230,3 +230,13 @@ test('platform limits are stated once, in the shared platform rules', () => {
     assert.match(rules, new RegExp(`(?<![\\d,])${n}(?![\\d,])`), `the platform rules lack ${n}`);
   }
 });
+
+test('the platform rules give the Instagram hashtag limit the server instructions give', () => {
+  // The number check above passes on any "5": the rules also cap Pinterest at 5 images.
+  const hashtags = (text) => /^.*\bInstagram\b.*?\b(\d+) hashtags\b/m.exec(text)?.[1];
+  const rules = hashtags(read(RULES));
+  assert.ok(rules, 'the platform rules give no Instagram hashtag limit');
+  for (const binding of ['remote', 'stdio']) {
+    assert.equal(hashtags(instructionsFor(binding)), rules, `${binding} instructions`);
+  }
+});
