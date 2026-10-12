@@ -9,7 +9,7 @@ Check every post against these rules before you create it. They follow what Post
 | X | 280. Up to 4,000 only when the user says the account has X Premium |
 | Threads | 500 |
 | Bluesky | 300 |
-| Instagram | 2,200, with at most 30 hashtags |
+| Instagram | 2,200, with at most 5 hashtags |
 | TikTok | 4,000 on photo posts, 2,200 when the post has a video |
 | LinkedIn | 3,000 |
 | Facebook | 63,206 |

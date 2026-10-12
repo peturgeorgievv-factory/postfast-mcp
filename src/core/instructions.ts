@@ -23,7 +23,7 @@ const MEDIA = `Media: use the key returned by an upload tool, and set mediaItems
 const LIMITS = `Per-platform limits (media counts / characters):
 - X: up to 4 images or 1 video (no mixing); 280 chars (4,000 with X Premium).
 - TikTok: 1 video OR up to 10 images; 4,000 chars.
-- Instagram: up to 10 media items, images and videos mixed; 2,200 chars, max 30 hashtags.
+- Instagram: up to 10 media items, images and videos mixed; 2,200 chars, max 5 hashtags.
 - YouTube: 1 video, no images; title max 100 chars.
 - Facebook / LinkedIn: up to 10 images OR 1 video (no mixing).
 - Threads: up to 10 media items, images and videos mixed; 500 chars.
