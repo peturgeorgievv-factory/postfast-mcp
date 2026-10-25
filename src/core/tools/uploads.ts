@@ -80,6 +80,7 @@ export const uploadTools: ToolDef[] = [
         ),
     },
     annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: true },
+    scopes: ['media:write'],
     run: (port, args, workspaceId) =>
       port.uploadFromUrl(args as unknown as UploadFromUrlArgs, workspaceId),
   },
@@ -114,6 +115,7 @@ export const uploadTools: ToolDef[] = [
         ),
     },
     annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: true },
+    scopes: ['media:write'],
     _meta: { 'openai/fileParams': ['file'] },
     run: (port, args, workspaceId) =>
       port.uploadMedia(args as unknown as UploadMediaArgs, workspaceId),

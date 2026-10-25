@@ -1,7 +1,8 @@
 // The remote binding's confirmation rules, exercised against the built dist:
-// posts are held until approve_posts, and comment replies and deletions go
-// through signed prepare/confirm tokens (BuildToolsOptions.confirmGate). The
-// stdio binding keeps direct publishing and replies. Run with `npm test`.
+// posts are held until approve_posts, and each comment reply, private reply
+// and deletion is previewed by one tool and carried out by another, with the
+// preview's signed token (BuildToolsOptions.confirmGate). The stdio binding
+// keeps direct publishing and replies. Run with `npm test`.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { z } from 'zod';
@@ -13,16 +14,15 @@ const ITEM = '11111111-1111-4111-8111-111111111111';
 const OTHER_ITEM = '22222222-2222-4222-8222-222222222222';
 const WS = '33333333-3333-4333-8333-333333333333';
 const OTHER_WS = '44444444-4444-4444-8444-444444444444';
-const REPLY = { itemId: ITEM, action: 'REPLY', text: 'thanks!' };
 
 /** A port that records every call and answers with a marker result. */
-function recordingPort({ delayMs = 0, fail } = {}) {
+function recordingPort({ delayMs = 0, fail, without = [] } = {}) {
   const calls = [];
   const port = new Proxy(
     {},
     {
       get: (_t, method) =>
-        method === 'then'
+        method === 'then' || without.includes(method)
           ? undefined
           : async (...args) => {
               calls.push({ method, args });
@@ -40,87 +40,144 @@ const gatedTools = (port) =>
 const remoteWithoutSecret = (port) => buildTools({ binding: 'remote', withWorkspaceField: true, port });
 const stdioTools = (port) => buildTools({ binding: 'stdio', port });
 const tool = (tools, name) => tools.find((t) => t.name === name);
-const prepare = (port, args, ws) => tool(gatedTools(port), 'prepare_inbox_action').run(port, args, ws);
-const confirm = (port, args, ws) => tool(gatedTools(port), 'confirm_inbox_action').run(port, args, ws);
+const run = (port, name, args, ws) => tool(gatedTools(port), name).run(port, args, ws);
 const parse = (t, args) => z.object(t.inputSchema).safeParse(args);
 
-test('prepare returns a preview and a token and calls no port method', async () => {
-  const { port, calls } = recordingPort();
-  const out = await prepare(port, REPLY, WS);
-  assert.deepEqual(out.preview, { action: 'REPLY', itemId: ITEM, text: 'thanks!', workspaceId: WS });
-  assert.match(out.confirmToken, /^v1\.\d{10}\.[0-9a-f-]{36}\.[A-Za-z0-9_-]{43}$/);
-  assert.ok(Date.parse(out.expiresAt) > Date.now());
-  assert.match(out.next, /confirm_inbox_action/);
-  // DELETE drops any text; no workspaceId passed means no workspaceId key.
-  const del = await prepare(port, { itemId: ITEM, action: 'DELETE', text: 'ignored' }, undefined);
-  assert.deepEqual(del.preview, { action: 'DELETE', itemId: ITEM });
-  assert.equal(calls.length, 0);
-});
+/** The token's jti, which the reply tools send as the backend's idempotency key. */
+const jtiOf = (confirmToken) => confirmToken.split('.')[2];
 
-test('prepare rejects REPLY and PRIVATE_REPLY without text', async () => {
-  const { port } = recordingPort();
-  for (const action of ['REPLY', 'PRIVATE_REPLY']) {
-    await assert.rejects(
-      prepare(port, { itemId: ITEM, action }, WS),
-      /^Error: text is required for REPLY and PRIVATE_REPLY\.$/,
-    );
-  }
-});
+/**
+ * Each comment operation: its preview tool, the tool that carries it out, and
+ * the port call it makes for a given token.
+ */
+const OPERATIONS = [
+  {
+    action: 'REPLY',
+    preview: 'preview_comment_reply',
+    perform: 'reply_to_comment',
+    args: { itemId: ITEM, text: 'thanks!' },
+    method: 'replyToInboxItem',
+    call: (token) => ({
+      method: 'replyToInboxItem',
+      args: [{ itemId: ITEM, text: 'thanks!', idempotencyKey: `confirm:${jtiOf(token)}` }, WS],
+    }),
+  },
+  {
+    action: 'PRIVATE_REPLY',
+    preview: 'preview_private_reply',
+    perform: 'send_private_reply',
+    args: { itemId: ITEM, text: 'thanks!' },
+    method: 'sendInboxPrivateReply',
+    call: (token) => ({
+      method: 'sendInboxPrivateReply',
+      args: [{ itemId: ITEM, text: 'thanks!', idempotencyKey: `confirm:${jtiOf(token)}` }, WS],
+    }),
+  },
+  {
+    action: 'DELETE',
+    preview: 'preview_comment_deletion',
+    perform: 'delete_comment',
+    args: { itemId: ITEM },
+    method: 'setInboxItemState',
+    // Deleting twice can't remove more, so a deletion sends no idempotency key.
+    call: () => ({ method: 'setInboxItemState', args: [{ itemId: ITEM, action: 'DELETE' }, WS] }),
+  },
+];
+const [REPLY] = OPERATIONS;
+const COMMENT_TOOLS = OPERATIONS.flatMap((op) => [op.preview, op.perform]);
 
-const DISPATCH = {
-  REPLY: ['replyToInboxItem', [{ itemId: ITEM, text: 'thanks!' }, WS]],
-  PRIVATE_REPLY: ['sendInboxPrivateReply', [{ itemId: ITEM, text: 'thanks!' }, WS]],
-  DELETE: ['setInboxItemState', [{ itemId: ITEM, action: 'DELETE' }, WS]],
-};
-for (const [action, [method, args]] of Object.entries(DISPATCH)) {
-  test(`confirm ${action} calls ${method} exactly once with the exact args`, async () => {
+const escape = (text) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const mismatch = (op) =>
+  new RegExp(
+    `^Error: ${escape(`confirmToken does not match this request. Preview it again with ${op.preview} and pass exactly what was previewed.`)}$`,
+  );
+
+for (const op of OPERATIONS) {
+  test(`${op.preview} returns a preview and a token and calls no port method`, async () => {
     const { port, calls } = recordingPort();
-    const text = action === 'DELETE' ? undefined : 'thanks!';
-    const { confirmToken } = await prepare(port, { itemId: ITEM, action, text }, WS);
-    const result = await confirm(port, { confirmToken, itemId: ITEM, action, text }, WS);
-    assert.deepEqual(calls, [{ method, args }]);
-    assert.deepEqual(result, { ok: true, method });
+    const out = await run(port, op.preview, op.args, WS);
+    assert.deepEqual(out.preview, { action: op.action, ...op.args, workspaceId: WS });
+    assert.match(out.confirmToken, /^v1\.\d{10}\.[0-9a-f-]{36}\.[A-Za-z0-9_-]{43}$/);
+    assert.ok(Date.parse(out.expiresAt) > Date.now());
+    assert.match(out.next, new RegExp(`call ${op.perform} with this confirmToken`));
+    // No workspaceId passed means no workspaceId key.
+    const plain = await run(port, op.preview, op.args, undefined);
+    assert.deepEqual(plain.preview, { action: op.action, ...op.args });
+    assert.equal(calls.length, 0);
+  });
+
+  test(`${op.perform} calls ${op.method} exactly once with the exact args`, async () => {
+    const { port, calls } = recordingPort();
+    const { confirmToken } = await run(port, op.preview, op.args, WS);
+    const result = await run(port, op.perform, { confirmToken, ...op.args }, WS);
+    assert.deepEqual(calls, [op.call(confirmToken)]);
+    assert.deepEqual(result, { ok: true, method: op.method });
+  });
+
+  test(`${op.perform} refuses a missing token, another operation's token and a changed request`, async () => {
+    const { port, calls } = recordingPort();
+    const { confirmToken } = await run(port, op.preview, op.args, WS);
+    await assert.rejects(
+      run(port, op.perform, { ...op.args }, WS),
+      new RegExp(`^Error: confirmToken is required\\. Preview it first with ${op.preview}\\.$`),
+    );
+    // A token another operation previewed for the same comment carries nothing out here.
+    for (const other of OPERATIONS.filter((o) => o !== op)) {
+      const foreign = await run(port, other.preview, { ...other.args }, WS);
+      await assert.rejects(
+        run(port, op.perform, { ...op.args, confirmToken: foreign.confirmToken }, WS),
+        mismatch(op),
+      );
+    }
+    const changed = [
+      [{ ...op.args, itemId: OTHER_ITEM }, WS],
+      [op.args, OTHER_WS],
+      [op.args, undefined],
+      ...('text' in op.args ? [[{ ...op.args, text: 'thanks' }, WS]] : []),
+    ];
+    for (const [args, ws] of changed) {
+      await assert.rejects(run(port, op.perform, { confirmToken, ...args }, ws), mismatch(op));
+    }
+    assert.equal(calls.length, 0);
+    // A refused attempt does not use the token up.
+    await run(port, op.perform, { confirmToken, ...op.args }, WS);
+    assert.deepEqual(calls, [op.call(confirmToken)]);
+  });
+
+  test(`${op.perform} refuses an expired token and a reused one`, async () => {
+    const { port, calls } = recordingPort();
+    const fields = { ws: WS, action: op.action, ...op.args };
+    const stale = sign(fields, SECRET, Date.now() - 901_000).confirmToken;
+    await assert.rejects(
+      run(port, op.perform, { confirmToken: stale, ...op.args }, WS),
+      new RegExp(`^Error: confirmToken has expired\\. Preview it again with ${op.preview}\\.$`),
+    );
+    const { confirmToken } = await run(port, op.preview, op.args, WS);
+    await run(port, op.perform, { confirmToken, ...op.args }, WS);
+    await assert.rejects(
+      run(port, op.perform, { confirmToken, ...op.args }, WS),
+      /^Error: This confirmToken was already used\.$/,
+    );
+    assert.equal(calls.length, 1);
   });
 }
 
-test('confirm rejects a changed text, itemId, action or workspaceId', async () => {
-  const { port, calls } = recordingPort();
-  const { confirmToken } = await prepare(port, REPLY, WS);
-  const changed = [
-    [{ ...REPLY, text: 'thanks' }, WS],
-    [{ ...REPLY, itemId: OTHER_ITEM }, WS],
-    [{ ...REPLY, action: 'PRIVATE_REPLY' }, WS],
-    [REPLY, OTHER_WS],
-    [REPLY, undefined],
-  ];
-  for (const [args, ws] of changed) {
-    await assert.rejects(confirm(port, { confirmToken, ...args }, ws), /^Error: confirmToken does not match this action\. Prepare it again with prepare_inbox_action and confirm exactly what was previewed\.$/);
+test('the reply previews refuse a missing text', async () => {
+  const { port } = recordingPort();
+  for (const name of ['preview_comment_reply', 'preview_private_reply']) {
+    await assert.rejects(run(port, name, { itemId: ITEM }, WS), /^Error: text is required\.$/);
   }
-  assert.equal(calls.length, 0);
-  // A rejected attempt does not use the token up.
-  await confirm(port, { confirmToken, ...REPLY }, WS);
-  assert.equal(calls.length, 1);
 });
 
-test('confirm rejects a tampered signature, another secret and malformed tokens', async () => {
+test('a tampered signature, another secret and malformed tokens are refused', async () => {
   const { port, calls } = recordingPort();
-  const { confirmToken } = await prepare(port, REPLY, WS);
+  const { confirmToken } = await run(port, REPLY.preview, REPLY.args, WS);
   const tampered = confirmToken.slice(0, -1) + (confirmToken.endsWith('A') ? 'B' : 'A');
-  const foreign = sign({ ws: WS, ...REPLY }, 'a-different-secret-also-32-chars').confirmToken;
-  for (const bad of [tampered, foreign, '', 'v1', `v2${confirmToken.slice(2)}`, `${confirmToken}.x`]) {
-    await assert.rejects(confirm(port, { confirmToken: bad, ...REPLY }, WS), /does not match this action/);
+  const foreign = sign({ ws: WS, action: 'REPLY', ...REPLY.args }, 'a-different-secret-also-32-chars').confirmToken;
+  for (const bad of [tampered, foreign, 'v1', `v2${confirmToken.slice(2)}`, `${confirmToken}.x`]) {
+    await assert.rejects(run(port, REPLY.perform, { confirmToken: bad, ...REPLY.args }, WS), mismatch(REPLY));
   }
   assert.equal(calls.length, 0);
-});
-
-test('confirm rejects an expired token and a reused one', async () => {
-  const { port, calls } = recordingPort();
-  const stale = sign({ ws: WS, ...REPLY }, SECRET, Date.now() - 901_000).confirmToken;
-  await assert.rejects(confirm(port, { confirmToken: stale, ...REPLY }, WS), /^Error: confirmToken has expired\. Prepare the action again\.$/);
-  const { confirmToken } = await prepare(port, REPLY, WS);
-  await confirm(port, { confirmToken, ...REPLY }, WS);
-  await assert.rejects(confirm(port, { confirmToken, ...REPLY }, WS), /^Error: This confirmToken was already used\.$/);
-  assert.equal(calls.length, 1);
 });
 
 test('expiry is in seconds: a token verifies at +899 s and is expired at +901 s', () => {
@@ -132,38 +189,127 @@ test('expiry is in seconds: a token verifies at +899 s and is expired at +901 s'
   assert.throws(() => redeem(sign(fields, SECRET, now).confirmToken, fields, SECRET, now + 901_000), /expired/);
 });
 
-test('two concurrent confirms with the same token make exactly one port call', async () => {
+test('two concurrent calls with the same token make exactly one port call', async () => {
   const { port, calls } = recordingPort({ delayMs: 20 });
-  const { confirmToken } = await prepare(port, REPLY, WS);
+  const { confirmToken } = await run(port, REPLY.preview, REPLY.args, WS);
   const results = await Promise.allSettled([
-    confirm(port, { confirmToken, ...REPLY }, WS),
-    confirm(port, { confirmToken, ...REPLY }, WS),
+    run(port, REPLY.perform, { confirmToken, ...REPLY.args }, WS),
+    run(port, REPLY.perform, { confirmToken, ...REPLY.args }, WS),
   ]);
   assert.deepEqual(results.map((r) => r.status).sort(), ['fulfilled', 'rejected']);
   assert.match(results.find((r) => r.status === 'rejected').reason.message, /already used/);
   assert.equal(calls.length, 1);
 });
 
-test('a failed platform call releases the token so the same confirm can retry', async () => {
+test('a failed platform call releases the token so the same call can retry', async () => {
   let failing = true;
   const { port, calls } = recordingPort({ fail: () => failing });
-  const { confirmToken } = await prepare(port, REPLY, WS);
-  await assert.rejects(confirm(port, { confirmToken, ...REPLY }, WS), /inbox\.rateLimited/);
+  const { confirmToken } = await run(port, REPLY.preview, REPLY.args, WS);
+  await assert.rejects(run(port, REPLY.perform, { confirmToken, ...REPLY.args }, WS), /inbox\.rateLimited/);
   failing = false;
-  assert.deepEqual(await confirm(port, { confirmToken, ...REPLY }, WS), { ok: true, method: 'replyToInboxItem' });
-  assert.equal(calls.length, 2);
+  assert.deepEqual(await run(port, REPLY.perform, { confirmToken, ...REPLY.args }, WS), {
+    ok: true,
+    method: 'replyToInboxItem',
+  });
+  // Both attempts carry the same key, so if the first one did go out, the backend sends it once.
+  assert.deepEqual(calls, [REPLY.call(confirmToken), REPLY.call(confirmToken)]);
 });
 
-test('DELETE confirms whether or not the caller echoes a text', async () => {
+test('each approval sends under its own idempotency key, the token\'s id', async () => {
   const { port, calls } = recordingPort();
-  const first = await prepare(port, { itemId: ITEM, action: 'DELETE' }, WS);
-  await confirm(port, { confirmToken: first.confirmToken, itemId: ITEM, action: 'DELETE', text: 'echoed' }, WS);
-  const second = await prepare(port, { itemId: ITEM, action: 'DELETE', text: 'ignored' }, WS);
-  await confirm(port, { confirmToken: second.confirmToken, itemId: ITEM, action: 'DELETE' }, WS);
-  assert.deepEqual(
-    calls.map((c) => c.args[0]),
-    [{ itemId: ITEM, action: 'DELETE' }, { itemId: ITEM, action: 'DELETE' }],
-  );
+  for (const op of OPERATIONS.filter((o) => o.action !== 'DELETE')) {
+    const first = await run(port, op.preview, op.args, WS);
+    const second = await run(port, op.preview, op.args, WS);
+    await run(port, op.perform, { ...op.args, confirmToken: first.confirmToken }, WS);
+    await run(port, op.perform, { ...op.args, confirmToken: second.confirmToken }, WS);
+    const keys = calls.splice(0).map((c) => c.args[0].idempotencyKey);
+    assert.deepEqual(keys, [`confirm:${jtiOf(first.confirmToken)}`, `confirm:${jtiOf(second.confirmToken)}`]);
+    // Two previews the user said yes to are two sends, not one.
+    assert.notEqual(keys[0], keys[1]);
+    // The backend takes keys up to 200 characters.
+    assert.ok(keys.every((key) => key.length <= 200));
+  }
+});
+
+test('one tool per operation: each comment tool takes only its own fields and carries its own hints', () => {
+  const tools = gatedTools(recordingPort().port);
+  const keys = (name) => Object.keys(tool(tools, name).inputSchema).sort();
+  assert.deepEqual(keys('preview_comment_reply'), ['itemId', 'text', 'workspaceId']);
+  assert.deepEqual(keys('reply_to_comment'), ['confirmToken', 'itemId', 'text', 'workspaceId']);
+  assert.deepEqual(keys('preview_private_reply'), ['itemId', 'text', 'workspaceId']);
+  assert.deepEqual(keys('send_private_reply'), ['confirmToken', 'itemId', 'text', 'workspaceId']);
+  assert.deepEqual(keys('preview_comment_deletion'), ['itemId', 'workspaceId']);
+  assert.deepEqual(keys('delete_comment'), ['confirmToken', 'itemId', 'workspaceId']);
+
+  const hints = (name) => {
+    const { title: _title, ...rest } = tool(tools, name).annotations;
+    return rest;
+  };
+  const preview = { readOnlyHint: true, destructiveHint: false, openWorldHint: false };
+  const reply = { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true };
+  for (const op of OPERATIONS) assert.deepEqual(hints(op.preview), preview, op.preview);
+  assert.deepEqual(hints('reply_to_comment'), reply);
+  assert.deepEqual(hints('send_private_reply'), reply);
+  assert.deepEqual(hints('delete_comment'), {
+    readOnlyHint: false,
+    destructiveHint: true,
+    idempotentHint: true,
+    openWorldHint: true,
+  });
+
+  // The token is required: a call without one never reaches run().
+  for (const op of OPERATIONS) {
+    assert.equal(parse(tool(tools, op.perform), op.args).success, false, op.perform);
+    assert.equal(parse(tool(tools, op.perform), { ...op.args, confirmToken: 'x' }).success, true, op.perform);
+  }
+});
+
+test('no hosted tool switches between operations with a parameter', () => {
+  const app = { mediaOrigin: 'https://media.example.com', domain: 'https://mcp.example.com', webAppUrl: 'https://app.example.com' };
+  const tools = buildTools({ binding: 'remote', withWorkspaceField: true, confirmGate: { secret: SECRET }, app });
+  const enumValues = (schema) => {
+    const json = z.toJSONSchema(schema, { io: 'input', unrepresentable: 'any' });
+    return json.enum ?? json.anyOf?.flatMap((s) => s.enum ?? []) ?? [];
+  };
+  for (const t of tools) {
+    for (const [field, schema] of Object.entries(t.inputSchema)) {
+      // No field picks a comment operation: those are tools of their own.
+      for (const value of ['REPLY', 'PRIVATE_REPLY', 'DELETE']) {
+        assert.ok(!enumValues(schema).includes(value), `${t.name}.${field} offers ${value}`);
+      }
+      if (field === 'action' || field === 'operation') {
+        // set_inbox_item_state sets a comment's visibility, hidden or shown,
+        // reversibly and under one set of hints; record_app_action only records
+        // which calendar button was used, and the model never sees it.
+        assert.ok(['set_inbox_item_state', 'record_app_action'].includes(t.name), `${t.name} has ${field}`);
+      }
+    }
+  }
+  assert.deepEqual(enumValues(tool(tools, 'set_inbox_item_state').inputSchema.action), ['HIDE', 'UNHIDE']);
+  // Negative control: the check sees an operation enum when there is one.
+  assert.ok(enumValues(z.enum(['REPLY', 'PRIVATE_REPLY', 'DELETE'])).includes('DELETE'));
+  for (const surface of [tools, stdioTools(recordingPort().port)]) {
+    const names = surface.map((t) => t.name);
+    assert.ok(!names.includes('prepare_inbox_action') && !names.includes('confirm_inbox_action'));
+  }
+});
+
+test('a port without one inbox method leaves out only that operation\'s two tools', () => {
+  const logged = [];
+  const original = console.error;
+  console.error = (...args) => logged.push(args.join(' '));
+  let tools;
+  try {
+    tools = gatedTools(recordingPort({ without: ['sendInboxPrivateReply'] }).port);
+  } finally {
+    console.error = original;
+  }
+  const names = tools.map((t) => t.name);
+  assert.ok(!names.includes('preview_private_reply') && !names.includes('send_private_reply'));
+  for (const name of ['preview_comment_reply', 'reply_to_comment', 'preview_comment_deletion', 'delete_comment']) {
+    assert.ok(names.includes(name), name);
+  }
+  assert.equal(logged.filter((line) => line.includes('sendInboxPrivateReply')).length, 2);
 });
 
 const POST = { posts: [{ content: 'connector check', socialMediaId: ITEM }], status: 'DRAFT' };
@@ -182,19 +328,20 @@ test('the remote binding is always gated: create_posts is held, set_inbox_item_s
     assert.match(tool(tools, 'approve_posts').description, /only after they say yes/);
   }
   const names = gatedTools(recordingPort().port).map((t) => t.name);
-  assert.equal(names.length, 27);
-  // Later tools append: the confirm tools keep their published positions.
-  assert.deepEqual(names.slice(24), ['prepare_inbox_action', 'confirm_inbox_action', 'delete_posts']);
+  assert.equal(names.length, 31);
+  // The comment tools take the place of the pair they replace; delete_posts stays last.
+  assert.deepEqual(names.slice(24), [...COMMENT_TOOLS, 'delete_posts']);
 });
 
-test('without a secret the remote binding stays gated and leaves out only the two confirm tools', () => {
+test('without a secret the remote binding stays gated and leaves out only the six comment tools', () => {
   const view = (tools) => tools.map((t) => [t.name, t.description, t.annotations, Object.keys(t.inputSchema)]);
   const withSecret = gatedTools(recordingPort().port);
   const without = remoteWithoutSecret(recordingPort().port);
   assert.deepEqual(
     view(without),
-    view(withSecret.filter((t) => !t.name.endsWith('_inbox_action'))),
+    view(withSecret.filter((t) => !COMMENT_TOOLS.includes(t.name))),
   );
+  assert.equal(withSecret.length - without.length, 6);
 });
 
 test('stdio keeps direct publishing and direct replies', async () => {
@@ -213,7 +360,7 @@ test('stdio keeps direct publishing and direct replies', async () => {
   assert.equal(parse(moderate, { itemId: ITEM, action: 'DELETE' }).success, true);
   await moderate.run(port, { itemId: ITEM, action: 'DELETE' });
   assert.deepEqual(calls, [{ method: 'setInboxItemState', args: [{ itemId: ITEM, action: 'DELETE' }, undefined] }]);
-  assert.ok(!tools.some((t) => t.name.endsWith('_inbox_action') || t.name === 'approve_posts'));
+  assert.ok(!tools.some((t) => COMMENT_TOOLS.includes(t.name) || t.name === 'approve_posts'));
 });
 
 test('a short secret throws on remote; stdio ignores the gate', () => {
@@ -237,12 +384,20 @@ test('instructions: remote holds everything for a yes, stdio keeps its own text'
   assert.equal(remote.length, stdio.length);
   const differs = stdio.filter((p, i) => p !== remote[i]).map((p) => p.slice(0, 12));
   assert.deepEqual(differs, ['Flow: list_a', 'The POSTFAST', 'Status & tim', 'delete_post ', 'Social inbox']);
-  for (const s of ['ChatGPT', 'few minutes ahead', 'reply_to_inbox_item', 'send_inbox_private_reply']) {
+  for (const s of [
+    'ChatGPT',
+    'few minutes ahead',
+    'reply_to_inbox_item',
+    'send_inbox_private_reply',
+    'prepare_inbox_action',
+    'confirm_inbox_action',
+  ]) {
     assert.ok(!SERVER_INSTRUCTIONS.remote.includes(s), s);
   }
   for (const s of [
     'approve_posts only after they say yes',
-    'confirm_inbox_action only after they say yes',
+    'preview it with preview_comment_reply, preview_private_reply or preview_comment_deletion, show the user the preview',
+    'carry it out with reply_to_comment, send_private_reply or delete_comment only after they say yes',
     'call delete_post or delete_posts only after they say yes',
   ]) {
     assert.ok(SERVER_INSTRUCTIONS.remote.includes(s), s);
@@ -258,8 +413,12 @@ const CONSENT = {
   ],
   delete_post: [/call this only after they say yes in the conversation/],
   delete_posts: [/show the user every post you are about to delete .* call this only after they say yes in the conversation/],
-  prepare_inbox_action: [/wait for their yes in the conversation before calling confirm_inbox_action/],
-  confirm_inbox_action: [/only after the user has seen the preview and said yes in the conversation/],
+  preview_comment_reply: [/wait for their yes in the conversation before calling reply_to_comment, even if they already told you what to write/],
+  reply_to_comment: [/only after the user has seen the preview and said yes in the conversation/],
+  preview_private_reply: [/wait for their yes in the conversation before calling send_private_reply, even if they already told you what to write/],
+  send_private_reply: [/only after the user has seen the preview and said yes in the conversation/],
+  preview_comment_deletion: [/wait for their yes in the conversation before calling delete_comment/],
+  delete_comment: [/only after the user has seen the preview and said yes in the conversation/],
   generate_connect_link: [/Email the link \(sendEmail\) only when the user asks you to and gives the address/],
   set_inbox_item_state: [/Hide or unhide a comment only when the user asks/],
 };
@@ -276,6 +435,18 @@ test('remote tool text waits for the user before anything is published, sent, hi
   assert.doesNotMatch(tool(tools, 'approve_posts').description, /instead of approving it, and delete the old one/);
   assert.doesNotMatch(tool(tools, 'delete_post').description, /The deletion cannot be undone/);
   assert.doesNotMatch(tool(tools, 'delete_posts').description, /The deletion cannot be undone/);
+});
+
+test('the comment tools keep their irreversibility notes', () => {
+  const tools = gatedTools(recordingPort().port);
+  assert.match(tool(tools, 'reply_to_comment').description, /Replies on Threads can't be removed through PostFast\./);
+  assert.match(tool(tools, 'preview_comment_reply').description, /A reply on Threads can't be removed through PostFast afterwards/);
+  assert.match(tool(tools, 'send_private_reply').description, /A private reply can't be unsent/);
+  assert.match(tool(tools, 'delete_comment').description, /Deleting can't be undone\./);
+  assert.match(tool(tools, 'preview_comment_deletion').description, /will be deleted permanently/);
+  // The moderation and item tools point at the comment tools that replaced the old pair.
+  assert.match(tool(tools, 'set_inbox_item_state').description, /use preview_comment_deletion, then delete_comment/);
+  assert.match(tool(tools, 'list_inbox_items').description, /through preview_private_reply and send_private_reply/);
 });
 
 test('stdio keeps its own wording for the tools whose remote text asks for the yes', () => {

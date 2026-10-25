@@ -1,5 +1,15 @@
 # postfast-mcp
 
+## 0.14.0
+
+### Minor Changes
+
+- Hosted connector: one tool per comment operation, and each tool's OAuth scopes.
+
+  - The remote binding replaces `prepare_inbox_action` and `confirm_inbox_action`, which picked a public reply, an Instagram private reply or a comment deletion with an `action` parameter, with one pair of tools per operation: `preview_comment_reply` → `reply_to_comment`, `preview_private_reply` → `send_private_reply` and `preview_comment_deletion` → `delete_comment`. A preview is read-only and calls nothing: it returns a signed `confirmToken` over the workspace, comment, operation and text. The second tool takes only its own operation's fields, carries its own annotations (a reply or a private reply is open-world but not destructive, a deletion is destructive), and refuses a token that is missing, expired, already used, or previewed for another comment, text, workspace or operation. A reply and a private reply send the token's id as the backend's idempotency key, so a repeat of one approval goes out once, also when it reaches another replica of the host or follows a timeout that hid a completed send. The server instructions, `list_inbox_items` and `set_inbox_item_state` name the new tools, and the directory plugin's `manage-comments` skill follows them. The stdio binding is unchanged.
+  - Every remote tool lists `securitySchemes`, `[{ type: "oauth2", scopes: [...] }]` with the scopes the backend checks for its call, at the top level of its tools/list entry and in `_meta.securitySchemes`; `buildTools()` returns it as `ResolvedTool.securitySchemes`. The backend still checks scopes on every call.
+  - `registerCatalogTools()` takes `scopeChallenge: { resourceMetadataUrl }`. When a port method throws the new `InsufficientScopeError`, the tool result is an error whose `_meta["mcp/www_authenticate"]` holds an RFC 6750 `insufficient_scope` challenge: the metadata URL, an `error_description` naming the missing scopes, and a `scope` of the token's granted scopes (from the request's `authInfo`) plus the tool's, so asking again never narrows a token. A refusal for scopes the token already has stays a plain error. `insufficientScopeResult()` builds the same result for hosts that run tools themselves. A reply, private reply or deletion refused this way keeps its token, so the same call goes through once the scope is granted.
+
 ## 0.13.1
 
 ### Patch Changes

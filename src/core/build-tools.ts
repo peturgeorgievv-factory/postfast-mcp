@@ -1,15 +1,22 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import type { AuthInfo } from '@modelcontextprotocol/sdk/server/auth/types.js';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import {
   APP_RESOURCE_URI,
   assertAppOptions,
-  listToolIcons,
   registerAppResource,
   type AppOptions,
 } from './app.js';
 import type { BackendPort } from './backend-port.js';
+import {
+  assertScopeChallengeOptions,
+  insufficientScopeResult,
+  isInsufficientScopeError,
+  type ScopeChallengeOptions,
+  type SecurityScheme,
+} from './scope-challenge.js';
 import { workspaceIdField } from './shared.js';
-import type { Binding, ResolvedTool, ToolDef, ToolIcon } from './tool-def.js';
+import type { Binding, ResolvedTool, ToolDef } from './tool-def.js';
 import { ALL_TOOLS } from './tools/index.js';
 
 export interface ConfirmGateOptions {
@@ -32,11 +39,12 @@ export interface BuildToolsOptions {
    */
   port?: BackendPort;
   /**
-   * Remote only. The key that signs prepare_inbox_action / confirm_inbox_action
-   * tokens for comment replies, private replies and deletions. The remote
-   * catalogue holds every post and reply for the user's yes either way;
-   * without a key those two tools are left out (logged once), so comment
-   * replies and deletions are unavailable.
+   * Remote only. The key that signs and checks the confirm tokens of the
+   * comment tools: preview_comment_reply → reply_to_comment,
+   * preview_private_reply → send_private_reply and preview_comment_deletion →
+   * delete_comment. The remote catalogue holds every post and reply for the
+   * user's yes either way; without a key those six tools are left out (logged
+   * once), so comment replies and deletions are unavailable.
    */
   confirmGate?: ConfirmGateOptions;
   /**
@@ -61,7 +69,7 @@ export function buildTools(options: BuildToolsOptions): ResolvedTool[] {
   if (remote && !secret && !warnedNoConfirmSecret) {
     warnedNoConfirmSecret = true;
     console.error(
-      '[postfast-mcp/core] no confirmGate secret: prepare_inbox_action and confirm_inbox_action are left out, so comment replies and deletions are unavailable',
+      '[postfast-mcp/core] no confirmGate secret: the comment reply, private reply and deletion tools are left out, so comment replies and deletions are unavailable',
     );
   }
   const appOn = remote && !!app;
@@ -93,6 +101,9 @@ export function buildTools(options: BuildToolsOptions): ResolvedTool[] {
       typeof def.inputSchema === 'function' ? def.inputSchema(binding) : def.inputSchema;
     const annotations = remote && def.remoteAnnotations ? def.remoteAnnotations : def.annotations;
     const ctx = contextFor(def);
+    // Remote only: the hosted connector is the one clients sign in to with OAuth.
+    const securitySchemes: SecurityScheme[] | undefined =
+      remote && def.scopes ? [{ type: 'oauth2', scopes: [...def.scopes] }] : undefined;
 
     return {
       name: def.name,
@@ -104,8 +115,9 @@ export function buildTools(options: BuildToolsOptions): ResolvedTool[] {
           ? { ...inputSchema, workspaceId: workspaceIdField }
           : inputSchema,
       annotations: { title: def.title, ...annotations },
-      _meta: def._meta,
+      _meta: securitySchemes ? { ...def._meta, securitySchemes } : def._meta,
       ...(def.icons ? { icons: def.icons } : {}),
+      ...(securitySchemes ? { securitySchemes } : {}),
       portMethod: def.portMethod,
       // Hand the confirm secret and app options to run(), also for hosts that call tool.run() themselves.
       run: Object.keys(ctx).length
@@ -147,33 +159,95 @@ export function toolError(message: string): CallToolResult {
   };
 }
 
-/** Run a handler, converting thrown errors into `isError` tool results. */
+/**
+ * Run a handler, converting thrown errors into `isError` tool results.
+ * `onError` may answer an error with a result of its own; when it returns
+ * nothing, the error's message is the result.
+ */
 export async function runTool(
   fn: () => Promise<unknown>,
   toResult: (data: unknown) => CallToolResult = toolResult,
+  onError?: (err: unknown) => CallToolResult | undefined,
 ): Promise<CallToolResult> {
   try {
     return toResult(await fn());
   } catch (err) {
-    return toolError((err as Error).message || 'Tool execution failed.');
+    return onError?.(err) ?? toolError((err as Error).message || 'Tool execution failed.');
   }
 }
 
 export interface RegisterToolsOptions extends BuildToolsOptions {
   port: BackendPort;
+  /**
+   * Remote only. When a tool's port call throws InsufficientScopeError (the
+   * backend refused the token's scopes), the result becomes an OAuth
+   * insufficient_scope challenge naming this metadata URL and the tool's
+   * scopes, so a client can ask the user for them and retry. Without it the
+   * error stays an ordinary tool error.
+   */
+  scopeChallenge?: ScopeChallengeOptions;
 }
 
 /**
- * Register the resolved catalog for a binding on an MCP server. With `app`,
- * also registers the view as a UI resource and lists the app tools' icons,
- * but only when a registered tool opens the view (a port without the app
- * methods registers neither).
+ * The challenge for a tool whose call the backend refused for scope, or
+ * undefined when one cannot help: the tool needs no scope, or the token
+ * already has every scope the tool declares (asking again would loop).
+ */
+function scopeChallengeFor(
+  tool: ResolvedTool,
+  options: ScopeChallengeOptions,
+  authInfo: AuthInfo | undefined,
+): CallToolResult | undefined {
+  const scopes = tool.securitySchemes?.flatMap((scheme) => scheme.scopes) ?? [];
+  const granted = Array.isArray(authInfo?.scopes) ? authInfo.scopes : undefined;
+  if (!scopes.length || (granted && scopes.every((scope) => granted.includes(scope)))) {
+    return undefined;
+  }
+  return insufficientScopeResult({ ...options, scopes, grantedScopes: granted });
+}
+
+type RequestHandler = (request: unknown, extra: unknown) => Promise<unknown>;
+
+/**
+ * Adds fields McpServer has no option for (`securitySchemes`, `icons`) to the
+ * named tools in tools/list, by wrapping its tools/list handler; every other
+ * field stays the SDK's own output. If the SDK keeps its handlers elsewhere,
+ * nothing is added and a log line says so: `securitySchemes` still reach
+ * clients in each tool's `_meta`, and the host falls back to the app's logo.
+ */
+function listToolFields(server: McpServer, fields: Map<string, Record<string, unknown>>): void {
+  const handlers = (server.server as unknown as { _requestHandlers?: unknown })._requestHandlers;
+  const list =
+    handlers instanceof Map ? (handlers.get('tools/list') as RequestHandler | undefined) : undefined;
+  if (!list) {
+    console.error(
+      '[postfast-mcp/core] securitySchemes and icons not listed at the top level: no tools/list handler to wrap',
+    );
+    return;
+  }
+  (handlers as Map<string, RequestHandler>).set('tools/list', async (request, extra) => {
+    const result = (await list(request, extra)) as { tools?: Record<string, unknown>[] };
+    for (const tool of result.tools ?? []) {
+      Object.assign(tool, fields.get(tool.name as string));
+    }
+    return result;
+  });
+}
+
+/**
+ * Register the resolved catalog for a binding on an MCP server. On the remote
+ * binding every tool lists its `securitySchemes`. With `app`, also registers
+ * the view as a UI resource and lists the app tools' icons, but only when a
+ * registered tool opens the view (a port without the app methods registers
+ * neither).
  */
 export function registerCatalogTools(
   server: McpServer,
   options: RegisterToolsOptions,
 ): void {
   const { port } = options;
+  const scopeChallenge = options.binding === 'remote' ? options.scopeChallenge : undefined;
+  if (scopeChallenge) assertScopeChallengeOptions(scopeChallenge);
   const tools = buildTools(options);
 
   for (const tool of tools) {
@@ -186,20 +260,34 @@ export function registerCatalogTools(
         annotations: tool.annotations,
         ...(tool._meta ? { _meta: tool._meta } : {}),
       },
-      (args: Record<string, unknown>) =>
-        runTool(() => {
-          const { workspaceId, ...rest } = args ?? {};
-          return tool.run(port, rest, workspaceId as string | undefined);
-        }, tool.toResult),
+      (args: Record<string, unknown>, extra?: { authInfo?: AuthInfo }) =>
+        runTool(
+          () => {
+            const { workspaceId, ...rest } = args ?? {};
+            return tool.run(port, rest, workspaceId as string | undefined);
+          },
+          tool.toResult,
+          scopeChallenge
+            ? (err) =>
+                isInsufficientScopeError(err)
+                  ? scopeChallengeFor(tool, scopeChallenge, extra?.authInfo)
+                  : undefined
+            : undefined,
+        ),
     );
   }
 
+  const listed = new Map<string, Record<string, unknown>>();
+  for (const tool of tools) {
+    if (tool.securitySchemes) listed.set(tool.name, { securitySchemes: tool.securitySchemes });
+  }
   const opensView = (tool: ResolvedTool) =>
     (tool._meta?.ui as { resourceUri?: string } | undefined)?.resourceUri === APP_RESOURCE_URI;
   if (options.app && tools.some(opensView)) {
     registerAppResource(server, options.app);
-    const icons = new Map<string, ToolIcon[]>();
-    for (const tool of tools) if (tool.icons) icons.set(tool.name, tool.icons);
-    listToolIcons(server, icons);
+    for (const tool of tools) {
+      if (tool.icons) listed.set(tool.name, { ...listed.get(tool.name), icons: tool.icons });
+    }
   }
+  if (listed.size) listToolFields(server, listed);
 }

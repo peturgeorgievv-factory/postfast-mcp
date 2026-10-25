@@ -315,6 +315,7 @@ export const postTools: ToolDef[] = [
         .describe('End date filter (ISO 8601, e.g. 2026-01-31T23:59:59.999Z)'),
     },
     annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
+    scopes: ['posts:read'],
     run: (port, args, workspaceId) =>
       port.listPosts(args as unknown as ListPostsArgs, workspaceId),
   },
@@ -366,6 +367,7 @@ export const postTools: ToolDef[] = [
     // approve_posts is what publishes.
     annotations: { readOnlyHint: false, destructiveHint: true, openWorldHint: true },
     remoteAnnotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: false },
+    scopes: ['posts:write'],
     run: (port, args, workspaceId) =>
       port.createPosts(args as unknown as CreatePostsArgs, workspaceId),
   },
@@ -382,6 +384,7 @@ export const postTools: ToolDef[] = [
     // destructive: APPROVED is the last gate before the scheduler publishes, and a
     // published post cannot be un-published through our API.
     annotations: { readOnlyHint: false, destructiveHint: true, openWorldHint: true },
+    scopes: ['posts:approve'],
     run: (port, args, workspaceId) =>
       port.approvePosts(args as unknown as ApprovePostsArgs, workspaceId),
   },
@@ -404,6 +407,7 @@ export const postTools: ToolDef[] = [
       idempotentHint: true,
       openWorldHint: false,
     },
+    scopes: ['posts:delete'],
     run: (port, args, workspaceId) => port.deletePost(args.id as string, workspaceId),
   },
   {
@@ -428,6 +432,7 @@ export const postTools: ToolDef[] = [
     // openWorld false: reads metrics already synced into our database; no live
     // platform call at request time.
     annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
+    scopes: ['analytics:read'],
     run: (port, args, workspaceId) =>
       port.getPostAnalytics(args as unknown as AnalyticsArgs, workspaceId),
   },
@@ -459,6 +464,7 @@ export const bulkPostTools: ToolDef[] = [
       idempotentHint: true,
       openWorldHint: false,
     },
+    scopes: ['posts:delete'],
     portMethod: 'deletePosts',
     run: (port, args, workspaceId) => port.deletePosts!(args.ids as string[], workspaceId),
   },

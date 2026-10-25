@@ -60,8 +60,12 @@ test('the skills name only tools on the remote surface', () => {
   // The confirmation flow the skills exist to teach.
   for (const name of [
     'approve_posts',
-    'prepare_inbox_action',
-    'confirm_inbox_action',
+    'preview_comment_reply',
+    'reply_to_comment',
+    'preview_private_reply',
+    'send_private_reply',
+    'preview_comment_deletion',
+    'delete_comment',
     'upload_from_url',
     'upload_media',
     'set_inbox_item_state',
