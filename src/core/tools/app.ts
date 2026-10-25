@@ -310,6 +310,8 @@ const calendarTool = (
   description,
   inputSchema: { refresh: refreshField },
   annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
+  // The calendar's own call; its workspace list needs no scope.
+  scopes: ['posts:read', 'accounts:read'],
   icons: [APP_ICON],
   _meta: appToolMeta(entrypoint),
   portMethod: 'getAppCalendar',
@@ -349,6 +351,7 @@ export const appTools: ToolDef[] = [
       postId: z.uuid().describe('The post to open, from the calendar.'),
     },
     annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
+    scopes: ['posts:read'],
     _meta: appToolMeta(),
     portMethod: 'getAppPost',
     run: (port, args, workspaceId, ctx) => loadPost(port, args, workspaceId, ctx?.app),
@@ -374,6 +377,8 @@ export const appTools: ToolDef[] = [
       idempotentHint: false,
       openWorldHint: false,
     },
+    // Analytics only: any token of the connection may record a button.
+    scopes: [],
     _meta: appToolMeta(),
     portMethod: 'recordAppAction',
     run: async (port, args, workspaceId) => {

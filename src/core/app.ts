@@ -6,6 +6,7 @@ import type {
   OpenAIUiResourceMetadata,
   OpenAIUiToolMetadata,
 } from '@openai/mcp-extensions/server';
+import { LOOPBACK_HOSTS } from './shared.js';
 import type { ToolIcon } from './tool-def.js';
 import type { AppEntrypoint } from './types.js';
 
@@ -39,8 +40,6 @@ export interface AppOptions {
 /** Versioned: a change an open view can't handle ships under a new URI. */
 export const APP_RESOURCE_URI = 'ui://postfast/app-v1';
 export const APP_RESOURCE_MIME_TYPE = 'text/html;profile=mcp-app';
-
-const LOOPBACK_HOSTS = new Set(['localhost', '127.0.0.1', '[::1]']);
 
 /** Throws unless every option is a bare origin: https, or http on a loopback host. */
 export function assertAppOptions(app: AppOptions): void {
@@ -133,31 +132,4 @@ export function registerAppResource(server: McpServer, app: AppOptions): void {
       contents: [{ uri: APP_RESOURCE_URI, mimeType: APP_RESOURCE_MIME_TYPE, text, _meta }],
     }),
   );
-}
-
-type RequestHandler = (request: unknown, extra: unknown) => Promise<unknown>;
-
-/**
- * Lists icons on the named tools in tools/list. McpServer has no field for
- * tool icons, so this wraps its tools/list handler and adds `icons` to those
- * tools only; every other field stays the SDK's own output. If the SDK keeps
- * its handlers elsewhere, the icons are skipped with a log and the host falls
- * back to the app's own logo.
- */
-export function listToolIcons(server: McpServer, icons: Map<string, ToolIcon[]>): void {
-  const handlers = (server.server as unknown as { _requestHandlers?: unknown })._requestHandlers;
-  const list =
-    handlers instanceof Map ? (handlers.get('tools/list') as RequestHandler | undefined) : undefined;
-  if (!list) {
-    console.error('[postfast-mcp/core] tool icons not listed: no tools/list handler to wrap');
-    return;
-  }
-  (handlers as Map<string, RequestHandler>).set('tools/list', async (request, extra) => {
-    const result = (await list(request, extra)) as { tools?: { name: string; icons?: ToolIcon[] }[] };
-    for (const tool of result.tools ?? []) {
-      const toolIcons = icons.get(tool.name);
-      if (toolIcons) tool.icons = toolIcons;
-    }
-    return result;
-  });
 }

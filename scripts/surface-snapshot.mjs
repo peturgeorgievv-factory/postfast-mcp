@@ -8,13 +8,15 @@
 // Usage: node scripts/surface-snapshot.mjs <stdio|remote> [outDir]
 // Writes <mode>.raw.json (as returned, key order kept, so a parameter-order
 // change shows) and <mode>.json (keys sorted, array order kept). Compare two
-// renders with cmp on both files.
+// renders with cmp on both files. tools/list keeps fields the SDK's own Tool
+// type doesn't know (securitySchemes), which its listTools() would drop.
 
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
+import { ListToolsResultSchema, ToolSchema } from '@modelcontextprotocol/sdk/types.js';
 import { instructionsFor, registerCatalogTools } from '../dist/core/index.js';
 
 const MODES = ['stdio', 'remote'];
@@ -47,7 +49,11 @@ const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
 await server.connect(serverTransport);
 const client = new Client({ name: 'surface-snapshot', version: '0.0.0' });
 await client.connect(clientTransport);
-const raw = { instructions: client.getInstructions(), ...(await client.listTools()) };
+const ListedTools = ListToolsResultSchema.extend({ tools: ToolSchema.passthrough().array() });
+const raw = {
+  instructions: client.getInstructions(),
+  ...(await client.request({ method: 'tools/list' }, ListedTools)),
+};
 await client.close();
 await server.close();
 

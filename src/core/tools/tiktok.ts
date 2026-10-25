@@ -28,6 +28,7 @@ export const tiktokTools: ToolDef[] = [
         .describe('Trending window (default 7DAY)'),
     },
     annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: true },
+    scopes: ['accounts:read'],
     portMethod: 'listTikTokSounds',
     run: (port, args, workspaceId) =>
       port.listTikTokSounds!(args as unknown as ListTikTokSoundsArgs, workspaceId),

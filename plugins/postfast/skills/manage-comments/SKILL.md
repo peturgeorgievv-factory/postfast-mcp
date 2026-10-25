@@ -9,10 +9,10 @@ The PostFast inbox holds comments on the user's own posts on TikTok, Instagram, 
 
 ## Rules
 
-1. **Nothing is sent or deleted without a yes to the exact preview.** A public reply, an Instagram private reply or a deletion goes through `prepare_inbox_action`, which sends nothing and returns a preview. Show the user the preview, wait for their yes in the conversation, and only then call `confirm_inbox_action`. This holds even when the user dictated the reply word for word: they still see the preview and say yes before it is sent. Never prepare and confirm in the same turn.
-2. **Confirm exactly what was previewed.** Pass `confirm_inbox_action` the `confirmToken` with the same `itemId`, `action` and `text`, and the same `workspaceId` only if you passed one to prepare. If the user changes the text, prepare it again and show the new preview.
+1. **Nothing is sent or deleted without a yes to the exact preview.** Each action has its own preview tool, which sends nothing and returns a preview: `preview_comment_reply` for a public reply, `preview_private_reply` for an Instagram private reply and `preview_comment_deletion` for a deletion. Show the user the preview, wait for their yes in the conversation, and only then call the tool that carries it out: `reply_to_comment`, `send_private_reply` or `delete_comment`. This holds even when the user dictated the reply word for word: they still see the preview and say yes before it is sent. Never preview and carry out in the same turn.
+2. **Carry out exactly what was previewed.** Pass the `confirmToken` from the preview with the same `itemId` and `text`, and the same `workspaceId` only if you passed one to the preview. If the user changes the text, preview it again and show the new preview.
 3. **The conversation decides whether and how long a reply can be.** Read `canReply`, `maxReplyLength`, `windowState` and `disabledReason` on the conversation and keep to them. Don't assume a network's rules. When `canReply` is false, tell the user why, using `disabledReason`, instead of trying.
-4. **If `prepare_inbox_action` is not among your tools,** replies, private replies and deletions aren't available on this connection. Tell the user and suggest doing it in PostFast instead. Reading, hiding, restoring and sorting comments still work.
+4. **If `preview_comment_reply`, `preview_private_reply` or `preview_comment_deletion` is not among your tools,** that action (a public reply, a private reply or a deletion) isn't available on this connection. Tell the user and suggest doing it in PostFast instead. Reading, hiding, restoring and sorting comments still work.
 
 ## Find comments to answer
 
@@ -27,7 +27,7 @@ The PostFast inbox holds comments on the user's own posts on TikTok, Instagram, 
 ## Reply
 
 1. Draft a short reply to each comment the user wants answered, in the voice of the account and within `maxReplyLength`. Suggest hiding spam or abuse rather than answering it. Show the drafts as a numbered list so the user can change or drop any of them.
-2. For each reply the user keeps, call `prepare_inbox_action` with `action: "REPLY"`, the comment's own `itemId` (the item from `list_inbox_items`, not the conversation), and the `text` exactly as the user kept it, word for word.
+2. For each reply the user keeps, call `preview_comment_reply` with the comment's own `itemId` (the item from `list_inbox_items`, not the conversation) and the `text` exactly as the user kept it, word for word.
 3. Show the previews together: for each, whose comment it is and what it says, and the exact reply that will appear under it publicly. For example:
 
    > **Nothing is sent yet. Reply to these?**
@@ -37,19 +37,19 @@ The PostFast inbox holds comments on the user's own posts on TikTok, Instagram, 
    >
    > Reply **yes** to send, or tell me what to change.
 
-4. After the user says yes, call `confirm_inbox_action` once for each prepared reply. A yes can cover every reply in the preview it answers.
-5. A `confirmToken` works once and expires 15 minutes after it was prepared. If it has expired, prepare the reply again and show it again.
+4. After the user says yes, call `reply_to_comment` once for each previewed reply, with its `confirmToken`, `itemId` and `text`. A yes can cover every reply in the preview it answers.
+5. A `confirmToken` works once and expires 15 minutes after the preview. If it has expired, preview the reply again and show it again.
 
 Replies on Threads can't be removed through PostFast afterwards, so point that out in the preview when a reply goes to Threads.
 
 ## Instagram private reply
 
-`action: "PRIVATE_REPLY"` sends one private reply to an Instagram comment. It arrives in the commenter's direct messages (possibly in their message requests), so say that in the preview. It is possible only when the comment item's `canPrivateReply` is true, once per comment, and within 7 days of the comment. It goes through prepare, preview, yes and confirm like any reply, and it can't be unsent.
+`preview_private_reply` and then `send_private_reply` send one private reply to an Instagram comment. It arrives in the commenter's direct messages (possibly in their message requests), so say that in the preview. It is possible only when the comment item's `canPrivateReply` is true, once per comment, and within 7 days of the comment. It goes through preview, yes and send like any reply, and it can't be unsent.
 
 ## Hide, restore or delete a comment
 
 - **Hide or restore:** `set_inbox_item_state` with `action` HIDE or UNHIDE. Hiding takes the comment out of public view on the network, and it can be undone. Tell the user which comment you are hiding; if hiding was your suggestion, ask first.
-- **Delete:** `prepare_inbox_action` with `action: "DELETE"`, then the preview, the yes and `confirm_inbox_action`. Deleting removes the comment from the network for good. Threads doesn't support deleting; offer to hide the comment instead.
+- **Delete:** `preview_comment_deletion`, then the preview, the yes and `delete_comment`. Deleting removes the comment from the network for good. Threads doesn't support deleting; offer to hide the comment instead.
 
 ## Sort and assign
 
@@ -59,4 +59,6 @@ Replies on Threads can't be removed through PostFast afterwards, so point that o
 
 ## When something fails
 
-Errors come back as `inbox.*` codes, such as `replyTooLong`, `replyNotSupported`, `rateLimited`, `privateReplyAlreadySent`, `privateReplyWindowExpired` or `deleteNotSupported`. Tell the user plainly what happened. When `confirm_inbox_action` says the token doesn't match, prepare the action again with the exact values and show the new preview.
+Errors come back as `inbox.*` codes, such as `replyTooLong`, `replyNotSupported`, `rateLimited`, `privateReplyAlreadySent`, `privateReplyWindowExpired` or `deleteNotSupported`. Tell the user plainly what happened. When `reply_to_comment`, `send_private_reply` or `delete_comment` says the token doesn't match, preview the action again with the exact values and show the new preview.
+
+If a call says the connection doesn't have permission for the action yet, the user needs to reconnect PostFast and allow it; their app may offer that on its own. Then make the same call again: a `confirmToken` that was refused this way still works until it expires, so the user doesn't need to approve the same preview twice.

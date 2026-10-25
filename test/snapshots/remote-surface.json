@@ -1,5 +1,5 @@
 {
-  "instructions": "PostFast schedules and publishes social posts across X, Instagram, Facebook, TikTok, LinkedIn, YouTube, Threads, Pinterest, Bluesky, Telegram, and Google Business Profile.\n\nFlow: list_accounts (+ list_workspaces) to see what's connected → create_posts (one socialMediaId per post; batch up to 15) → attach media via upload_from_url (a public https URL) or upload_media (base64 bytes in data + contentType). Posts are held for approval and nothing publishes until approve_posts sets them to APPROVED: show the user what will be posted, where and when, and call approve_posts only after they say yes, even if they asked you to post it.\n\nWorkspaces: omit workspaceId to use the connection's default; pass a workspaceId (from list_workspaces) to act in another workspace.\n\nBefore scheduling, confirm the target account's connectionStatus is CONNECTED. A DISABLED account will not publish (disconnected accounts are the #1 cause of failed posts) — saving a DRAFT is still allowed.\n\nStatus & timing: status=SCHEDULED requires scheduledAt on every post (ISO-8601, in the future, within 1 year); status=DRAFT must omit scheduledAt. Every post is created as PENDING_APPROVAL and publishes at its scheduledAt only once approve_posts sets it to APPROVED.\n\nMedia: use the key returned by an upload tool, and set mediaItems[].type to match the file (IMAGE for image/* keys, VIDEO for video/* keys — a mismatch is rejected). Videos are capped at 250MB (Telegram 50MB, Bluesky 100MB). Media is REQUIRED on TikTok, YouTube (video only), Instagram, and Pinterest; X, LinkedIn, Facebook, Threads, Bluesky, Telegram, and Google Business Profile allow text-only posts (GBP accepts 1 image and no video). This requirement applies even to DRAFTS — a draft to a media-required platform without media is rejected. So if the user asks to post to a media-required platform and provides no media, ask them for an image/video (or generate and upload one) BEFORE calling create_posts; don't attempt the post without media.\n\nPer-platform limits (media counts / characters):\n- X: up to 4 images or 1 video (no mixing); 280 chars (4,000 with X Premium).\n- TikTok: 1 video OR up to 10 images; 4,000 chars.\n- Instagram: up to 10 media items, images and videos mixed; 2,200 chars, max 5 hashtags.\n- YouTube: 1 video, no images; title max 100 chars.\n- Facebook / LinkedIn: up to 10 images OR 1 video (no mixing).\n- Threads: up to 10 media items, images and videos mixed; 500 chars.\n- Pinterest: up to 5 images or 1 video; title max 100, description max 800.\n- Google Business Profile: text only, or 1 image and no video; 1,500 chars.\n- Bluesky: up to 10 images or 1 video. Telegram: up to 10 media items, at most 3 of them videos.\nNo post carries more than 10 media items.\nIf content exceeds the target platform's character limit, don't schedule it as-is — tell the user and offer to shorten or split it (X is 280 unless the account has X Premium = 4,000).\n\nPlatform-specific options go in the controls object, e.g.:\n- Pinterest: controls.pinterestBoardId is REQUIRED — it is a board's boardId from list_pinterest_boards, NOT the Pinterest account's socialMediaId.\n- Google Business Profile: controls.gbpLocationId is required — the locationId from list_gbp_locations.\n- YouTube: controls.youtubePlaylistId is the playlistId from list_youtube_playlists; youtubeIsShort defaults true; title falls back to the first 100 chars of content; youtubeLanguage sets the video's language (BCP-47, e.g. en-GB) and youtubeCaptionKey adds an uploaded .srt/.vtt caption file in that language (never in mediaItems).\n- TikTok: controls.tiktokPrivacy is deprecated (videos use the account default, photos default to public); tiktokTitle applies to photo carousels only (max 90); firstComment (max 1,200).\n- Instagram: controls.instagramPublishType = TIMELINE | STORY | REEL.\n- Facebook: controls.facebookContentType = POST | REEL | STORY. controls.facebookTargetCountries limits who can see a FEED post by country (ISO 3166-1 alpha-2, max 25; not Reels/Stories).\n- Geotag a place (Facebook/Instagram): call search_places, then pass a returned id as controls.facebookPlaceId (Facebook feed posts only — not Reels/Stories/video) and/or controls.instagramLocationId (Instagram single media only — not carousels). One id works for both.\n- LinkedIn: to attach a PDF, Word or PowerPoint document (shown as pages readers swipe through), upload it, then pass its key as controls.linkedinAttachmentKey (never in mediaItems, and not with images or a video on the same post) and its title as controls.linkedinAttachmentTitle.\n- X: controls.xRetweetUrl reposts an existing tweet (content/media are ignored).\nNote: list_pinterest_boards / list_youtube_playlists / list_gbp_locations take the account's socialMediaId; each returned item has BOTH an internal id and the platform id (boardId / playlistId / locationId) — pass the PLATFORM id to controls, not the internal id or the account id.\n\nFailed posts carry lastError — usually a disconnected account (reconnect, then retry) or platform-rejected media.\n\ndelete_post (one post) and delete_posts (up to 100 in one call) remove posts from PostFast only — they never delete an already-published post from the social platform. Say so when a user asks to delete something that has already gone out. Deleting can't be undone, so show the user which posts (account, time, first line) and call delete_post or delete_posts only after they say yes in the conversation.\n\nSocial inbox (comments on your posts: TikTok, Instagram, Facebook Pages, Threads; an account's inboxCapable flag from list_accounts says what is live today): read with list_inbox_conversations → list_inbox_items (get_inbox_unread_count for the total). To reply publicly under a comment (REPLY), send an Instagram private reply (PRIVATE_REPLY: one per comment, within 7 days) or delete a comment permanently (DELETE), call prepare_inbox_action, show the user the preview, and carry it out with confirm_inbox_action only after they say yes, even if they gave you the text. Whether and how long a reply can be comes ONLY from the conversation's server-computed canReply / maxReplyLength / windowState / disabledReason; never assume platform rules. Hide or restore a comment with set_inbox_item_state (HIDE / UNHIDE), triage with set_inbox_conversation_status and assign_inbox_conversation, and call mark_inbox_conversation_read after presenting a thread. It is a comments inbox; never present it as DMs or messages.",
+  "instructions": "PostFast schedules and publishes social posts across X, Instagram, Facebook, TikTok, LinkedIn, YouTube, Threads, Pinterest, Bluesky, Telegram, and Google Business Profile.\n\nFlow: list_accounts (+ list_workspaces) to see what's connected → create_posts (one socialMediaId per post; batch up to 15) → attach media via upload_from_url (a public https URL) or upload_media (base64 bytes in data + contentType). Posts are held for approval and nothing publishes until approve_posts sets them to APPROVED: show the user what will be posted, where and when, and call approve_posts only after they say yes, even if they asked you to post it.\n\nWorkspaces: omit workspaceId to use the connection's default; pass a workspaceId (from list_workspaces) to act in another workspace.\n\nBefore scheduling, confirm the target account's connectionStatus is CONNECTED. A DISABLED account will not publish (disconnected accounts are the #1 cause of failed posts) — saving a DRAFT is still allowed.\n\nStatus & timing: status=SCHEDULED requires scheduledAt on every post (ISO-8601, in the future, within 1 year); status=DRAFT must omit scheduledAt. Every post is created as PENDING_APPROVAL and publishes at its scheduledAt only once approve_posts sets it to APPROVED.\n\nMedia: use the key returned by an upload tool, and set mediaItems[].type to match the file (IMAGE for image/* keys, VIDEO for video/* keys — a mismatch is rejected). Videos are capped at 250MB (Telegram 50MB, Bluesky 100MB). Media is REQUIRED on TikTok, YouTube (video only), Instagram, and Pinterest; X, LinkedIn, Facebook, Threads, Bluesky, Telegram, and Google Business Profile allow text-only posts (GBP accepts 1 image and no video). This requirement applies even to DRAFTS — a draft to a media-required platform without media is rejected. So if the user asks to post to a media-required platform and provides no media, ask them for an image/video (or generate and upload one) BEFORE calling create_posts; don't attempt the post without media.\n\nPer-platform limits (media counts / characters):\n- X: up to 4 images or 1 video (no mixing); 280 chars (4,000 with X Premium).\n- TikTok: 1 video OR up to 10 images; 4,000 chars.\n- Instagram: up to 10 media items, images and videos mixed; 2,200 chars, max 5 hashtags.\n- YouTube: 1 video, no images; title max 100 chars.\n- Facebook / LinkedIn: up to 10 images OR 1 video (no mixing).\n- Threads: up to 10 media items, images and videos mixed; 500 chars.\n- Pinterest: up to 5 images or 1 video; title max 100, description max 800.\n- Google Business Profile: text only, or 1 image and no video; 1,500 chars.\n- Bluesky: up to 10 images or 1 video. Telegram: up to 10 media items, at most 3 of them videos.\nNo post carries more than 10 media items.\nIf content exceeds the target platform's character limit, don't schedule it as-is — tell the user and offer to shorten or split it (X is 280 unless the account has X Premium = 4,000).\n\nPlatform-specific options go in the controls object, e.g.:\n- Pinterest: controls.pinterestBoardId is REQUIRED — it is a board's boardId from list_pinterest_boards, NOT the Pinterest account's socialMediaId.\n- Google Business Profile: controls.gbpLocationId is required — the locationId from list_gbp_locations.\n- YouTube: controls.youtubePlaylistId is the playlistId from list_youtube_playlists; youtubeIsShort defaults true; title falls back to the first 100 chars of content; youtubeLanguage sets the video's language (BCP-47, e.g. en-GB) and youtubeCaptionKey adds an uploaded .srt/.vtt caption file in that language (never in mediaItems).\n- TikTok: controls.tiktokPrivacy is deprecated (videos use the account default, photos default to public); tiktokTitle applies to photo carousels only (max 90); firstComment (max 1,200).\n- Instagram: controls.instagramPublishType = TIMELINE | STORY | REEL.\n- Facebook: controls.facebookContentType = POST | REEL | STORY. controls.facebookTargetCountries limits who can see a FEED post by country (ISO 3166-1 alpha-2, max 25; not Reels/Stories).\n- Geotag a place (Facebook/Instagram): call search_places, then pass a returned id as controls.facebookPlaceId (Facebook feed posts only — not Reels/Stories/video) and/or controls.instagramLocationId (Instagram single media only — not carousels). One id works for both.\n- LinkedIn: to attach a PDF, Word or PowerPoint document (shown as pages readers swipe through), upload it, then pass its key as controls.linkedinAttachmentKey (never in mediaItems, and not with images or a video on the same post) and its title as controls.linkedinAttachmentTitle.\n- X: controls.xRetweetUrl reposts an existing tweet (content/media are ignored).\nNote: list_pinterest_boards / list_youtube_playlists / list_gbp_locations take the account's socialMediaId; each returned item has BOTH an internal id and the platform id (boardId / playlistId / locationId) — pass the PLATFORM id to controls, not the internal id or the account id.\n\nFailed posts carry lastError — usually a disconnected account (reconnect, then retry) or platform-rejected media.\n\ndelete_post (one post) and delete_posts (up to 100 in one call) remove posts from PostFast only — they never delete an already-published post from the social platform. Say so when a user asks to delete something that has already gone out. Deleting can't be undone, so show the user which posts (account, time, first line) and call delete_post or delete_posts only after they say yes in the conversation.\n\nSocial inbox (comments on your posts: TikTok, Instagram, Facebook Pages, Threads; an account's inboxCapable flag from list_accounts says what is live today): read with list_inbox_conversations → list_inbox_items (get_inbox_unread_count for the total). A public reply under a comment, an Instagram private reply (one per comment, within 7 days) and a permanent comment deletion each take two tools: preview it with preview_comment_reply, preview_private_reply or preview_comment_deletion, show the user the preview, and carry it out with reply_to_comment, send_private_reply or delete_comment only after they say yes, even if they gave you the text. Whether and how long a reply can be comes ONLY from the conversation's server-computed canReply / maxReplyLength / windowState / disabledReason; never assume platform rules. Hide or restore a comment with set_inbox_item_state (HIDE / UNHIDE), triage with set_inbox_conversation_status and assign_inbox_conversation, and call mark_inbox_conversation_read after presenting a thread. It is a comments inbox; never present it as DMs or messages.",
   "capabilities": {
     "logging": {},
     "tools": {
@@ -106,7 +106,25 @@
       },
       "execution": {
         "taskSupport": "forbidden"
-      }
+      },
+      "_meta": {
+        "securitySchemes": [
+          {
+            "type": "oauth2",
+            "scopes": [
+              "posts:read"
+            ]
+          }
+        ]
+      },
+      "securitySchemes": [
+        {
+          "type": "oauth2",
+          "scopes": [
+            "posts:read"
+          ]
+        }
+      ]
     },
     {
       "name": "create_posts",
@@ -489,7 +507,25 @@
       },
       "execution": {
         "taskSupport": "forbidden"
-      }
+      },
+      "_meta": {
+        "securitySchemes": [
+          {
+            "type": "oauth2",
+            "scopes": [
+              "posts:write"
+            ]
+          }
+        ]
+      },
+      "securitySchemes": [
+        {
+          "type": "oauth2",
+          "scopes": [
+            "posts:write"
+          ]
+        }
+      ]
     },
     {
       "name": "approve_posts",
@@ -540,7 +576,25 @@
       },
       "execution": {
         "taskSupport": "forbidden"
-      }
+      },
+      "_meta": {
+        "securitySchemes": [
+          {
+            "type": "oauth2",
+            "scopes": [
+              "posts:approve"
+            ]
+          }
+        ]
+      },
+      "securitySchemes": [
+        {
+          "type": "oauth2",
+          "scopes": [
+            "posts:approve"
+          ]
+        }
+      ]
     },
     {
       "name": "delete_post",
@@ -576,7 +630,25 @@
       },
       "execution": {
         "taskSupport": "forbidden"
-      }
+      },
+      "_meta": {
+        "securitySchemes": [
+          {
+            "type": "oauth2",
+            "scopes": [
+              "posts:delete"
+            ]
+          }
+        ]
+      },
+      "securitySchemes": [
+        {
+          "type": "oauth2",
+          "scopes": [
+            "posts:delete"
+          ]
+        }
+      ]
     },
     {
       "name": "get_post_analytics",
@@ -643,7 +715,25 @@
       },
       "execution": {
         "taskSupport": "forbidden"
-      }
+      },
+      "_meta": {
+        "securitySchemes": [
+          {
+            "type": "oauth2",
+            "scopes": [
+              "analytics:read"
+            ]
+          }
+        ]
+      },
+      "securitySchemes": [
+        {
+          "type": "oauth2",
+          "scopes": [
+            "analytics:read"
+          ]
+        }
+      ]
     },
     {
       "name": "list_accounts",
@@ -669,7 +759,25 @@
       },
       "execution": {
         "taskSupport": "forbidden"
-      }
+      },
+      "_meta": {
+        "securitySchemes": [
+          {
+            "type": "oauth2",
+            "scopes": [
+              "accounts:read"
+            ]
+          }
+        ]
+      },
+      "securitySchemes": [
+        {
+          "type": "oauth2",
+          "scopes": [
+            "accounts:read"
+          ]
+        }
+      ]
     },
     {
       "name": "list_pinterest_boards",
@@ -704,7 +812,25 @@
       },
       "execution": {
         "taskSupport": "forbidden"
-      }
+      },
+      "_meta": {
+        "securitySchemes": [
+          {
+            "type": "oauth2",
+            "scopes": [
+              "accounts:read"
+            ]
+          }
+        ]
+      },
+      "securitySchemes": [
+        {
+          "type": "oauth2",
+          "scopes": [
+            "accounts:read"
+          ]
+        }
+      ]
     },
     {
       "name": "list_youtube_playlists",
@@ -739,7 +865,25 @@
       },
       "execution": {
         "taskSupport": "forbidden"
-      }
+      },
+      "_meta": {
+        "securitySchemes": [
+          {
+            "type": "oauth2",
+            "scopes": [
+              "accounts:read"
+            ]
+          }
+        ]
+      },
+      "securitySchemes": [
+        {
+          "type": "oauth2",
+          "scopes": [
+            "accounts:read"
+          ]
+        }
+      ]
     },
     {
       "name": "list_gbp_locations",
@@ -774,7 +918,25 @@
       },
       "execution": {
         "taskSupport": "forbidden"
-      }
+      },
+      "_meta": {
+        "securitySchemes": [
+          {
+            "type": "oauth2",
+            "scopes": [
+              "accounts:read"
+            ]
+          }
+        ]
+      },
+      "securitySchemes": [
+        {
+          "type": "oauth2",
+          "scopes": [
+            "accounts:read"
+          ]
+        }
+      ]
     },
     {
       "name": "get_follower_history",
@@ -817,7 +979,25 @@
       },
       "execution": {
         "taskSupport": "forbidden"
-      }
+      },
+      "_meta": {
+        "securitySchemes": [
+          {
+            "type": "oauth2",
+            "scopes": [
+              "analytics:read"
+            ]
+          }
+        ]
+      },
+      "securitySchemes": [
+        {
+          "type": "oauth2",
+          "scopes": [
+            "analytics:read"
+          ]
+        }
+      ]
     },
     {
       "name": "search_places",
@@ -851,7 +1031,25 @@
       },
       "execution": {
         "taskSupport": "forbidden"
-      }
+      },
+      "_meta": {
+        "securitySchemes": [
+          {
+            "type": "oauth2",
+            "scopes": [
+              "accounts:read"
+            ]
+          }
+        ]
+      },
+      "securitySchemes": [
+        {
+          "type": "oauth2",
+          "scopes": [
+            "accounts:read"
+          ]
+        }
+      ]
     },
     {
       "name": "generate_connect_link",
@@ -926,7 +1124,25 @@
       },
       "execution": {
         "taskSupport": "forbidden"
-      }
+      },
+      "_meta": {
+        "securitySchemes": [
+          {
+            "type": "oauth2",
+            "scopes": [
+              "connectlink:generate"
+            ]
+          }
+        ]
+      },
+      "securitySchemes": [
+        {
+          "type": "oauth2",
+          "scopes": [
+            "connectlink:generate"
+          ]
+        }
+      ]
     },
     {
       "name": "list_workspaces",
@@ -945,7 +1161,21 @@
       },
       "execution": {
         "taskSupport": "forbidden"
-      }
+      },
+      "_meta": {
+        "securitySchemes": [
+          {
+            "type": "oauth2",
+            "scopes": []
+          }
+        ]
+      },
+      "securitySchemes": [
+        {
+          "type": "oauth2",
+          "scopes": []
+        }
+      ]
     },
     {
       "name": "upload_from_url",
@@ -983,7 +1213,25 @@
       },
       "execution": {
         "taskSupport": "forbidden"
-      }
+      },
+      "_meta": {
+        "securitySchemes": [
+          {
+            "type": "oauth2",
+            "scopes": [
+              "media:write"
+            ]
+          }
+        ]
+      },
+      "securitySchemes": [
+        {
+          "type": "oauth2",
+          "scopes": [
+            "media:write"
+          ]
+        }
+      ]
     },
     {
       "name": "upload_media",
@@ -1045,8 +1293,24 @@
       "_meta": {
         "openai/fileParams": [
           "file"
+        ],
+        "securitySchemes": [
+          {
+            "type": "oauth2",
+            "scopes": [
+              "media:write"
+            ]
+          }
         ]
-      }
+      },
+      "securitySchemes": [
+        {
+          "type": "oauth2",
+          "scopes": [
+            "media:write"
+          ]
+        }
+      ]
     },
     {
       "name": "list_inbox_conversations",
@@ -1137,7 +1401,25 @@
       },
       "execution": {
         "taskSupport": "forbidden"
-      }
+      },
+      "_meta": {
+        "securitySchemes": [
+          {
+            "type": "oauth2",
+            "scopes": [
+              "inbox:read"
+            ]
+          }
+        ]
+      },
+      "securitySchemes": [
+        {
+          "type": "oauth2",
+          "scopes": [
+            "inbox:read"
+          ]
+        }
+      ]
     },
     {
       "name": "get_inbox_conversation",
@@ -1172,12 +1454,30 @@
       },
       "execution": {
         "taskSupport": "forbidden"
-      }
+      },
+      "_meta": {
+        "securitySchemes": [
+          {
+            "type": "oauth2",
+            "scopes": [
+              "inbox:read"
+            ]
+          }
+        ]
+      },
+      "securitySchemes": [
+        {
+          "type": "oauth2",
+          "scopes": [
+            "inbox:read"
+          ]
+        }
+      ]
     },
     {
       "name": "list_inbox_items",
       "title": "List Inbox Items",
-      "description": "List the items of one inbox conversation — the comments and the replies sent to them — oldest first by default (order=DESC for newest first). Items carry direction (INBOUND | OUTBOUND), state (VISIBLE | HIDDEN | DELETED), author info, and on Instagram comments canPrivateReply (eligibility for a PRIVATE_REPLY through prepare_inbox_action). Replies sent from PostFast appear exactly once — no duplicates when the platform reports them back.",
+      "description": "List the items of one inbox conversation — the comments and the replies sent to them — oldest first by default (order=DESC for newest first). Items carry direction (INBOUND | OUTBOUND), state (VISIBLE | HIDDEN | DELETED), author info, and on Instagram comments canPrivateReply (eligibility for a private reply through preview_private_reply and send_private_reply). Replies sent from PostFast appear exactly once — no duplicates when the platform reports them back.",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -1229,7 +1529,25 @@
       },
       "execution": {
         "taskSupport": "forbidden"
-      }
+      },
+      "_meta": {
+        "securitySchemes": [
+          {
+            "type": "oauth2",
+            "scopes": [
+              "inbox:read"
+            ]
+          }
+        ]
+      },
+      "securitySchemes": [
+        {
+          "type": "oauth2",
+          "scopes": [
+            "inbox:read"
+          ]
+        }
+      ]
     },
     {
       "name": "get_inbox_unread_count",
@@ -1255,12 +1573,30 @@
       },
       "execution": {
         "taskSupport": "forbidden"
-      }
+      },
+      "_meta": {
+        "securitySchemes": [
+          {
+            "type": "oauth2",
+            "scopes": [
+              "inbox:read"
+            ]
+          }
+        ]
+      },
+      "securitySchemes": [
+        {
+          "type": "oauth2",
+          "scopes": [
+            "inbox:read"
+          ]
+        }
+      ]
     },
     {
       "name": "set_inbox_item_state",
       "title": "Moderate Inbox Comment",
-      "description": "Hide a comment from the public on the platform (HIDE) or restore it (UNHIDE). Works on TikTok, Instagram, Facebook and Threads and can be reversed. To delete a comment permanently, use prepare_inbox_action with action DELETE. State changes made on the platform itself sync back to the inbox automatically. Hide or unhide a comment only when the user asks.",
+      "description": "Hide a comment from the public on the platform (HIDE) or restore it (UNHIDE). Works on TikTok, Instagram, Facebook and Threads and can be reversed. To delete a comment permanently, use preview_comment_deletion, then delete_comment. State changes made on the platform itself sync back to the inbox automatically. Hide or unhide a comment only when the user asks.",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -1300,7 +1636,25 @@
       },
       "execution": {
         "taskSupport": "forbidden"
-      }
+      },
+      "_meta": {
+        "securitySchemes": [
+          {
+            "type": "oauth2",
+            "scopes": [
+              "inbox:manage"
+            ]
+          }
+        ]
+      },
+      "securitySchemes": [
+        {
+          "type": "oauth2",
+          "scopes": [
+            "inbox:manage"
+          ]
+        }
+      ]
     },
     {
       "name": "mark_inbox_conversation_read",
@@ -1335,7 +1689,25 @@
       },
       "execution": {
         "taskSupport": "forbidden"
-      }
+      },
+      "_meta": {
+        "securitySchemes": [
+          {
+            "type": "oauth2",
+            "scopes": [
+              "inbox:manage"
+            ]
+          }
+        ]
+      },
+      "securitySchemes": [
+        {
+          "type": "oauth2",
+          "scopes": [
+            "inbox:manage"
+          ]
+        }
+      ]
     },
     {
       "name": "set_inbox_conversation_status",
@@ -1380,7 +1752,25 @@
       },
       "execution": {
         "taskSupport": "forbidden"
-      }
+      },
+      "_meta": {
+        "securitySchemes": [
+          {
+            "type": "oauth2",
+            "scopes": [
+              "inbox:manage"
+            ]
+          }
+        ]
+      },
+      "securitySchemes": [
+        {
+          "type": "oauth2",
+          "scopes": [
+            "inbox:manage"
+          ]
+        }
+      ]
     },
     {
       "name": "assign_inbox_conversation",
@@ -1421,7 +1811,25 @@
       },
       "execution": {
         "taskSupport": "forbidden"
-      }
+      },
+      "_meta": {
+        "securitySchemes": [
+          {
+            "type": "oauth2",
+            "scopes": [
+              "inbox:manage"
+            ]
+          }
+        ]
+      },
+      "securitySchemes": [
+        {
+          "type": "oauth2",
+          "scopes": [
+            "inbox:manage"
+          ]
+        }
+      ]
     },
     {
       "name": "list_tiktok_sounds",
@@ -1476,12 +1884,30 @@
       },
       "execution": {
         "taskSupport": "forbidden"
-      }
+      },
+      "_meta": {
+        "securitySchemes": [
+          {
+            "type": "oauth2",
+            "scopes": [
+              "accounts:read"
+            ]
+          }
+        ]
+      },
+      "securitySchemes": [
+        {
+          "type": "oauth2",
+          "scopes": [
+            "accounts:read"
+          ]
+        }
+      ]
     },
     {
-      "name": "prepare_inbox_action",
-      "title": "Prepare Comment Reply or Deletion",
-      "description": "Prepare a reply to a comment, an Instagram private reply, or a comment deletion WITHOUT doing it. REPLY posts publicly under the comment; PRIVATE_REPLY sends an Instagram private reply that arrives as a direct message (one per comment, within 7 days; check the item's canPrivateReply); DELETE removes the comment on the platform permanently (not supported on Threads). Before a reply, check the conversation's canReply and maxReplyLength. Returns a preview and a confirmToken. Then show the user which comment it is (its author and text) and exactly what will happen, and wait for their yes in the conversation before calling confirm_inbox_action, even if they already told you what to write. Nothing reaches the platform in this step.",
+      "name": "preview_comment_reply",
+      "title": "Preview Comment Reply",
+      "description": "Preview a public reply to a comment WITHOUT sending it. Pass the comment item's id (from list_inbox_items, not the conversation id) and the reply text, after checking the conversation's canReply and maxReplyLength. Returns a preview and a confirmToken; nothing reaches the platform. Then show the user which comment it is (its author and text) and the exact reply, and wait for their yes in the conversation before calling reply_to_comment, even if they already told you what to write. A reply on Threads can't be removed through PostFast afterwards, so say so in the preview.",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -1489,21 +1915,12 @@
             "type": "string",
             "format": "uuid",
             "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
-            "description": "The comment item id (from list_inbox_items)"
-          },
-          "action": {
-            "type": "string",
-            "enum": [
-              "REPLY",
-              "PRIVATE_REPLY",
-              "DELETE"
-            ],
-            "description": "REPLY (public, under the comment), PRIVATE_REPLY (Instagram only) or DELETE (permanent)"
+            "description": "The comment item id to reply under (from list_inbox_items)"
           },
           "text": {
-            "description": "Reply text. Required for REPLY and PRIVATE_REPLY; omit for DELETE.",
             "type": "string",
-            "minLength": 1
+            "minLength": 1,
+            "description": "Reply text. Must fit the conversation's maxReplyLength."
           },
           "workspaceId": {
             "description": "Target workspace id (from list_workspaces). Omit to use the connection's default workspace.",
@@ -1514,51 +1931,56 @@
         },
         "required": [
           "itemId",
-          "action"
+          "text"
         ],
         "$schema": "http://json-schema.org/draft-07/schema#"
       },
       "annotations": {
-        "title": "Prepare Comment Reply or Deletion",
+        "title": "Preview Comment Reply",
         "readOnlyHint": true,
         "destructiveHint": false,
         "openWorldHint": false
       },
       "execution": {
         "taskSupport": "forbidden"
-      }
+      },
+      "_meta": {
+        "securitySchemes": [
+          {
+            "type": "oauth2",
+            "scopes": []
+          }
+        ]
+      },
+      "securitySchemes": [
+        {
+          "type": "oauth2",
+          "scopes": []
+        }
+      ]
     },
     {
-      "name": "confirm_inbox_action",
-      "title": "Confirm Comment Reply or Deletion",
-      "description": "Carry out a reply or deletion prepared with prepare_inbox_action. Pass its confirmToken with the same itemId, action and text (and workspaceId, if you used one); anything different is rejected. Call it only after the user has seen the preview and said yes in the conversation. Replies on Threads cannot be removed through PostFast, private replies cannot be unsent, and deletions cannot be undone. A token expires 15 minutes after it was prepared and works once. Failures return the underlying inbox.* codes (for example replyTooLong, privateReplyAlreadySent, deleteNotSupported).",
+      "name": "reply_to_comment",
+      "title": "Reply to Comment",
+      "description": "Post a public reply under a comment, exactly as previewed with preview_comment_reply. Pass its confirmToken with the same itemId and text (and workspaceId, if you used one); anything different is rejected. Call it only after the user has seen the preview and said yes in the conversation. Replies on Threads can't be removed through PostFast. A token expires 15 minutes after the preview and works once. Failures return inbox.* codes (for example replyTooLong, replyNotSupported, rateLimited).",
       "inputSchema": {
         "type": "object",
         "properties": {
           "confirmToken": {
             "type": "string",
             "minLength": 1,
-            "description": "The confirmToken from prepare_inbox_action"
+            "description": "The confirmToken from preview_comment_reply"
           },
           "itemId": {
             "type": "string",
             "format": "uuid",
             "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
-            "description": "Must match the prepared action exactly."
-          },
-          "action": {
-            "type": "string",
-            "enum": [
-              "REPLY",
-              "PRIVATE_REPLY",
-              "DELETE"
-            ],
-            "description": "Must match the prepared action exactly."
+            "description": "Must match the preview exactly."
           },
           "text": {
-            "description": "Must match the prepared action exactly.",
             "type": "string",
-            "minLength": 1
+            "minLength": 1,
+            "description": "Must match the preview exactly."
           },
           "workspaceId": {
             "description": "Target workspace id (from list_workspaces). Omit to use the connection's default workspace.",
@@ -1570,20 +1992,268 @@
         "required": [
           "confirmToken",
           "itemId",
-          "action"
+          "text"
         ],
         "$schema": "http://json-schema.org/draft-07/schema#"
       },
       "annotations": {
-        "title": "Confirm Comment Reply or Deletion",
+        "title": "Reply to Comment",
         "readOnlyHint": false,
-        "destructiveHint": true,
+        "destructiveHint": false,
         "idempotentHint": false,
         "openWorldHint": true
       },
       "execution": {
         "taskSupport": "forbidden"
-      }
+      },
+      "_meta": {
+        "securitySchemes": [
+          {
+            "type": "oauth2",
+            "scopes": [
+              "inbox:reply"
+            ]
+          }
+        ]
+      },
+      "securitySchemes": [
+        {
+          "type": "oauth2",
+          "scopes": [
+            "inbox:reply"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "preview_private_reply",
+      "title": "Preview Instagram Private Reply",
+      "description": "Instagram only: preview a private reply to a comment WITHOUT sending it. It arrives in the commenter's direct messages (possibly in their message requests) and is allowed once per comment, within 7 days of the comment, up to 1,000 bytes; check the comment item's canPrivateReply first (from list_inbox_items). Returns a preview and a confirmToken; nothing is sent. Then show the user which comment it is (its author and text) and the exact message, and wait for their yes in the conversation before calling send_private_reply, even if they already told you what to write.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "itemId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+            "description": "The Instagram comment item id to reply privately to (canPrivateReply must be true)"
+          },
+          "text": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Private reply text (max 1,000 bytes)"
+          },
+          "workspaceId": {
+            "description": "Target workspace id (from list_workspaces). Omit to use the connection's default workspace.",
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          }
+        },
+        "required": [
+          "itemId",
+          "text"
+        ],
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "annotations": {
+        "title": "Preview Instagram Private Reply",
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "openWorldHint": false
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "_meta": {
+        "securitySchemes": [
+          {
+            "type": "oauth2",
+            "scopes": []
+          }
+        ]
+      },
+      "securitySchemes": [
+        {
+          "type": "oauth2",
+          "scopes": []
+        }
+      ]
+    },
+    {
+      "name": "send_private_reply",
+      "title": "Send Instagram Private Reply",
+      "description": "Instagram only: send a private reply to a comment, exactly as previewed with preview_private_reply. Pass its confirmToken with the same itemId and text (and workspaceId, if you used one); anything different is rejected. Call it only after the user has seen the preview and said yes in the conversation. A private reply can't be unsent, and a comment takes only one: a second fails with inbox.privateReplyAlreadySent. A token expires 15 minutes after the preview and works once. Other failures include privateReplyWindowExpired and privateReplyNotSupported.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "confirmToken": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The confirmToken from preview_private_reply"
+          },
+          "itemId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+            "description": "Must match the preview exactly."
+          },
+          "text": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Must match the preview exactly."
+          },
+          "workspaceId": {
+            "description": "Target workspace id (from list_workspaces). Omit to use the connection's default workspace.",
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          }
+        },
+        "required": [
+          "confirmToken",
+          "itemId",
+          "text"
+        ],
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "annotations": {
+        "title": "Send Instagram Private Reply",
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": true
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "_meta": {
+        "securitySchemes": [
+          {
+            "type": "oauth2",
+            "scopes": [
+              "inbox:reply"
+            ]
+          }
+        ]
+      },
+      "securitySchemes": [
+        {
+          "type": "oauth2",
+          "scopes": [
+            "inbox:reply"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "preview_comment_deletion",
+      "title": "Preview Comment Deletion",
+      "description": "Preview deleting a comment WITHOUT deleting it. Deleting removes the comment from the platform for good; Threads doesn't support it, so offer to hide the comment with set_inbox_item_state instead. Returns a preview and a confirmToken; nothing changes. Then show the user which comment it is (its author and text) and that it will be deleted permanently, and wait for their yes in the conversation before calling delete_comment.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "itemId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+            "description": "The comment item id to delete (from list_inbox_items)"
+          },
+          "workspaceId": {
+            "description": "Target workspace id (from list_workspaces). Omit to use the connection's default workspace.",
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          }
+        },
+        "required": [
+          "itemId"
+        ],
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "annotations": {
+        "title": "Preview Comment Deletion",
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "openWorldHint": false
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "_meta": {
+        "securitySchemes": [
+          {
+            "type": "oauth2",
+            "scopes": []
+          }
+        ]
+      },
+      "securitySchemes": [
+        {
+          "type": "oauth2",
+          "scopes": []
+        }
+      ]
+    },
+    {
+      "name": "delete_comment",
+      "title": "Delete Comment",
+      "description": "Delete a comment from the platform for good, exactly as previewed with preview_comment_deletion. Pass its confirmToken with the same itemId (and workspaceId, if you used one); anything different is rejected. Call it only after the user has seen the preview and said yes in the conversation. Deleting can't be undone. A token expires 15 minutes after the preview and works once. Failures return inbox.* codes (for example deleteNotSupported on Threads).",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "confirmToken": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The confirmToken from preview_comment_deletion"
+          },
+          "itemId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+            "description": "Must match the preview exactly."
+          },
+          "workspaceId": {
+            "description": "Target workspace id (from list_workspaces). Omit to use the connection's default workspace.",
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          }
+        },
+        "required": [
+          "confirmToken",
+          "itemId"
+        ],
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "annotations": {
+        "title": "Delete Comment",
+        "readOnlyHint": false,
+        "destructiveHint": true,
+        "idempotentHint": true,
+        "openWorldHint": true
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "_meta": {
+        "securitySchemes": [
+          {
+            "type": "oauth2",
+            "scopes": [
+              "inbox:manage"
+            ]
+          }
+        ]
+      },
+      "securitySchemes": [
+        {
+          "type": "oauth2",
+          "scopes": [
+            "inbox:manage"
+          ]
+        }
+      ]
     },
     {
       "name": "delete_posts",
@@ -1624,7 +2294,25 @@
       },
       "execution": {
         "taskSupport": "forbidden"
-      }
+      },
+      "_meta": {
+        "securitySchemes": [
+          {
+            "type": "oauth2",
+            "scopes": [
+              "posts:delete"
+            ]
+          }
+        ]
+      },
+      "securitySchemes": [
+        {
+          "type": "oauth2",
+          "scopes": [
+            "posts:delete"
+          ]
+        }
+      ]
     }
   ]
 }

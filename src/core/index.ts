@@ -23,6 +23,13 @@ export {
 } from './build-tools.js';
 export { SERVER_INSTRUCTIONS, instructionsFor } from './instructions.js';
 export {
+  InsufficientScopeError,
+  insufficientScopeResult,
+  type InsufficientScopeOptions,
+  type ScopeChallengeOptions,
+  type SecurityScheme,
+} from './scope-challenge.js';
+export {
   CAPTION_MIME_TYPES,
   CREATE_APPROVAL_STATUSES,
   CREATE_STATUSES,

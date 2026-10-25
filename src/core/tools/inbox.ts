@@ -59,6 +59,7 @@ export const inboxTools: ToolDef[] = [
         .describe('Only conversations assigned to this workspace member'),
     },
     annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
+    scopes: ['inbox:read'],
     portMethod: 'listInboxConversations',
     run: (port, args, workspaceId) =>
       port.listInboxConversations!(
@@ -76,6 +77,7 @@ export const inboxTools: ToolDef[] = [
       id: z.uuid().describe('Conversation id (from list_inbox_conversations)'),
     },
     annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
+    scopes: ['inbox:read'],
     portMethod: 'getInboxConversation',
     run: (port, args, workspaceId) =>
       port.getInboxConversation!(args.id as string, workspaceId),
@@ -86,7 +88,9 @@ export const inboxTools: ToolDef[] = [
     title: 'List Inbox Items',
     description: (binding) =>
       'List the items of one inbox conversation — the comments and the replies sent to them — oldest first by default (order=DESC for newest first). Items carry direction (INBOUND | OUTBOUND), state (VISIBLE | HIDDEN | DELETED), author info, and on Instagram comments canPrivateReply (eligibility for ' +
-      (binding === 'remote' ? 'a PRIVATE_REPLY through prepare_inbox_action' : 'send_inbox_private_reply') +
+      (binding === 'remote'
+        ? 'a private reply through preview_private_reply and send_private_reply'
+        : 'send_inbox_private_reply') +
       '). Replies sent from PostFast appear exactly once — no duplicates when the platform reports them back.',
     inputSchema: {
       conversationId: z
@@ -100,6 +104,7 @@ export const inboxTools: ToolDef[] = [
         .describe('Sort by comment time. Default ASC (oldest first); DESC for newest first.'),
     },
     annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
+    scopes: ['inbox:read'],
     portMethod: 'listInboxItems',
     run: (port, args, workspaceId) =>
       port.listInboxItems!(args as unknown as ListInboxItemsArgs, workspaceId),
@@ -112,12 +117,13 @@ export const inboxTools: ToolDef[] = [
       'Total unread comment count across all inbox conversations in the workspace (the sum of per-conversation unreadCount). Use mark_inbox_conversation_read after presenting a conversation to the user.',
     inputSchema: {},
     annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
+    scopes: ['inbox:read'],
     portMethod: 'getInboxUnreadCount',
     run: (port, _args, workspaceId) => port.getInboxUnreadCount!(workspaceId),
   },
   {
     name: 'reply_to_inbox_item',
-    // stdio only: the remote binding replies through prepare/confirm_inbox_action.
+    // stdio only: the remote binding replies through preview_comment_reply and reply_to_comment.
     binding: 'stdio',
     title: 'Reply to Inbox Comment',
     description:
@@ -135,7 +141,7 @@ export const inboxTools: ToolDef[] = [
   },
   {
     name: 'send_inbox_private_reply',
-    // stdio only: the remote binding replies through prepare/confirm_inbox_action.
+    // stdio only: the remote binding replies through preview_private_reply and send_private_reply.
     binding: 'stdio',
     title: 'Send Instagram Private Reply',
     description:
@@ -159,7 +165,7 @@ export const inboxTools: ToolDef[] = [
     title: 'Moderate Inbox Comment',
     description: (binding) =>
       binding === 'remote'
-        ? 'Hide a comment from the public on the platform (HIDE) or restore it (UNHIDE). Works on TikTok, Instagram, Facebook and Threads and can be reversed. To delete a comment permanently, use prepare_inbox_action with action DELETE. State changes made on the platform itself sync back to the inbox automatically. Hide or unhide a comment only when the user asks.'
+        ? 'Hide a comment from the public on the platform (HIDE) or restore it (UNHIDE). Works on TikTok, Instagram, Facebook and Threads and can be reversed. To delete a comment permanently, use preview_comment_deletion, then delete_comment. State changes made on the platform itself sync back to the inbox automatically. Hide or unhide a comment only when the user asks.'
         : 'Moderate a comment on the platform: HIDE hides it from the public, UNHIDE restores it, DELETE removes the comment on the platform — cannot be undone. HIDE/UNHIDE work on TikTok, Instagram, Facebook, and Threads; DELETE is not supported on Threads (inbox.deleteNotSupported). State changes made on the platform itself sync back to the inbox automatically.',
     inputSchema: (binding) => ({
       itemId: z.uuid().describe('The comment item id (from list_inbox_items)'),
@@ -170,14 +176,15 @@ export const inboxTools: ToolDef[] = [
             .describe('HIDE, UNHIDE, or DELETE (DELETE is irreversible)'),
     }),
     annotations: { readOnlyHint: false, destructiveHint: true, openWorldHint: true },
-    // Remote, DELETE moves to prepare/confirm_inbox_action, leaving only
-    // reversible HIDE/UNHIDE here.
+    // Remote, DELETE moves to preview_comment_deletion and delete_comment,
+    // leaving only reversible HIDE/UNHIDE here.
     remoteAnnotations: {
       readOnlyHint: false,
       destructiveHint: false,
       idempotentHint: true,
       openWorldHint: true,
     },
+    scopes: ['inbox:manage'],
     portMethod: 'setInboxItemState',
     run: (port, args, workspaceId) =>
       port.setInboxItemState!(args as unknown as SetInboxItemStateArgs, workspaceId),
@@ -194,6 +201,7 @@ export const inboxTools: ToolDef[] = [
         .describe('Conversation id (from list_inbox_conversations)'),
     },
     annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: false },
+    scopes: ['inbox:manage'],
     portMethod: 'markInboxConversationRead',
     run: (port, args, workspaceId) =>
       port.markInboxConversationRead!(args.conversationId as string, workspaceId),
@@ -211,6 +219,7 @@ export const inboxTools: ToolDef[] = [
       status: z.enum(INBOX_CONVERSATION_STATUSES).describe('New conversation status'),
     },
     annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: false },
+    scopes: ['inbox:manage'],
     portMethod: 'setInboxConversationStatus',
     run: (port, args, workspaceId) =>
       port.setInboxConversationStatus!(
@@ -234,6 +243,7 @@ export const inboxTools: ToolDef[] = [
         .describe('Workspace member user id to assign. Omit to unassign.'),
     },
     annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: false },
+    scopes: ['inbox:manage'],
     portMethod: 'assignInboxConversation',
     run: (port, args, workspaceId) =>
       port.assignInboxConversation!(

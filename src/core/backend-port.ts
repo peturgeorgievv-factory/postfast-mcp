@@ -93,6 +93,11 @@ export interface ListInboxItemsArgs {
 export interface InboxReplyArgs {
   itemId: string;
   text: string;
+  /**
+   * Sends with the same key go out once: the backend returns the first send's
+   * result for a repeat. Set by the remote reply tools from their confirm token.
+   */
+  idempotencyKey?: string;
 }
 
 export interface SetInboxItemStateArgs {

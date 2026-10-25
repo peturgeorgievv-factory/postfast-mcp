@@ -12,6 +12,7 @@ export const accountTools: ToolDef[] = [
       'List all social media accounts connected to the workspace. Each account includes connectionStatus (CONNECTED or DISABLED) and disabledReason (null unless DISABLED), plus followerCount (latest stored snapshot, a string; absent for platforms without follower data), followerCountUpdatedAt, and inboxCapable (whether the account can appear in the social inbox, i.e. comment ingestion is supported). A DISABLED account will not publish until the user reconnects it — pre-check before scheduling. For a follower trend over time, use get_follower_history.',
     inputSchema: {},
     annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
+    scopes: ['accounts:read'],
     run: (port, _args, workspaceId) => port.listAccounts(workspaceId),
   },
   {
@@ -25,6 +26,7 @@ export const accountTools: ToolDef[] = [
     },
     // openWorld false: reads boards already stored in our database.
     annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
+    scopes: ['accounts:read'],
     run: (port, args, workspaceId) =>
       port.listPinterestBoards(args.socialMediaId as string, workspaceId),
   },
@@ -39,6 +41,7 @@ export const accountTools: ToolDef[] = [
     },
     // openWorld false: reads playlists already stored in our database.
     annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
+    scopes: ['accounts:read'],
     run: (port, args, workspaceId) =>
       port.listYoutubePlaylists(args.socialMediaId as string, workspaceId),
   },
@@ -53,6 +56,7 @@ export const accountTools: ToolDef[] = [
     },
     // openWorld false: reads locations already stored in our database.
     annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
+    scopes: ['accounts:read'],
     run: (port, args, workspaceId) =>
       port.listGbpLocations(args.socialMediaId as string, workspaceId),
   },
@@ -74,6 +78,7 @@ export const accountTools: ToolDef[] = [
         .describe('Range end (ISO 8601). Defaults to now; range is capped at 365 days.'),
     },
     annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
+    scopes: ['analytics:read'],
     run: (port, args, workspaceId) =>
       port.getFollowerHistory(args as unknown as FollowerHistoryArgs, workspaceId),
   },
@@ -87,6 +92,7 @@ export const accountTools: ToolDef[] = [
       query: z.string().min(2).describe('Place search text, min 2 characters (e.g. "eiffel tower")'),
     },
     annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: true },
+    scopes: ['accounts:read'],
     run: (port, args, workspaceId) => port.searchPlaces(args.query as string, workspaceId),
   },
   {
@@ -143,6 +149,7 @@ export const accountTools: ToolDef[] = [
     // destructive: sendEmail delivers a real email that cannot be recalled, and the
     // minted link grants account-connect access until it expires.
     annotations: { readOnlyHint: false, destructiveHint: true, openWorldHint: true },
+    scopes: ['connectlink:generate'],
     run: (port, args, workspaceId) =>
       port.generateConnectLink(args as unknown as ConnectLinkArgs, workspaceId),
   },

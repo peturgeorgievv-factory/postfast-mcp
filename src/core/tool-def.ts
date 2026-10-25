@@ -2,6 +2,7 @@ import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import type { ZodRawShape } from 'zod';
 import type { AppOptions } from './app.js';
 import type { BackendPort } from './backend-port.js';
+import type { SecurityScheme } from './scope-challenge.js';
 
 /** The two deployments a catalog tool can ship in. */
 export type Binding = 'stdio' | 'remote';
@@ -51,11 +52,18 @@ export interface ToolDef {
   annotations: ToolAnnotations;
   /** Replaces `annotations` on the remote binding. */
   remoteAnnotations?: ToolAnnotations;
+  /**
+   * The OAuth scopes the backend checks for this tool's calls, listed on the
+   * remote binding as `securitySchemes`. Empty when any token of the
+   * connection may call it. Every tool the remote binding lists declares
+   * this; the stdio binding never lists it.
+   */
+  scopes?: readonly string[];
   /** Extra tool metadata, e.g. the ChatGPT file-param marker on upload_media. */
   _meta?: Record<string, unknown>;
   /** False only for tools that are not scoped to a workspace (list_workspaces). */
   workspaceScoped?: boolean;
-  /** The tool signs confirm tokens, so it exists only with BuildToolsOptions.confirmGate. */
+  /** The tool signs or redeems confirm tokens, so it exists only with BuildToolsOptions.confirmGate. */
   needsConfirmSecret?: boolean;
   /** The tool exists only when the host turns the app on (BuildToolsOptions.app). */
   appOnly?: boolean;
@@ -94,6 +102,8 @@ export interface ResolvedTool {
   annotations: ResolvedToolAnnotations;
   _meta?: Record<string, unknown>;
   icons?: ToolIcon[];
+  /** Remote only: the tool's OAuth scopes, also mirrored in `_meta.securitySchemes`. */
+  securitySchemes?: SecurityScheme[];
   portMethod?: keyof BackendPort;
   run: ToolDef['run'];
   toResult?: ToolDef['toResult'];

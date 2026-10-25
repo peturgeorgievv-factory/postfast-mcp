@@ -62,6 +62,9 @@ export function uploadTypeFor(contentType: string): UploadType | undefined {
   return undefined;
 }
 
+/** Hosts where a host-supplied URL may be plain http (local development). */
+export const LOOPBACK_HOSTS = new Set(['localhost', '127.0.0.1', '[::1]']);
+
 /** Some MCP clients stringify complex params — parse them back before validation. */
 export function jsonParse<T extends z.ZodTypeAny>(schema: T) {
   return z.preprocess((val) => {
