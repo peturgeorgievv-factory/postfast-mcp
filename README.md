@@ -167,6 +167,22 @@ Comments on your posts — TikTok, Instagram, Facebook Pages, and Threads — in
 | `set_inbox_conversation_status` | Triage: OPEN / SNOOZED / CLOSED |
 | `assign_inbox_conversation` | Assign a conversation to a workspace member (or unassign) |
 
+### Webhooks
+
+PostFast can send a signed JSON event to your own HTTPS endpoint when a post publishes or fails for good, or when an account connects, reconnects or disconnects. Deliveries follow the [Standard Webhooks](https://www.standardwebhooks.com) spec (`webhook-id`, `webhook-timestamp` and `webhook-signature` headers), so any Standard Webhooks library verifies them. On the hosted connector, only workspace admins can use these tools.
+
+| Tool | Description |
+|------|-------------|
+| `list_webhook_endpoints` | List the workspace's endpoints, turned-off ones included (`active`, `disabledReason`, last success and failure) |
+| `get_webhook_endpoint` | Fetch one endpoint |
+| `create_webhook_endpoint` | Register an HTTPS URL for some or all of `post.published`, `post.failed`, `account.connected` and `account.disconnected`; the answer carries the signing secret, which is never shown again |
+| `update_webhook_endpoint` | Change an endpoint's URL, events or description, or turn it off and back on |
+| `delete_webhook_endpoint` | Delete an endpoint together with its delivery log |
+| `test_webhook_endpoint` | Send a test event, or a sample of one event type, and see how your receiver answered |
+| `list_webhook_deliveries` | An endpoint's delivery log for the last 30 days: each attempt's status code, and the payload as sent |
+
+Store the secret in your receiver as soon as the endpoint is created. An endpoint receives every event of its types from the whole workspace; to follow one account, filter on `data.post.socialMediaId` or `data.account.id`. A workspace can have 5 active endpoints.
+
 ## Supported Platforms
 
 Facebook, Instagram, X (Twitter), TikTok, LinkedIn, YouTube, BlueSky, Threads, Pinterest, Telegram, Google Business Profile

@@ -88,10 +88,11 @@ for (const [binding, build] of Object.entries(SURFACES)) {
     assert.match(del.description, /use delete_post for a single post/);
   });
 
-  test(`${binding}: delete_posts is appended, so every existing tool keeps its position`, () => {
+  test(`${binding}: delete_posts was appended and keeps its position as later tools are added`, () => {
     const names = build(recordingPort().port).map((t) => t.name);
-    assert.equal(names.at(-1), 'delete_posts');
-    assert.equal(names.indexOf('delete_posts'), names.length - 1);
+    // Its position since 0.11.0; the webhook tools come after it.
+    assert.equal(names.indexOf('delete_posts'), binding === 'stdio' ? 24 : 30);
+    assert.equal(names[names.indexOf('delete_posts') + 1], 'list_webhook_endpoints');
   });
 
   test(`${binding}: a port without deletePosts skips delete_posts and nothing else`, () => {

@@ -7,12 +7,16 @@ import type {
   FollowerHistory,
   GbpLocation,
   PaginatedPosts,
+  PaginatedWebhookDeliveries,
   PinterestBoard,
   Place,
   Platform,
   SignedUploadUrl,
   SocialAccount,
   UploadType,
+  WebhookEndpoint,
+  WebhookEvent,
+  WebhookTestResult,
   YouTubePlaylist,
 } from './types.js';
 
@@ -162,6 +166,34 @@ export interface LocalUploadResult {
   contentType: string;
 }
 
+export interface CreateWebhookEndpointArgs {
+  url: string;
+  events: WebhookEvent[];
+  description?: string;
+}
+
+/** Omitted fields keep their value; `description: null` removes it. */
+export interface UpdateWebhookEndpointArgs {
+  id: string;
+  url?: string;
+  events?: WebhookEvent[];
+  description?: string | null;
+  active?: boolean;
+}
+
+export interface TestWebhookEndpointArgs {
+  id: string;
+  /** Send a sample of this event type instead of `webhook.test`. */
+  sampleEvent?: WebhookEvent;
+}
+
+export interface ListWebhookDeliveriesArgs {
+  endpointId: string;
+  page?: number;
+  limit?: number;
+  getCount?: boolean;
+}
+
 /**
  * Everything the catalog tools need from a backend. The stdio bin implements
  * it over the public REST API (pf-api-key); the deployed host implements it
@@ -256,4 +288,26 @@ export interface BackendPort {
     ids: string[],
     workspaceId?: string,
   ): Promise<{ deletedIds: string[]; notFoundIds: string[] } | unknown>;
+
+  // Webhook endpoints and their delivery log (optional — same staggered-adoption rule).
+  listWebhookEndpoints?(workspaceId?: string): Promise<WebhookEndpoint[] | unknown>;
+  getWebhookEndpoint?(id: string, workspaceId?: string): Promise<WebhookEndpoint | unknown>;
+  createWebhookEndpoint?(
+    args: CreateWebhookEndpointArgs,
+    workspaceId?: string,
+  ): Promise<WebhookEndpoint | unknown>;
+  updateWebhookEndpoint?(
+    args: UpdateWebhookEndpointArgs,
+    workspaceId?: string,
+  ): Promise<WebhookEndpoint | unknown>;
+  /** Answers `{ ok: true }`. */
+  deleteWebhookEndpoint?(id: string, workspaceId?: string): Promise<{ ok: true } | unknown>;
+  testWebhookEndpoint?(
+    args: TestWebhookEndpointArgs,
+    workspaceId?: string,
+  ): Promise<WebhookTestResult | unknown>;
+  listWebhookDeliveries?(
+    args: ListWebhookDeliveriesArgs,
+    workspaceId?: string,
+  ): Promise<PaginatedWebhookDeliveries | unknown>;
 }

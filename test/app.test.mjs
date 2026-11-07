@@ -187,7 +187,7 @@ test('without the app option no binding lists the app tools', () => {
   ];
   assert.deepEqual(
     surfaces.map((tools) => tools.length),
-    [25, 25, 31, 25],
+    [32, 32, 38, 32],
   );
   for (const tools of surfaces) {
     assert.ok(!names(tools).some((name) => APP_TOOLS.includes(name)));
@@ -518,7 +518,7 @@ test('a port without the app methods registers no app tool and no resource', asy
   try {
     const client = await connect(remote(port));
     const { tools } = await client.listTools();
-    assert.equal(tools.length, 31);
+    assert.equal(tools.length, 38);
     assert.equal(client.getServerCapabilities().resources, undefined);
     await client.close();
   } finally {
@@ -527,11 +527,11 @@ test('a port without the app methods registers no app tool and no resource', asy
   assert.equal(logged.filter((line) => line.includes('skipping tool')).length, 4);
 });
 
-test('the app tools come after the whole remote surface, comment tools included', async () => {
+test('the app tools come after the whole remote surface, comment and webhook tools included', async () => {
   const client = await connect(remote(appPort().port));
   const { tools } = await client.listTools();
-  assert.equal(tools.length, 35);
-  assert.deepEqual(names(tools).slice(24, 31), [
+  assert.equal(tools.length, 42);
+  assert.deepEqual(names(tools).slice(24, 38), [
     'preview_comment_reply',
     'reply_to_comment',
     'preview_private_reply',
@@ -539,6 +539,13 @@ test('the app tools come after the whole remote surface, comment tools included'
     'preview_comment_deletion',
     'delete_comment',
     'delete_posts',
+    'list_webhook_endpoints',
+    'get_webhook_endpoint',
+    'create_webhook_endpoint',
+    'update_webhook_endpoint',
+    'delete_webhook_endpoint',
+    'test_webhook_endpoint',
+    'list_webhook_deliveries',
   ]);
   assert.deepEqual(names(tools).slice(-APP_TOOLS.length), APP_TOOLS);
   await client.close();

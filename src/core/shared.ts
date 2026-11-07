@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import type { UploadType } from './types.js';
+import type { UploadType, WebhookEvent } from './types.js';
 
 export const PLATFORMS = [
   'FACEBOOK',
@@ -27,6 +27,13 @@ export const SET_APPROVAL_STATUSES = [
   'REJECTED',
   'NEEDS_WORK',
 ] as const;
+/** The event types a webhook endpoint can receive (webhook.test can't be chosen). */
+export const WEBHOOK_EVENTS = [
+  'post.published',
+  'post.failed',
+  'account.connected',
+  'account.disconnected',
+] as const satisfies readonly WebhookEvent[];
 
 export const IMAGE_MIME_TYPES = [
   'image/jpeg',
