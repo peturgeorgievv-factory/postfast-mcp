@@ -5,6 +5,7 @@ import { inboxTools } from './inbox.js';
 import { bulkPostTools, postTools } from './posts.js';
 import { tiktokTools } from './tiktok.js';
 import { uploadTools } from './uploads.js';
+import { webhookTools } from './webhooks.js';
 import { workspaceTools } from './workspaces.js';
 import type { ToolDef } from '../tool-def.js';
 
@@ -24,5 +25,6 @@ export const ALL_TOOLS: ToolDef[] = [
   ...tiktokTools,
   ...inboxConfirmTools,
   ...bulkPostTools,
+  ...webhookTools,
   ...appTools,
 ];

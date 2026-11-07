@@ -1,6 +1,6 @@
 // The stdio REST adapter over a stubbed fetch: what reaches the PostFast API
-// for the post filters, the bulk delete and local uploads, and how an API
-// error reads. Run with `npm test`.
+// for the post filters, the bulk delete, local uploads and the webhook
+// endpoints, and how an API error reads. Run with `npm test`.
 import { afterEach, beforeEach, test } from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtempSync, writeFileSync } from 'node:fs';
@@ -139,6 +139,49 @@ test('uploadLocalFile sends caption files and documents with their own types', a
     message: 'Unsupported file extension ".txt". Supported: .jpg, .jpeg, .png, .gif, .webp, .mp4, .webm, .mov, .srt, .vtt, .pdf, .doc, .docx, .ppt, .pptx',
   });
   assert.equal(sent.length, 0);
+});
+
+test('the webhook methods call the /webhook-endpoints routes with exactly the given fields', async () => {
+  const api = new RestAdapter();
+  const url = 'https://hooks.example.com/postfast';
+  const base = 'https://api.example.test/webhook-endpoints';
+  await api.listWebhookEndpoints();
+  await api.getWebhookEndpoint(A);
+  await api.createWebhookEndpoint({ url, events: ['post.published', 'post.failed'] });
+  await api.createWebhookEndpoint({ url, events: ['account.connected'], description: 'CRM sync' });
+  // Omitted fields stay out of the PATCH (they keep their value); null removes the description.
+  await api.updateWebhookEndpoint({ id: A, description: null, active: true });
+  await api.updateWebhookEndpoint({ id: A, url, events: ['account.disconnected'] });
+  await api.testWebhookEndpoint({ id: A });
+  await api.testWebhookEndpoint({ id: A, sampleEvent: 'post.failed' });
+  await api.listWebhookDeliveries({ endpointId: A, page: 0, limit: 10 });
+  await api.listWebhookDeliveries({ endpointId: A, page: 3, limit: 100, getCount: true });
+  assert.deepEqual(
+    requests.map(({ url: u, method, key, body }) => [method, u, key, body]),
+    [
+      ['GET', base, 'pf-test-key', undefined],
+      ['GET', `${base}/${A}`, 'pf-test-key', undefined],
+      ['POST', base, 'pf-test-key', { url, events: ['post.published', 'post.failed'] }],
+      ['POST', base, 'pf-test-key', { url, events: ['account.connected'], description: 'CRM sync' }],
+      ['PATCH', `${base}/${A}`, 'pf-test-key', { description: null, active: true }],
+      ['PATCH', `${base}/${A}`, 'pf-test-key', { url, events: ['account.disconnected'] }],
+      ['POST', `${base}/${A}/test`, 'pf-test-key', {}],
+      ['POST', `${base}/${A}/test`, 'pf-test-key', { sampleEvent: 'post.failed' }],
+      ['GET', `${base}/${A}/deliveries?page=0&limit=10`, 'pf-test-key', undefined],
+      ['GET', `${base}/${A}/deliveries?page=3&limit=100&getCount=true`, 'pf-test-key', undefined],
+    ],
+  );
+});
+
+test("deleteWebhookEndpoint answers { ok: true } for the API's empty 204, and passes a 404 on", async () => {
+  const api = new RestAdapter();
+  reply = () => new Response(null, { status: 204 });
+  assert.deepEqual(await api.deleteWebhookEndpoint(A), { ok: true });
+  assert.deepEqual(requests, [
+    { url: `https://api.example.test/webhook-endpoints/${A}`, method: 'DELETE', key: 'pf-test-key', body: undefined },
+  ]);
+  reply = () => json({ statusCode: 404, message: 'webhook.notFound', error: 'Not Found' }, { status: 404 });
+  await assert.rejects(api.deleteWebhookEndpoint(B), { message: 'PostFast API error (404): webhook.notFound' });
 });
 
 test("an error carries the API's reason after its code", async () => {

@@ -1,5 +1,16 @@
 # postfast-mcp
 
+## 0.15.0
+
+### Minor Changes
+
+- Webhook endpoints: seven new tools on both bindings, for the URLs where PostFast sends signed events (Standard Webhooks) and for each endpoint's delivery log.
+
+  - `list_webhook_endpoints`, `get_webhook_endpoint`, `create_webhook_endpoint`, `update_webhook_endpoint`, `delete_webhook_endpoint`, `test_webhook_endpoint` and `list_webhook_deliveries` are registered after `delete_posts`, so every existing tool keeps its position and its text. The server instructions don't change.
+  - The descriptions carry what a model learns nowhere else. They cover the four event types (`post.published`; `post.failed`, sent only once a post has failed for good; `account.connected`, which includes reconnects; `account.disconnected`) and the fact that an endpoint receives every event of its types from the whole workspace. They give the URL rules (https, port 443, a public hostname with a dot) and the cap of 5 active endpoints. They explain that `create_webhook_endpoint` returns the signing secret only once, so it must go into the receiver right away, and how a receiver verifies deliveries. They state the delivery rules: a 2xx within 15 seconds counts; anything else is retried 7 times over about a day; a 410 Gone, or five days of failures, turns the endpoint off; and nothing that happened while it was off is sent later. They describe what `test_webhook_endpoint` sends with and without `sampleEvent`, and what each `webhook.*` error code and each delivery error code means.
+  - Remote binding: every webhook tool declares the `webhooks:manage` scope and says only workspace admins can use it (others get `webhook.forbidden`). `create_webhook_endpoint` and `update_webhook_endpoint` accept only a URL the user gave and wait for the user's yes. Deleting an endpoint waits for the yes too, and a test is sent only when the user asks.
+  - The seven `BackendPort` methods (`listWebhookEndpoints`, `getWebhookEndpoint`, `createWebhookEndpoint`, `updateWebhookEndpoint`, `deleteWebhookEndpoint`, `testWebhookEndpoint`, `listWebhookDeliveries`) are optional. A host whose adapter predates them skips these tools and logs a line. `postfast-mcp/core` exports the methods' argument types, `WEBHOOK_EVENTS` and the response types. The stdio adapter calls `/webhook-endpoints` and `GET /webhook-endpoints/{id}/deliveries` with the API key. For a deletion it returns `{ ok: true }`, as the hosted connector does.
+
 ## 0.14.0
 
 ### Minor Changes

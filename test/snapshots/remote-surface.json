@@ -2313,6 +2313,458 @@
           ]
         }
       ]
+    },
+    {
+      "name": "list_webhook_endpoints",
+      "title": "List Webhook Endpoints",
+      "description": "List the workspace's webhook endpoints: the URLs where PostFast sends a signed JSON event when a post publishes or fails for good, or when an account connects or disconnects. Oldest first, turned-off ones included. Each has id, url, events, description, active, disabledReason (GONE: its receiver answered 410 Gone; FAILING: its deliveries failed for five days and the workspace owner was emailed; null while it is active, or when a user turned it off), lastSuccessAt and lastFailureAt. The signing secret is never listed: create_webhook_endpoint returns it once. To see what was sent and how the receiver answered, use list_webhook_deliveries. Only workspace admins can use this tool; for anyone else it fails with webhook.forbidden, which reconnecting doesn't fix.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "workspaceId": {
+            "description": "Target workspace id (from list_workspaces). Omit to use the connection's default workspace.",
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          }
+        },
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "annotations": {
+        "title": "List Webhook Endpoints",
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "openWorldHint": false
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "_meta": {
+        "securitySchemes": [
+          {
+            "type": "oauth2",
+            "scopes": [
+              "webhooks:manage"
+            ]
+          }
+        ]
+      },
+      "securitySchemes": [
+        {
+          "type": "oauth2",
+          "scopes": [
+            "webhooks:manage"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "get_webhook_endpoint",
+      "title": "Get Webhook Endpoint",
+      "description": "Fetch one webhook endpoint by id, with the fields list_webhook_endpoints gives (never the signing secret). An id that isn't in this workspace, or was deleted, fails with webhook.notFound. Only workspace admins can use this tool; for anyone else it fails with webhook.forbidden, which reconnecting doesn't fix.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+            "description": "Webhook endpoint id (from list_webhook_endpoints)"
+          },
+          "workspaceId": {
+            "description": "Target workspace id (from list_workspaces). Omit to use the connection's default workspace.",
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "annotations": {
+        "title": "Get Webhook Endpoint",
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "openWorldHint": false
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "_meta": {
+        "securitySchemes": [
+          {
+            "type": "oauth2",
+            "scopes": [
+              "webhooks:manage"
+            ]
+          }
+        ]
+      },
+      "securitySchemes": [
+        {
+          "type": "oauth2",
+          "scopes": [
+            "webhooks:manage"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "create_webhook_endpoint",
+      "title": "Create Webhook Endpoint",
+      "description": "Register a webhook endpoint: a URL where PostFast sends a signed JSON POST for every event of the chosen types, { id, type, timestamp, workspaceId, data }, where data.post is a post as list_posts returns it and data.account an account as list_accounts returns it. The endpoint gets these events from the whole workspace, for every account; a receiver that wants one account checks data.post.socialMediaId (or data.post.platform) or data.account.id. A workspace can have 5 active endpoints (turned-off ones don't count); one more fails with webhook.limitReached. The answer is the endpoint plus secret (whsec_…), shown this once: PostFast never returns it again, so give it to the user and tell them to store it in their receiver now (if it is lost, delete the endpoint and create a new one). The receiver checks every delivery with it as Standard Webhooks specifies: the webhook-id, webhook-timestamp and webhook-signature headers, verified over the raw request body; a Standard Webhooks library such as standardwebhooks does this. A delivery counts when the receiver answers 2xx within 15 seconds; redirects are not followed. Anything else is retried up to 7 more times over about a day (after 5 s, 5 min, 30 min, 2 h, 4 h, 6 h and 7 h). A 410 Gone answer turns the endpoint off at once, and five days of failures with no success turn it off and email the workspace owner. An event can arrive twice and events can arrive out of order, so the receiver should skip an id it has already handled. Offer test_webhook_endpoint to check the receiver. Use only a URL the user gave you. From then on every such event, with its post or account data, goes to that URL, so show the user the URL and the event types and call this only after they say yes in the conversation. Only workspace admins can use this tool; for anyone else it fails with webhook.forbidden, which reconnecting doesn't fix.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "maxLength": 2048,
+            "format": "uri",
+            "description": "The receiver's URL: https on port 443, with a public hostname that contains a dot (no IP address, no localhost or internal name, no user:password@) and resolves to public addresses; at most 2,048 characters. A URL that breaks a rule fails with webhook.urlNotHttps, webhook.urlPortNotAllowed, webhook.urlHostNotAllowed, webhook.urlPrivateAddress (it resolves to a private address), webhook.urlResolutionFailed (the hostname doesn't resolve) or webhook.invalidUrl."
+          },
+          "events": {
+            "minItems": 1,
+            "maxItems": 4,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "post.published",
+                "post.failed",
+                "account.connected",
+                "account.disconnected"
+              ]
+            },
+            "description": "Event types to send, each at most once: post.published (a post was published), post.failed (a post failed for good, with the reason in data.post.lastError; never sent for a failure that will still be retried), account.connected (an account was connected or reconnected; data.reconnected is true for a reconnect, and data.externalId carries the connect link's externalId when it had one) and account.disconnected (PostFast paused an account, for example because its access expired or was revoked). webhook.test can't be chosen: only test_webhook_endpoint sends it."
+          },
+          "description": {
+            "description": "A note to tell endpoints apart, such as what the receiver is for (max 255 characters)",
+            "type": "string",
+            "maxLength": 255
+          },
+          "workspaceId": {
+            "description": "Target workspace id (from list_workspaces). Omit to use the connection's default workspace.",
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          }
+        },
+        "required": [
+          "url",
+          "events"
+        ],
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "annotations": {
+        "title": "Create Webhook Endpoint",
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": true
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "_meta": {
+        "securitySchemes": [
+          {
+            "type": "oauth2",
+            "scopes": [
+              "webhooks:manage"
+            ]
+          }
+        ]
+      },
+      "securitySchemes": [
+        {
+          "type": "oauth2",
+          "scopes": [
+            "webhooks:manage"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "update_webhook_endpoint",
+      "title": "Update Webhook Endpoint",
+      "description": "Change a webhook endpoint: its url, events or description, or turn it off (active false) or back on (active true). Fields you omit keep their value; description null removes the description. A new url follows the rules of create_webhook_endpoint, keeps the same signing secret, and starts the endpoint's failure count afresh. active true turns an endpoint back on, whether PostFast turned it off (disabledReason GONE or FAILING) or a user did, and resets its failure count; it fails with webhook.limitReached when the workspace already has 5 active endpoints. Events that happen while an endpoint is off are never sent to it, not even after it is turned back on. An id that isn't in this workspace fails with webhook.notFound. Returns the updated endpoint. A new url must be one the user gave you. Show the user what will change and call this only after they say yes in the conversation. Only workspace admins can use this tool; for anyone else it fails with webhook.forbidden, which reconnecting doesn't fix.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+            "description": "Webhook endpoint id (from list_webhook_endpoints)"
+          },
+          "url": {
+            "description": "New receiver URL, under the rules of create_webhook_endpoint",
+            "type": "string",
+            "maxLength": 2048,
+            "format": "uri"
+          },
+          "events": {
+            "description": "The event types to send from now on, replacing the current ones (the values create_webhook_endpoint takes)",
+            "minItems": 1,
+            "maxItems": 4,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "post.published",
+                "post.failed",
+                "account.connected",
+                "account.disconnected"
+              ]
+            }
+          },
+          "description": {
+            "description": "New note (max 255 characters), or null to remove it",
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 255
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "active": {
+            "description": "false turns the endpoint off; true turns it back on and resets its failure count",
+            "type": "boolean"
+          },
+          "workspaceId": {
+            "description": "Target workspace id (from list_workspaces). Omit to use the connection's default workspace.",
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "annotations": {
+        "title": "Update Webhook Endpoint",
+        "readOnlyHint": false,
+        "destructiveHint": true,
+        "idempotentHint": true,
+        "openWorldHint": true
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "_meta": {
+        "securitySchemes": [
+          {
+            "type": "oauth2",
+            "scopes": [
+              "webhooks:manage"
+            ]
+          }
+        ]
+      },
+      "securitySchemes": [
+        {
+          "type": "oauth2",
+          "scopes": [
+            "webhooks:manage"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "delete_webhook_endpoint",
+      "title": "Delete Webhook Endpoint",
+      "description": "Delete a webhook endpoint by id. PostFast stops sending to it at once: deliveries still waiting are dropped, and its delivery log and signing secret are deleted with it. To pause an endpoint instead, set active false with update_webhook_endpoint. An id that isn't in this workspace fails with webhook.notFound. Returns { ok: true }. Deleting can't be undone, so show the user which endpoint (its url and description) and call this only after they say yes in the conversation. Only workspace admins can use this tool; for anyone else it fails with webhook.forbidden, which reconnecting doesn't fix.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+            "description": "Webhook endpoint id (from list_webhook_endpoints)"
+          },
+          "workspaceId": {
+            "description": "Target workspace id (from list_workspaces). Omit to use the connection's default workspace.",
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "annotations": {
+        "title": "Delete Webhook Endpoint",
+        "readOnlyHint": false,
+        "destructiveHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "_meta": {
+        "securitySchemes": [
+          {
+            "type": "oauth2",
+            "scopes": [
+              "webhooks:manage"
+            ]
+          }
+        ]
+      },
+      "securitySchemes": [
+        {
+          "type": "oauth2",
+          "scopes": [
+            "webhooks:manage"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "test_webhook_endpoint",
+      "title": "Test Webhook Endpoint",
+      "description": "Send one signed test delivery to a webhook endpoint now and report how its receiver answered: { eventId, type, delivered, statusCode, latencyMs, error }. It waits up to 15 seconds for the receiver, and the call succeeds even when the receiver failed, so read delivered, statusCode and error (null when delivered; otherwise timeout, connection, tls, redirect, http_4xx, http_5xx, gone, blocked_address, payload_too_large, or internal, which is PostFast's own failure). Without sampleEvent it sends a webhook.test event, whose data is { webhook: { id, url }, message }. With sampleEvent it sends a fixed sample of that event type, built exactly like a real one so the receiver can be set up before any real event happens: ids of zeros, platform X, the post text \"Sample post from PostFast\" or the account @sample, and no real post or account data. A test counts like any delivery: it shows in list_webhook_deliveries, a failure adds to the endpoint's failure count, and a 410 Gone answer turns the endpoint off. webhook.disabled means PostFast has webhooks switched off for now, not that this endpoint is off. The receiver may act on a test as on a real event, so send one only when the user asks. Only workspace admins can use this tool; for anyone else it fails with webhook.forbidden, which reconnecting doesn't fix.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+            "description": "Webhook endpoint id (from list_webhook_endpoints)"
+          },
+          "sampleEvent": {
+            "description": "Send a fixed sample of this event type instead of webhook.test",
+            "type": "string",
+            "enum": [
+              "post.published",
+              "post.failed",
+              "account.connected",
+              "account.disconnected"
+            ]
+          },
+          "workspaceId": {
+            "description": "Target workspace id (from list_workspaces). Omit to use the connection's default workspace.",
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "annotations": {
+        "title": "Test Webhook Endpoint",
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": true
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "_meta": {
+        "securitySchemes": [
+          {
+            "type": "oauth2",
+            "scopes": [
+              "webhooks:manage"
+            ]
+          }
+        ]
+      },
+      "securitySchemes": [
+        {
+          "type": "oauth2",
+          "scopes": [
+            "webhooks:manage"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "list_webhook_deliveries",
+      "title": "List Webhook Deliveries",
+      "description": "List a webhook endpoint's delivery log, newest first: every delivery to it from the last 30 days, with how the receiver answered. Use it to find out why an event did or didn't arrive. Each row has eventId (evt_…, the webhook-id header the receiver got), eventType, resourceId (the post id for post events, the account id for account events, the endpoint id for webhook.test, null for a sample), status, attempts (each with n, at, statusCode, latencyMs and error), lastStatusCode, lastErrorCode, nextAttemptAt, completedAt and payload (the body exactly as sent). status is SUCCEEDED, FAILED (every attempt failed, the receiver answered 410 Gone, or the event was too large to send), PENDING (still being delivered: a nextAttemptAt in the future means a retry is scheduled, up to 8 attempts over about a day) or SKIPPED (dropped before any attempt because the endpoint was off). Error codes: timeout, connection, tls, redirect (redirects are not followed), http_4xx, http_5xx, gone (410), blocked_address (PostFast refused to connect because the hostname resolved to a private address), exhausted, payload_too_large (the event was too large to send) and internal (PostFast's own failure, not the receiver's). Only the receiver's status code is kept, never its response body. totalCount and pageInfo.hasNextPage are filled only when getCount is true, so ask for it on the first page; without it, a full page may have more after it. An id that isn't in this workspace, or was deleted, gives an empty page rather than an error; get_webhook_endpoint tells whether it exists. Only workspace admins can use this tool; for anyone else it fails with webhook.forbidden, which reconnecting doesn't fix.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "endpointId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+            "description": "Webhook endpoint id (from list_webhook_endpoints)"
+          },
+          "page": {
+            "default": 0,
+            "description": "Page number (0-based)",
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "limit": {
+            "default": 10,
+            "description": "Deliveries per page (max 100; every row carries the full event payload)",
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100
+          },
+          "getCount": {
+            "description": "Count the whole log, which fills totalCount and pageInfo.hasNextPage. Ask for it on the first page only.",
+            "type": "boolean"
+          },
+          "workspaceId": {
+            "description": "Target workspace id (from list_workspaces). Omit to use the connection's default workspace.",
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          }
+        },
+        "required": [
+          "endpointId"
+        ],
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "annotations": {
+        "title": "List Webhook Deliveries",
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "openWorldHint": false
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "_meta": {
+        "securitySchemes": [
+          {
+            "type": "oauth2",
+            "scopes": [
+              "webhooks:manage"
+            ]
+          }
+        ]
+      },
+      "securitySchemes": [
+        {
+          "type": "oauth2",
+          "scopes": [
+            "webhooks:manage"
+          ]
+        }
+      ]
     }
   ]
 }

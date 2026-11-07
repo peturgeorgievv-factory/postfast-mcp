@@ -277,6 +277,112 @@ export interface PostControls {
   threadsTopicTag?: string;
 }
 
+// Webhook endpoints: what the webhook tools return.
+
+/** The event types a webhook endpoint can receive. `webhook.test` is sent only by test_webhook_endpoint. */
+export type WebhookEvent =
+  | 'post.published'
+  | 'post.failed'
+  | 'account.connected'
+  | 'account.disconnected';
+
+/**
+ * Why PostFast turned an endpoint off: GONE when its receiver answered 410,
+ * FAILING after five days of failed deliveries. Null while it is active or
+ * when a user turned it off.
+ */
+export type WebhookDisabledReason = 'GONE' | 'FAILING';
+
+export interface WebhookEndpoint {
+  id: string;
+  workspaceId: string;
+  url: string;
+  events: WebhookEvent[];
+  description: string | null;
+  active: boolean;
+  disabledReason: WebhookDisabledReason | null;
+  lastSuccessAt: string | null;
+  lastFailureAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+  /** The signing secret (`whsec_…`): only in the answer to create_webhook_endpoint, never again. */
+  secret?: string;
+}
+
+/** Why a delivery attempt did not count. `internal` is PostFast's own failure, not the receiver's. */
+export type WebhookDeliveryError =
+  | 'timeout'
+  | 'connection'
+  | 'tls'
+  | 'redirect'
+  | 'http_4xx'
+  | 'http_5xx'
+  | 'gone'
+  | 'blocked_address'
+  | 'exhausted'
+  | 'internal'
+  | 'payload_too_large';
+
+/** One synchronous delivery, from test_webhook_endpoint. */
+export interface WebhookTestResult {
+  /** `evt_<uuid>`: the `webhook-id` header the receiver got. */
+  eventId: string;
+  type: WebhookEvent | 'webhook.test';
+  delivered: boolean;
+  statusCode: number | null;
+  latencyMs: number;
+  error: WebhookDeliveryError | null;
+}
+
+/** The body a receiver gets, exactly as sent. */
+export interface WebhookEnvelope {
+  id: string;
+  type: WebhookEvent | 'webhook.test';
+  timestamp: string;
+  workspaceId: string;
+  data: Record<string, unknown>;
+}
+
+export interface WebhookDeliveryAttempt {
+  n: number;
+  at: string;
+  statusCode: number | null;
+  latencyMs: number;
+  error: WebhookDeliveryError | null;
+}
+
+/** SKIPPED: dropped before any attempt because the endpoint was off. */
+export type WebhookDeliveryStatus = 'PENDING' | 'SUCCEEDED' | 'FAILED' | 'SKIPPED';
+
+/** One row of an endpoint's delivery log. */
+export interface WebhookDelivery {
+  id: string;
+  /** `evt_<uuid>`, the same under every endpoint that got the event. */
+  eventId: string;
+  eventType: WebhookEvent | 'webhook.test';
+  /** The post (post events), the account (account events), the endpoint (`webhook.test`), or null (samples). */
+  resourceId: string | null;
+  socialMediaId: string | null;
+  status: WebhookDeliveryStatus;
+  attemptCount: number;
+  attempts: WebhookDeliveryAttempt[];
+  lastStatusCode: number | null;
+  lastErrorCode: WebhookDeliveryError | null;
+  lastLatencyMs: number | null;
+  /** When the next attempt is due, while the status is PENDING. */
+  nextAttemptAt: string | null;
+  completedAt: string | null;
+  createdAt: string;
+  payload: WebhookEnvelope;
+}
+
+/** A page of the delivery log, newest first. The count fields are set only with getCount: true. */
+export interface PaginatedWebhookDeliveries {
+  data: WebhookDelivery[];
+  totalCount: number | null;
+  pageInfo: { page: number | null; hasNextPage: boolean; perPage: number | null };
+}
+
 // The calendar app (BuildToolsOptions.app). What the backend returns for it,
 // and the view model the app tools hand to the view.
 

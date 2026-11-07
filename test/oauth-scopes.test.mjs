@@ -40,9 +40,12 @@ const ADVERTISED = [
   'inbox:read',
   'inbox:reply',
   'inbox:manage',
+  'webhooks:manage',
 ];
 /** A token granted every scope but the three inbox ones. */
 const NO_INBOX = ADVERTISED.filter((scope) => !scope.startsWith('inbox:'));
+/** A token granted before webhooks:manage existed. */
+const NO_WEBHOOKS = ADVERTISED.filter((scope) => scope !== 'webhooks:manage');
 
 // The scope the backend's MCP gateway checks for each tool's call, by the
 // gateway command the host sends for it (in parentheses).
@@ -78,6 +81,13 @@ const EXPECTED = {
   preview_comment_deletion: [], // no backend call
   delete_comment: ['inbox:manage'], // inbox-set-item-state, DELETE
   delete_posts: ['posts:delete'], // delete-posts
+  list_webhook_endpoints: ['webhooks:manage'], // webhook-list-endpoints
+  get_webhook_endpoint: ['webhooks:manage'], // webhook-get-endpoint
+  create_webhook_endpoint: ['webhooks:manage'], // webhook-create-endpoint
+  update_webhook_endpoint: ['webhooks:manage'], // webhook-update-endpoint
+  delete_webhook_endpoint: ['webhooks:manage'], // webhook-delete-endpoint
+  test_webhook_endpoint: ['webhooks:manage'], // webhook-test-endpoint
+  list_webhook_deliveries: ['webhooks:manage'], // webhook-list-deliveries
   open_postfast: ['posts:read', 'accounts:read'], // app-calendar (its list-workspaces needs none)
   postfast_tab: ['posts:read', 'accounts:read'], // app-calendar (its list-workspaces needs none)
   get_calendar_post: ['posts:read'], // app-post
@@ -171,7 +181,7 @@ test('the stdio binding lists no securitySchemes and keeps its tools as they wer
   }
   const client = await connect({ binding: 'stdio', port: scopedPort().port, scopeChallenge: { resourceMetadataUrl: PRM } });
   const { tools } = await client.request({ method: 'tools/list' }, ListedTools);
-  assert.equal(tools.length, 25);
+  assert.equal(tools.length, 32);
   for (const t of tools) assert.ok(t.securitySchemes === undefined && t._meta === undefined, t.name);
   await client.close();
 });
@@ -180,7 +190,7 @@ test('tools/list carries each tool\'s securitySchemes at the top level and in _m
   for (const extra of [{}, { app: APP }]) {
     const client = await connect(remote(scopedPort().port, extra));
     const { tools } = await client.request({ method: 'tools/list' }, ListedTools);
-    assert.equal(tools.length, extra.app ? 35 : 31);
+    assert.equal(tools.length, extra.app ? 42 : 38);
     for (const t of tools) {
       assert.deepEqual(t.securitySchemes, [{ type: 'oauth2', scopes: EXPECTED[t.name] }], t.name);
       assert.deepEqual(t._meta.securitySchemes, t.securitySchemes, t.name);
@@ -261,6 +271,28 @@ test('a backend scope refusal becomes the challenge, asking for the token\'s sco
     content: [{ type: 'text', text: 'Insufficient scope: this connection is not authorized for this action.' }],
     isError: true,
   });
+  await client.close();
+});
+
+test('a token from before webhooks:manage is asked for it; an editor\'s webhook.forbidden stays a plain error', async () => {
+  // Only the webhook tools need the new scope.
+  const tools = buildTools({ binding: 'remote', withWorkspaceField: true, confirmGate: { secret: SECRET }, app: APP });
+  const needing = tools.filter((t) => t.securitySchemes[0].scopes.includes('webhooks:manage')).map((t) => t.name);
+  assert.deepEqual(needing, Object.keys(EXPECTED).filter((name) => name.includes('webhook')));
+  assert.equal(needing.length, 7);
+
+  let error = new InsufficientScopeError('Insufficient scope: this connection is not authorized for this action.');
+  const port = new Proxy({}, { get: (_t, m) => (m === 'then' ? undefined : async () => { throw error; }) });
+  const client = await connect(remote(port, { scopeChallenge: { resourceMetadataUrl: PRM } }), NO_WEBHOOKS);
+  const refused = await client.callTool({ name: 'list_webhook_endpoints', arguments: {} });
+  assert.match(refused.content[0].text, /it needs the webhooks:manage permission\. Reconnect PostFast and allow it/);
+  assert.equal(parseChallenge(refused._meta['mcp/www_authenticate'][0]).scope, ADVERTISED.join(' '));
+
+  // A member without the admin role is refused whatever the token holds: no
+  // challenge, since reconnecting can't change a role.
+  error = new Error('webhook.forbidden');
+  const forbidden = await client.callTool({ name: 'create_webhook_endpoint', arguments: { url: 'https://hooks.example.com/pf', events: ['post.published'] } });
+  assert.deepEqual(forbidden, { content: [{ type: 'text', text: 'webhook.forbidden' }], isError: true });
   await client.close();
 });
 

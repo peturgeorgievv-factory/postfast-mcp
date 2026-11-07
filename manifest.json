@@ -2,7 +2,7 @@
   "manifest_version": "0.3",
   "name": "postfast",
   "display_name": "PostFast",
-  "version": "0.14.0",
+  "version": "0.15.0",
   "description": "Schedule and manage social media posts via PostFast",
   "long_description": "Connect Claude to PostFast to schedule and manage social media posts across 11 platforms using natural language. Create, schedule, and delete posts on Instagram, TikTok, LinkedIn, X, Facebook, YouTube, Threads, BlueSky, Pinterest, Telegram, and Google Business Profile. Supports batch scheduling (up to 15 posts), media uploads, platform-specific controls, and post analytics (impressions, reach, likes, comments, shares).",
   "author": {
@@ -62,7 +62,14 @@
     { "name": "mark_inbox_conversation_read", "description": "Mark an inbox conversation read" },
     { "name": "set_inbox_conversation_status", "description": "Triage a conversation: OPEN, SNOOZED, or CLOSED" },
     { "name": "assign_inbox_conversation", "description": "Assign an inbox conversation to a workspace member" },
-    { "name": "list_tiktok_sounds", "description": "Trending Commercial Music Library sounds for a connected TikTok account" }
+    { "name": "list_tiktok_sounds", "description": "Trending Commercial Music Library sounds for a connected TikTok account" },
+    { "name": "list_webhook_endpoints", "description": "List the workspace's webhook endpoints" },
+    { "name": "get_webhook_endpoint", "description": "Fetch one webhook endpoint" },
+    { "name": "create_webhook_endpoint", "description": "Register a URL for signed post and account events (returns its signing secret once)" },
+    { "name": "update_webhook_endpoint", "description": "Change a webhook endpoint's URL, events or description, or turn it off and back on" },
+    { "name": "delete_webhook_endpoint", "description": "Delete a webhook endpoint and its delivery log" },
+    { "name": "test_webhook_endpoint", "description": "Send a test or sample event to a webhook endpoint and see how it answered" },
+    { "name": "list_webhook_deliveries", "description": "A webhook endpoint's delivery log for the last 30 days" }
   ],
   "compatibility": {
     "platforms": ["darwin", "win32"],

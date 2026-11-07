@@ -85,6 +85,15 @@ const OPERATIONS = [
 ];
 const [REPLY] = OPERATIONS;
 const COMMENT_TOOLS = OPERATIONS.flatMap((op) => [op.preview, op.perform]);
+const WEBHOOK_TOOLS = [
+  'list_webhook_endpoints',
+  'get_webhook_endpoint',
+  'create_webhook_endpoint',
+  'update_webhook_endpoint',
+  'delete_webhook_endpoint',
+  'test_webhook_endpoint',
+  'list_webhook_deliveries',
+];
 
 const escape = (text) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 const mismatch = (op) =>
@@ -328,9 +337,10 @@ test('the remote binding is always gated: create_posts is held, set_inbox_item_s
     assert.match(tool(tools, 'approve_posts').description, /only after they say yes/);
   }
   const names = gatedTools(recordingPort().port).map((t) => t.name);
-  assert.equal(names.length, 31);
-  // The comment tools take the place of the pair they replace; delete_posts stays last.
-  assert.deepEqual(names.slice(24), [...COMMENT_TOOLS, 'delete_posts']);
+  assert.equal(names.length, 38);
+  // The comment tools take the place of the pair they replace; delete_posts and
+  // then the webhook tools follow, each wave appended.
+  assert.deepEqual(names.slice(24), [...COMMENT_TOOLS, 'delete_posts', ...WEBHOOK_TOOLS]);
 });
 
 test('without a secret the remote binding stays gated and leaves out only the six comment tools', () => {
@@ -371,7 +381,7 @@ test('a short secret throws on remote; stdio ignores the gate', () => {
   const view = (tools) => tools.map((t) => [t.name, t.description, t.annotations, t._meta, t.run]);
   const plain = buildTools({ binding: 'stdio' });
   const withGate = buildTools({ binding: 'stdio', confirmGate: { secret: 'short' } });
-  assert.equal(withGate.length, 25);
+  assert.equal(withGate.length, 32);
   assert.deepEqual(view(withGate), view(plain));
 });
 
@@ -421,6 +431,17 @@ const CONSENT = {
   delete_comment: [/only after the user has seen the preview and said yes in the conversation/],
   generate_connect_link: [/Email the link \(sendEmail\) only when the user asks you to and gives the address/],
   set_inbox_item_state: [/Hide or unhide a comment only when the user asks/],
+  // A webhook endpoint sends workspace data to another server from then on.
+  create_webhook_endpoint: [
+    /Use only a URL the user gave you\./,
+    /show the user the URL and the event types and call this only after they say yes in the conversation/,
+  ],
+  update_webhook_endpoint: [
+    /A new url must be one the user gave you\./,
+    /Show the user what will change and call this only after they say yes in the conversation/,
+  ],
+  delete_webhook_endpoint: [/Deleting can't be undone, so show the user which endpoint .* call this only after they say yes in the conversation/],
+  test_webhook_endpoint: [/send one only when the user asks/],
 };
 
 test('remote tool text waits for the user before anything is published, sent, hidden or removed', () => {
@@ -435,6 +456,7 @@ test('remote tool text waits for the user before anything is published, sent, hi
   assert.doesNotMatch(tool(tools, 'approve_posts').description, /instead of approving it, and delete the old one/);
   assert.doesNotMatch(tool(tools, 'delete_post').description, /The deletion cannot be undone/);
   assert.doesNotMatch(tool(tools, 'delete_posts').description, /The deletion cannot be undone/);
+  assert.doesNotMatch(tool(tools, 'delete_webhook_endpoint').description, /The deletion cannot be undone/);
 });
 
 test('the comment tools keep their irreversibility notes', () => {
@@ -454,8 +476,9 @@ test('stdio keeps its own wording for the tools whose remote text asks for the y
   assert.match(tool(tools, 'delete_post').description, /does prevent it from publishing\. The deletion cannot be undone\.$/);
   assert.match(tool(tools, 'delete_posts').description, /listed once each\. The deletion cannot be undone\.$/);
   assert.equal(tool(tools, 'generate_connect_link').inputSchema.sendEmail.description, 'Send the link via email');
-  for (const name of ['delete_post', 'delete_posts', 'generate_connect_link', 'set_inbox_item_state']) {
-    for (const phrase of ['say yes', 'only when the user asks']) {
+  assert.match(tool(tools, 'delete_webhook_endpoint').description, /Returns \{ ok: true \}\. The deletion cannot be undone\.$/);
+  for (const name of ['delete_post', 'delete_posts', 'generate_connect_link', 'set_inbox_item_state', ...WEBHOOK_TOOLS]) {
+    for (const phrase of ['say yes', 'only when the user asks', 'the user gave you']) {
       assert.ok(!tool(tools, name).description.includes(phrase), `${name}: ${phrase}`);
     }
   }

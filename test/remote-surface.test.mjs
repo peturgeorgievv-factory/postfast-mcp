@@ -64,10 +64,21 @@ test('the remote surface matches its snapshot', async () => {
     rendered === pinned,
     'The remote surface changed. Review what hosted clients will see, then run UPDATE_SNAPSHOT=1 npm test to accept it.',
   );
-  // The snapshot is the confirm-gated surface, one tool per comment operation.
+  // The snapshot is the confirm-gated surface, one tool per comment operation,
+  // with the webhook tools last.
   const { tools, instructions } = JSON.parse(pinned);
   const names = tools.map((t) => t.name);
-  assert.equal(names.length, 31);
+  assert.equal(names.length, 38);
+  assert.deepEqual(names.slice(30), [
+    'delete_posts',
+    'list_webhook_endpoints',
+    'get_webhook_endpoint',
+    'create_webhook_endpoint',
+    'update_webhook_endpoint',
+    'delete_webhook_endpoint',
+    'test_webhook_endpoint',
+    'list_webhook_deliveries',
+  ]);
   for (const name of [
     'preview_comment_reply',
     'reply_to_comment',

@@ -7,15 +7,19 @@ import type {
   BackendPort,
   ConnectLinkArgs,
   CreatePostsArgs,
+  CreateWebhookEndpointArgs,
   FollowerHistoryArgs,
   InboxReplyArgs,
   ListInboxConversationsArgs,
   ListInboxItemsArgs,
   ListPostsArgs,
   ListTikTokSoundsArgs,
+  ListWebhookDeliveriesArgs,
   LocalUploadResult,
   SetInboxConversationStatusArgs,
   SetInboxItemStateArgs,
+  TestWebhookEndpointArgs,
+  UpdateWebhookEndpointArgs,
   UploadUrlsArgs,
 } from '../core/backend-port.js';
 import { uploadTypeFor } from '../core/shared.js';
@@ -331,6 +335,55 @@ export class RestAdapter implements BackendPort {
   assignInboxConversation(args: AssignInboxConversationArgs): Promise<unknown> {
     return this.post(`/social-inbox/conversations/${args.conversationId}/assign`, {
       assigneeUserId: args.assigneeUserId,
+    });
+  }
+
+  listWebhookEndpoints(): Promise<unknown> {
+    return this.get('/webhook-endpoints');
+  }
+
+  getWebhookEndpoint(id: string): Promise<unknown> {
+    return this.get(`/webhook-endpoints/${id}`);
+  }
+
+  createWebhookEndpoint(args: CreateWebhookEndpointArgs): Promise<unknown> {
+    return this.post('/webhook-endpoints', {
+      url: args.url,
+      events: args.events,
+      description: args.description,
+    });
+  }
+
+  // JSON leaves out the fields that were not given (they keep their value) and
+  // keeps description: null, which removes the description.
+  updateWebhookEndpoint(args: UpdateWebhookEndpointArgs): Promise<unknown> {
+    return this.request('PATCH', `/webhook-endpoints/${args.id}`, {
+      url: args.url,
+      events: args.events,
+      description: args.description,
+      active: args.active,
+    });
+  }
+
+  // The API answers 204 with no body; return what the hosted server returns.
+  async deleteWebhookEndpoint(id: string): Promise<{ ok: true }> {
+    await this.request('DELETE', `/webhook-endpoints/${id}`);
+    return { ok: true };
+  }
+
+  testWebhookEndpoint(args: TestWebhookEndpointArgs): Promise<unknown> {
+    return this.post(`/webhook-endpoints/${args.id}/test`, {
+      sampleEvent: args.sampleEvent,
+    });
+  }
+
+  listWebhookDeliveries(args: ListWebhookDeliveriesArgs): Promise<unknown> {
+    const param = (value: number | boolean | undefined) =>
+      value === undefined ? undefined : String(value);
+    return this.get(`/webhook-endpoints/${args.endpointId}/deliveries`, {
+      page: param(args.page),
+      limit: param(args.limit),
+      getCount: param(args.getCount),
     });
   }
 }
