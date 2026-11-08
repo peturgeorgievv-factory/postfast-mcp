@@ -1,5 +1,11 @@
 # postfast-mcp
 
+## 0.15.1
+
+### Patch Changes
+
+- `list_webhook_deliveries` now describes `SKIPPED` correctly. PostFast skips a delivery that comes due, first attempt or retry, while its endpoint is off. A skipped row can therefore follow failed attempts; the old text said it was always dropped "before any attempt". The description also says that while an endpoint is off, its `PENDING` rows end as `SKIPPED` unless the endpoint is turned back on before they come due.
+
 ## 0.15.0
 
 ### Minor Changes
