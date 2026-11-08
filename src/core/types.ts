@@ -351,7 +351,7 @@ export interface WebhookDeliveryAttempt {
   error: WebhookDeliveryError | null;
 }
 
-/** SKIPPED: dropped before any attempt because the endpoint was off. */
+/** SKIPPED: not sent because the endpoint was off when the delivery came due, possibly after failed attempts. */
 export type WebhookDeliveryStatus = 'PENDING' | 'SUCCEEDED' | 'FAILED' | 'SKIPPED';
 
 /** One row of an endpoint's delivery log. */

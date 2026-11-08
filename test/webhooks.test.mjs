@@ -220,6 +220,8 @@ for (const [binding, build] of Object.entries(SURFACES)) {
       list_webhook_deliveries: [
         /every delivery to it from the last 30 days/,
         /PENDING \(still being delivered: a nextAttemptAt in the future means a retry is scheduled/,
+        /SKIPPED \(not sent because the endpoint was off when the delivery came due, possibly after failed attempts/,
+        /while an endpoint is off, its PENDING rows end this way unless it is turned back on before they come due/,
         /never its response body/,
         /filled only when getCount is true/,
         /gives an empty page rather than an error/,
@@ -233,6 +235,9 @@ for (const [binding, build] of Object.entries(SURFACES)) {
     for (const [name, patterns] of Object.entries(FACTS)) {
       for (const pattern of patterns) assert.match(tool(tools, name).description, pattern, name);
     }
+    // The worker skips any due job of an endpoint that is off, retries included,
+    // so a SKIPPED row can carry failed attempts.
+    assert.doesNotMatch(tool(tools, 'list_webhook_deliveries').description, /before any attempt/);
 
     // The URL rules, the limits and every URL error code, on the field they apply to.
     const url = fieldText(create, 'url');
