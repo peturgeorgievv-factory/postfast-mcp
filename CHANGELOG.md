@@ -1,5 +1,11 @@
 # postfast-mcp
 
+## 0.15.3
+
+### Patch Changes
+
+- `youtubeThumbnailKey` gives the current thumbnail limits on both bindings: a JPEG or PNG image, up to 10 MB, at least 640 px wide, 16:9 (1280x720 or larger). The old text said 2 MB, which is below what PostFast accepts for any image and what YouTube now takes for a custom thumbnail. The `social-media-post` skill gives the same limits. No schema changes.
+
 ## 0.15.2
 
 ### Patch Changes

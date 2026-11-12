@@ -179,7 +179,7 @@ const controlsSchema = (binding: Binding) =>
       .string()
       .optional()
       .describe(
-        'Media key for a custom YouTube thumbnail (image, max 2MB, min 640px wide, 1280x720 recommended)',
+        'Media key for a custom YouTube thumbnail (JPEG or PNG image, up to 10 MB, at least 640 px wide, 16:9 (1280x720 or larger))',
       ),
     youtubeLanguage: z
       .string()
