@@ -1,5 +1,11 @@
 # postfast-mcp
 
+## 0.15.2
+
+### Patch Changes
+
+- The MCP Registry entry (`server.json`) now declares the hosted server, `https://mcp.postfa.st/mcp`, as a `streamable-http` remote next to the npm package. It needs no headers because the hosted server signs in with OAuth. The entry also gains the title "PostFast", the PostFast logo as its icon (512x512 PNG) and a website link, and its description now names what the server does on both transports. The npm package, the tools and the server instructions don't change.
+
 ## 0.15.1
 
 ### Patch Changes
