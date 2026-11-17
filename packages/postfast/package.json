@@ -1,6 +1,6 @@
 {
   "name": "postfast",
-  "version": "0.15.3",
+  "version": "0.15.4",
   "mcpName": "st.postfa/postfast",
   "description": "PostFast MCP server: schedule social media posts, answer comments and read analytics from AI tools",
   "type": "module",
@@ -11,7 +11,7 @@
     "bin"
   ],
   "dependencies": {
-    "postfast-mcp": "0.15.3"
+    "postfast-mcp": "0.15.4"
   },
   "engines": {
     "node": ">=18"
