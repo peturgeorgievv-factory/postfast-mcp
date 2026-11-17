@@ -231,6 +231,14 @@ Verify everything works with the MCP Inspector:
 POSTFAST_API_KEY=your-key npx @modelcontextprotocol/inspector npx postfast-mcp
 ```
 
+## Official packages
+
+| Where | Name |
+|-------|------|
+| npm | [`postfast-mcp`](https://www.npmjs.com/package/postfast-mcp), and [`postfast`](https://www.npmjs.com/package/postfast), which runs the same server at the same version: `npx -y postfast` |
+| MCP Registry | `st.postfa/postfast` (up to 0.15.3: `io.github.peturgeorgievv-factory/postfast-mcp`, now deprecated) |
+| Hosted MCP server | `https://mcp.postfa.st/mcp` |
+
 ## API Docs
 
 Full REST API documentation: [postfa.st/docs](https://postfa.st/docs)
@@ -246,9 +254,12 @@ node dist/stdio/index.js
 Tools are authored once in `src/core` (the catalog — schemas, descriptions,
 annotations, per-binding availability) and exposed to consumers as
 `postfast-mcp/core`; `src/stdio` binds the catalog to the public REST API.
+`packages/postfast` is the `postfast` package: a bin that starts this server,
+pinned to the same version.
 Releases: PRs add a `.changeset/*.md`; `npm run version` folds them into the
-bump + changelog, and pushing the `vX.Y.Z` tag publishes npm + MCP Registry +
-the MCPB release from CI (OIDC — no tokens anywhere).
+bump + changelog, and pushing the `vX.Y.Z` tag publishes `postfast-mcp` and
+`postfast` to npm (OIDC trusted publishing, no npm token), the MCPB release,
+and the MCP Registry entry (signed in with the key in postfa.st's DNS).
 
 ## Badges
 
