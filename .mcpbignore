@@ -11,6 +11,7 @@ tsconfig.json
 /.cursor-plugin/
 /assets/
 /plugins/
+/packages/
 .git/
 .gitignore
 .mcpregistry_*

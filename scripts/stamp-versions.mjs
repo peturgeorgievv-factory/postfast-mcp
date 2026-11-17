@@ -8,7 +8,9 @@
 // version inside the npm package; its MCP launcher is pinned to
 // postfast-mcp@<version> too), .claude-plugin/marketplace.json (plugins[]),
 // .cursor-plugin/plugin.json (version and launcher pin, as for the Claude
-// Code plugin), src/stdio/index.ts, and package-lock.json (regenerated via npm).
+// Code plugin), packages/postfast/package.json (the `postfast` package: its
+// version and its exact postfast-mcp pin), src/stdio/index.ts, and
+// package-lock.json (regenerated via npm).
 // JSON files are edited textually to preserve their checked-in formatting;
 // in each of them every `"version": "x.y.z"` key is one of our stamps
 // ("manifest_version" and dependency ranges never match the pattern).
@@ -66,11 +68,34 @@ function pinLauncher(relPath) {
   return { relPath, path, stamped };
 }
 
+/**
+ * The `postfast` package runs this server through an exact dependency, so its
+ * version and its postfast-mcp pin both move with ours. Returns the stamped
+ * text without writing it, like pinLauncher.
+ */
+function stampAliasPackage(relPath) {
+  const path = join(root, relPath);
+  const stamped = readFileSync(path, 'utf8')
+    .replace(/("version":\s*")\d+\.\d+\.\d+(")/, `$1${version}$2`)
+    .replace(/("postfast-mcp":\s*")\d+\.\d+\.\d+(")/, `$1${version}$2`);
+  const alias = JSON.parse(stamped);
+  if (alias.version !== version || alias.dependencies?.['postfast-mcp'] !== version) {
+    console.error(
+      `${relPath}: needs "version" and an exact "postfast-mcp" dependency (found ${alias.version} and ${alias.dependencies?.['postfast-mcp']}), aborting`,
+    );
+    process.exit(1);
+  }
+  return { relPath, path, stamped };
+}
+
 const pinned = ['.claude-plugin/plugin.json', '.cursor-plugin/plugin.json'].map(pinLauncher);
+const aliasPackage = stampAliasPackage('packages/postfast/package.json');
 for (const { relPath, path, stamped } of pinned) {
   writeFileSync(path, stamped);
   console.log(`  ${relPath} (launcher postfast-mcp@${version})`);
 }
+writeFileSync(aliasPackage.path, aliasPackage.stamped);
+console.log(`  ${aliasPackage.relPath} (pin postfast-mcp@${version})`);
 stampJson('manifest.json');
 stampJson('server.json');
 stampJson('.claude-plugin/plugin.json');

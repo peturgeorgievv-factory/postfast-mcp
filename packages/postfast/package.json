@@ -1,0 +1,38 @@
+{
+  "name": "postfast",
+  "version": "0.15.3",
+  "mcpName": "st.postfa/postfast",
+  "description": "PostFast MCP server: schedule social media posts, answer comments and read analytics from AI tools",
+  "type": "module",
+  "bin": {
+    "postfast": "bin/postfast.js"
+  },
+  "files": [
+    "bin"
+  ],
+  "dependencies": {
+    "postfast-mcp": "0.15.3"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": [
+    "postfast",
+    "mcp",
+    "mcp-server",
+    "model-context-protocol",
+    "social-media",
+    "scheduling"
+  ],
+  "author": "PostFast",
+  "license": "MIT",
+  "homepage": "https://postfa.st",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/peturgeorgievv-factory/postfast-mcp.git",
+    "directory": "packages/postfast"
+  },
+  "bugs": {
+    "url": "https://github.com/peturgeorgievv-factory/postfast-mcp/issues"
+  }
+}

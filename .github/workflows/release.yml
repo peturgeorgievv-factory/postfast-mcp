@@ -3,16 +3,27 @@ name: Release
 # Tag-triggered publishing (same model as n8n-nodes-postfast): prepare the
 # release locally with `npm run version` (changesets computes the bump +
 # changelog, stamp-versions propagates it), commit, then push a vX.Y.Z tag —
-# the tag is the publish button. CI holds no registry credentials anywhere:
-# npm goes through trusted publishing (OIDC) and the MCP Registry through
-# github-oidc, so nothing here needs the "Actions can create PRs" org setting.
+# the tag is the publish button.
+#
+# npm: postfast-mcp, then postfast (packages/postfast, which runs the same
+# server at the same version), both through trusted publishing (OIDC), so CI
+# holds no npm token and nothing here needs the "Actions can create PRs" org
+# setting.
+#
+# MCP Registry: the entry is st.postfa/postfast, a domain namespace. The
+# registry grants it only to a login signed with the Ed25519 key whose public
+# half is in postfa.st's DNS TXT record, so that key is the one registry
+# credential in CI. It is a secret of the mcp-registry environment, which only
+# main and v*.*.* tags can deploy to, and only the login step of the registry
+# job reads it. The publisher binary that receives it is pinned and its
+# signature verified first.
 
 on:
   push:
     tags: ["v*.*.*"]
-  # Manual re-publish of the CURRENT server.json to the MCP Registry (e.g. a
-  # registry hiccup, or a release published outside this workflow). OIDC from
-  # this org's repo grants the org namespace directly.
+  # Manual re-publish of main's server.json to the MCP Registry: the registry
+  # job alone (a registry hiccup, or a release published outside this
+  # workflow).
   workflow_dispatch:
 
 concurrency: ${{ github.workflow }}-${{ github.ref }}
@@ -20,29 +31,11 @@ concurrency: ${{ github.workflow }}-${{ github.ref }}
 permissions: {}
 
 jobs:
-  registry-republish:
-    if: github.event_name == 'workflow_dispatch'
-    runs-on: ubuntu-latest
-    permissions:
-      id-token: write
-    steps:
-      - uses: actions/checkout@v5
-      - name: Publish current server.json to MCP Registry
-        run: |
-          curl -L "https://github.com/modelcontextprotocol/registry/releases/latest/download/mcp-publisher_$(uname -s | tr '[:upper:]' '[:lower:]')_$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/').tar.gz" | tar xz mcp-publisher
-          ./mcp-publisher login github-oidc
-          for attempt in 1 2 3 4 5; do
-            ./mcp-publisher publish && exit 0
-            echo "publish attempt ${attempt} failed — retrying in 90s"
-            sleep 90
-          done
-          exit 1
-
   release:
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
     permissions:
-      id-token: write # npm trusted publishing + MCP Registry github-oidc
+      id-token: write # npm trusted publishing
       contents: write # create the GitHub Release and upload the .mcpb
     steps:
       - uses: actions/checkout@v5
@@ -58,30 +51,40 @@ jobs:
 
       - run: npm ci
 
-      - name: Tag must match the stamped version
+      - name: Tag must match the stamped versions
         run: |
+          TAG="${GITHUB_REF_NAME#v}"
           PKG=$(node -p "require('./package.json').version")
-          if [ "${GITHUB_REF_NAME#v}" != "$PKG" ]; then
-            echo "tag ${GITHUB_REF_NAME} does not match package.json ${PKG} — run npm run version and re-tag"
-            exit 1
-          fi
+          ALIAS=$(node -p "require('./packages/postfast/package.json').version")
+          PIN=$(node -p "require('./packages/postfast/package.json').dependencies['postfast-mcp']")
+          for v in "$PKG" "$ALIAS" "$PIN"; do
+            if [ "$v" != "$TAG" ]; then
+              echo "tag ${GITHUB_REF_NAME} does not match package.json ${PKG} / packages/postfast ${ALIAS} pinning postfast-mcp ${PIN} — run npm run version and re-tag"
+              exit 1
+            fi
+          done
 
       - run: npm run build
 
-      - name: Publish to npm (OIDC trusted publishing)
-        run: npm publish
-
-      - name: Publish to MCP Registry
+      # Both publishes skip a version npm already has, so after a failure
+      # further down this job, "Re-run failed jobs" carries on from there.
+      - name: Publish postfast-mcp to npm (OIDC trusted publishing)
         run: |
-          curl -L "https://github.com/modelcontextprotocol/registry/releases/latest/download/mcp-publisher_$(uname -s | tr '[:upper:]' '[:lower:]')_$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/').tar.gz" | tar xz mcp-publisher
-          ./mcp-publisher login github-oidc
-          # npm CDN metadata can lag a few minutes behind publish — retry.
-          for attempt in 1 2 3 4 5; do
-            ./mcp-publisher publish && exit 0
-            echo "publish attempt ${attempt} failed (npm CDN lag?) — retrying in 90s"
-            sleep 90
-          done
-          exit 1
+          if [ "$(npm view "postfast-mcp@${GITHUB_REF_NAME#v}" version 2>/dev/null)" = "${GITHUB_REF_NAME#v}" ]; then
+            echo "postfast-mcp@${GITHUB_REF_NAME#v} is already on npm, skipping"
+          else
+            npm publish
+          fi
+
+      # postfast pins postfast-mcp exactly, so it goes out second.
+      - name: Publish postfast to npm (OIDC trusted publishing)
+        working-directory: packages/postfast
+        run: |
+          if [ "$(npm view "postfast@${GITHUB_REF_NAME#v}" version 2>/dev/null)" = "${GITHUB_REF_NAME#v}" ]; then
+            echo "postfast@${GITHUB_REF_NAME#v} is already on npm, skipping"
+          else
+            npm publish
+          fi
 
       - name: GitHub Release with the MCPB bundle
         env:
@@ -89,7 +92,8 @@ jobs:
         run: |
           # Newest CHANGELOG section (header included) as the release notes.
           awk '/^## /{n++} n==1' CHANGELOG.md > /tmp/release-notes.md
-          gh release create "$GITHUB_REF_NAME" --title "${GITHUB_REF_NAME#v}" --notes-file /tmp/release-notes.md
+          gh release view "$GITHUB_REF_NAME" > /dev/null 2>&1 ||
+            gh release create "$GITHUB_REF_NAME" --title "${GITHUB_REF_NAME#v}" --notes-file /tmp/release-notes.md
           # Prune to production deps so the bundle ships only runtime node_modules.
           npm ci --omit=dev
           npx -y @anthropic-ai/mcpb@2.1.2 pack . postfast-mcp.mcpb
@@ -115,3 +119,73 @@ jobs:
           gh api repos/peturgeorgievv-factory/social-schedule-mcp/dispatches \
             -f event_type=catalog-release \
             -f "client_payload[version]=${GITHUB_REF_NAME#v}"
+
+  # Its own job so that a registry failure leaves npm, the GitHub Release and
+  # the host bump done, and "Re-run failed jobs" retries only this.
+  registry:
+    needs: release
+    # After a tag release, or alone from workflow_dispatch (release skipped).
+    if: ${{ !cancelled() && (needs.release.result == 'success' || github.event_name == 'workflow_dispatch') }}
+    runs-on: ubuntu-latest
+    environment: mcp-registry
+    permissions:
+      id-token: write # github-oidc login for the status of the previous entry
+    env:
+      MCP_PUBLISHER_VERSION: v1.8.9
+      PREVIOUS_NAME: io.github.peturgeorgievv-factory/postfast-mcp
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install cosign
+        uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 # v4.1.2
+
+      - name: Download and verify mcp-publisher
+        run: |
+          set -euo pipefail
+          archive="mcp-publisher_linux_amd64.tar.gz"
+          base_url="https://github.com/modelcontextprotocol/registry/releases/download/${MCP_PUBLISHER_VERSION}"
+          for file in "$archive" "$archive.sigstore.json"; do
+            curl --fail --location --silent --show-error --retry 5 --retry-all-errors --retry-delay 10 \
+              --output "$file" "$base_url/$file"
+          done
+          cosign verify-blob \
+            --bundle "$archive.sigstore.json" \
+            --certificate-identity "https://github.com/modelcontextprotocol/registry/.github/workflows/release.yml@refs/tags/${MCP_PUBLISHER_VERSION}" \
+            --certificate-oidc-issuer "https://token.actions.githubusercontent.com" \
+            "$archive"
+          tar xzf "$archive" mcp-publisher
+          rm -f "$archive" "$archive.sigstore.json"
+
+      - name: Publish server.json to the MCP Registry
+        env:
+          MCP_REGISTRY_PRIVATE_KEY: ${{ secrets.MCP_REGISTRY_PRIVATE_KEY }}
+        run: |
+          if [ -z "$MCP_REGISTRY_PRIVATE_KEY" ]; then
+            echo "MCP_REGISTRY_PRIVATE_KEY is not set in the mcp-registry environment"
+            exit 1
+          fi
+          ./mcp-publisher login dns --domain postfa.st --private-key "$MCP_REGISTRY_PRIVATE_KEY"
+          # npm CDN metadata can lag a few minutes behind publish — retry.
+          for attempt in 1 2 3 4 5; do
+            ./mcp-publisher publish && exit 0
+            echo "publish attempt ${attempt} failed (npm CDN lag?) — retrying in 90s"
+            sleep 90
+          done
+          exit 1
+
+      # Up to 0.15.3 the entry was io.github.peturgeorgievv-factory/postfast-mcp.
+      # Its versions stay listed, marked deprecated with a pointer to the new
+      # name; once that is done this step finds nothing to change.
+      - name: Mark the previous registry name deprecated
+        run: |
+          status=$(curl --fail --silent --show-error \
+            "https://registry.modelcontextprotocol.io/v0/servers/$(jq -rn --arg n "$PREVIOUS_NAME" '$n|@uri')/versions/latest" |
+            jq -r '._meta["io.modelcontextprotocol.registry/official"].status')
+          if [ "$status" = "deprecated" ]; then
+            echo "${PREVIOUS_NAME} is already deprecated"
+            exit 0
+          fi
+          ./mcp-publisher login github-oidc
+          ./mcp-publisher status --status deprecated --all-versions --yes \
+            --message "Moved to st.postfa/postfast, the same server listed under PostFast's own domain, postfa.st." \
+            "$PREVIOUS_NAME"
