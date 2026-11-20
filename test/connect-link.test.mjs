@@ -90,7 +90,15 @@ for (const binding of ['stdio', 'remote']) {
     ]) {
       assert.match(field.description, pattern);
     }
-    assert.match(t.inputSchema.properties.redirectUrl.description, /with skipConnectPage, the user is sent there directly/);
+    const redirect = t.inputSchema.properties.redirectUrl.description;
+    for (const pattern of [
+      /with skipConnectPage, the user is sent there directly/,
+      /needsBoard=true means the Pinterest account has no board yet/,
+      /needsLocation=true that the Google Business Profile account has no location yet/,
+      /A failed connect returns status=error and message \(plus externalId\) instead\./,
+    ]) {
+      assert.match(redirect, pattern);
+    }
     assert.match(t.description, /can skip the PostFast connect page \(skipConnectPage\)/);
   });
 }
