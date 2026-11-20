@@ -100,7 +100,7 @@ export const accountTools: ToolDef[] = [
     binding: 'both',
     title: 'Generate Connect Link',
     description: (binding) =>
-      'Generate a shareable link for external clients to connect their social accounts to the workspace. Can be scoped to specific platforms and return the user to your own app when done.' +
+      'Generate a shareable link for external clients to connect their social accounts to the workspace. Can be scoped to specific platforms and return the user to your own app when done. A one-platform link that your own product opens can skip the PostFast connect page (skipConnectPage).' +
       (binding === 'remote'
         ? ' Email the link (sendEmail) only when the user asks you to and gives the address.'
         : ''),
@@ -136,7 +136,7 @@ export const accountTools: ToolDef[] = [
         .max(2000)
         .optional()
         .describe(
-          'Where the connect page offers to send the user once connecting finishes, with status, platform, accountId and externalId on the query string, plus accountIds (every account connected, comma-separated) after a Facebook or LinkedIn page step. For Facebook, accountId is the first chosen Page. Must be https (http is accepted only on localhost).',
+          'Where the connect page offers to send the user once connecting finishes (with skipConnectPage, the user is sent there directly), with status, platform, accountId and externalId on the query string, plus accountIds (every account connected, comma-separated) after a Facebook or LinkedIn page step. For Facebook, accountId is the first chosen Page. Must be https (http is accepted only on localhost).',
         ),
       externalId: z
         .string()
@@ -144,6 +144,12 @@ export const accountTools: ToolDef[] = [
         .optional()
         .describe(
           'Your own reference for this link, echoed back unchanged on the return URL. Letters, digits and - . _ ~ : @ only.',
+        ),
+      skipConnectPage: z
+        .boolean()
+        .optional()
+        .describe(
+          "Skip the PostFast connect page, for a link your own product opens: the user goes straight to the platform's login and, with redirectUrl, straight back to it when done. Needs exactly one platform in platforms, and not with sendEmail. LINKEDIN, BLUESKY and TELEGRAM links show the connect page anyway, and a FACEBOOK link still stops at the Pages picker before returning.",
         ),
     }),
     // destructive: sendEmail delivers a real email that cannot be recalled, and the

@@ -173,6 +173,24 @@ test('the webhook methods call the /webhook-endpoints routes with exactly the gi
   );
 });
 
+test('generateConnectLink posts skipConnectPage to /social-media/connect-link, and leaves it out when not given', async () => {
+  const api = new RestAdapter();
+  await api.generateConnectLink({ expiryDays: 1, sendEmail: false, platforms: ['TIKTOK'], skipConnectPage: true });
+  await api.generateConnectLink({ expiryDays: 7, sendEmail: false });
+  assert.deepEqual(
+    requests.map(({ url: u, method, key, body }) => [method, u, key, body]),
+    [
+      [
+        'POST',
+        'https://api.example.test/social-media/connect-link',
+        'pf-test-key',
+        { expiryDays: 1, sendEmail: false, platforms: ['TIKTOK'], skipConnectPage: true },
+      ],
+      ['POST', 'https://api.example.test/social-media/connect-link', 'pf-test-key', { expiryDays: 7, sendEmail: false }],
+    ],
+  );
+});
+
 test("deleteWebhookEndpoint answers { ok: true } for the API's empty 204, and passes a 404 on", async () => {
   const api = new RestAdapter();
   reply = () => new Response(null, { status: 204 });

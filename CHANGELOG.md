@@ -1,5 +1,11 @@
 # postfast-mcp
 
+## 0.16.0
+
+### Minor Changes
+
+- `generate_connect_link` takes `skipConnectPage`, for a link your own product opens: the user goes straight to the platform's login and, with `redirectUrl`, straight back to it when done, without the PostFast connect page. It needs exactly one platform in `platforms` and can't be combined with `sendEmail`; LinkedIn, Bluesky and Telegram links show the connect page anyway, and a Facebook link still stops at the Pages picker. Left out, links behave as before.
+
 ## 0.15.4
 
 ### Patch Changes
