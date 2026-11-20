@@ -63,6 +63,7 @@ export interface ConnectLinkArgs {
   platforms?: Platform[];
   redirectUrl?: string;
   externalId?: string;
+  skipConnectPage?: boolean;
 }
 
 export interface UploadUrlsArgs {

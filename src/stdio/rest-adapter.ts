@@ -180,6 +180,7 @@ export class RestAdapter implements BackendPort {
       platforms: args.platforms,
       redirectUrl: args.redirectUrl,
       externalId: args.externalId,
+      skipConnectPage: args.skipConnectPage,
     });
   }
 
