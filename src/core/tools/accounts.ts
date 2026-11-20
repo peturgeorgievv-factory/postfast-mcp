@@ -136,7 +136,7 @@ export const accountTools: ToolDef[] = [
         .max(2000)
         .optional()
         .describe(
-          'Where the connect page offers to send the user once connecting finishes (with skipConnectPage, the user is sent there directly), with status, platform, accountId and externalId on the query string, plus accountIds (every account connected, comma-separated) after a Facebook or LinkedIn page step. For Facebook, accountId is the first chosen Page. Must be https (http is accepted only on localhost).',
+          'Where the connect page offers to send the user once connecting finishes (with skipConnectPage, the user is sent there directly), with status, platform, accountId and externalId on the query string, plus accountIds (every account connected, comma-separated) after a Facebook or LinkedIn page step. For Facebook, accountId is the first chosen Page. needsBoard=true means the Pinterest account has no board yet, and needsLocation=true that the Google Business Profile account has no location yet; it needs one before it can post. A failed connect returns status=error and message (plus externalId) instead. Must be https (http is accepted only on localhost).',
         ),
       externalId: z
         .string()

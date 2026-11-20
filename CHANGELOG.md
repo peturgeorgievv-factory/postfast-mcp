@@ -1,5 +1,11 @@
 # postfast-mcp
 
+## 0.16.1
+
+### Patch Changes
+
+- `generate_connect_link`'s `redirectUrl` description lists every return parameter: `needsBoard=true` when the Pinterest account has no board yet, `needsLocation=true` when the Google Business Profile account has no location yet, and `status=error` with `message` (plus `externalId`) when connecting fails.
+
 ## 0.16.0
 
 ### Minor Changes
