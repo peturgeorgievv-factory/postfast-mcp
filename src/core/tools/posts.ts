@@ -88,9 +88,14 @@ const controlsSchema = (binding: Binding) =>
       .enum(['PUBLIC', 'MUTUAL_FRIENDS', 'FOLLOWER_OF_CREATOR', 'ONLY_ME'])
       .optional()
       .describe(
-        'Deprecated. TikTok videos use the account default privacy (no per-post control) and photos default to public; use a draft for private posts.',
+        "Deprecated: don't rely on it to choose who sees a post. To post privately, send a draft (tiktokIsDraft: true); its audience is picked when it is finished in the TikTok app.",
       ),
-    tiktokIsDraft: z.boolean().optional(),
+    tiktokIsDraft: z
+      .boolean()
+      .optional()
+      .describe(
+        "Sends the post to the account's TikTok inbox as a draft instead of publishing it; it is finished and posted in the TikTok app, where its audience is picked. TikTok drops the caption, hashtags and post settings of a video draft, so they are added when finishing it; a photo draft keeps its title and caption.",
+      ),
     tiktokAllowComments: z.boolean().optional(),
     tiktokAllowDuet: z.boolean().optional(),
     tiktokAllowStitch: z.boolean().optional(),
