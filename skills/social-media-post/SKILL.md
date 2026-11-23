@@ -57,8 +57,8 @@ If any PostFast tool call fails with an authentication/401 error, tell the user:
 - `facebookReelsCollaborators`: array of usernames (for Reels)
 
 ### TikTok
-- `tiktokPrivacy`: **deprecated** — TikTok videos use the account default privacy (no per-post control) and photos default to public; use `tiktokIsDraft` for private posts
-- `tiktokIsDraft`: boolean, default false
+- `tiktokPrivacy`: **deprecated** — don't rely on it to choose who sees a post; to post privately, send a draft (`tiktokIsDraft: true`), whose audience is picked when it is finished in the TikTok app
+- `tiktokIsDraft`: boolean, default false — sends the post to the account's TikTok inbox as a draft, to finish and post in the TikTok app. TikTok drops the caption, hashtags and post settings of a video draft (they are added when finishing it); a photo draft keeps its title and caption
 - `tiktokAllowComments`: boolean, default true
 - `tiktokAllowDuet`: boolean, default true
 - `tiktokAllowStitch`: boolean, default true
