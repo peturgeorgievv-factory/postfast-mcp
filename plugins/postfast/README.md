@@ -16,6 +16,18 @@ Nothing goes out without your say-so. Claude creates every post in PostFast on h
 
 The plugin uses the PostFast connector, the same one listed in the Claude directory at [claude.ai/directory/postfast](https://claude.ai/directory/postfast). If you have connected PostFast already, the plugin uses that connection and you see one set of PostFast tools.
 
+## What the PostFast tools can do
+
+Besides reading your workspaces, social accounts, posts, comments and analytics, the PostFast connector's tools can change things in PostFast and on your social networks:
+
+- **Publish**: approve posts, which PostFast then publishes to your social accounts at their scheduled time.
+- **Send**: post public replies to comments, send Instagram private replies to comments, email a link for connecting a social account, and send a test event to a webhook endpoint.
+- **Delete**: delete posts from PostFast, one at a time or up to 100 at once (a post that has already been published stays on its network), delete comments from the network for good, and delete webhook endpoints.
+- **Change access**: create links that connect social accounts to your workspace, and add or change webhook endpoints, the web addresses PostFast sends events about your posts and accounts to (a post published or failed, an account connected or disconnected). Only workspace admins can manage webhook endpoints.
+- **Moderate and organize**: hide comments or show them again, and assign, snooze or close comment conversations.
+
+Before Claude publishes a post, replies to a comment, sends a private reply, deletes a post or a comment, or adds, changes or deletes a webhook endpoint, it shows you what will happen and waits for your yes. It hides or restores a comment, emails a link or sends a test event only when you ask. The tools can't make payments or change your PostFast plan, billing or workspace members.
+
 ## Get started
 
 1. You need a [PostFast](https://postfa.st) account with at least one social account connected.
@@ -32,7 +44,8 @@ The plugin uses the PostFast connector, the same one listed in the Claude direct
 
 - The plugin is instructions plus a reference to one connector: PostFast, at `https://mcp.postfa.st/mcp`. It runs no code of its own and stores nothing.
 - Claude reads your PostFast workspaces, connected accounts, posts, comments and analytics through the connector.
-- Claude sends PostFast what you ask it to act on: post text, media, times, target accounts and network settings; comment replies and moderation you approve; and approvals of posts you confirm. PostFast then publishes to the networks you connected.
+- Claude sends PostFast what you ask it to act on: post text, media, times, target accounts and network settings; comment replies and moderation you approve; approvals of posts you confirm; posts you choose to delete; and webhook endpoints you add, change or delete. PostFast then publishes to the networks you connected.
+- When you add a webhook endpoint, PostFast sends each event you chose for it, with the post's or the account's details, to that web address until the endpoint is turned off or deleted.
 - When you give Claude a link to an image, a video, a caption file or a document, PostFast's server downloads the file from that link. When you ask for an account reconnect link to be emailed, PostFast sends that email.
 - When you ask Claude to repurpose a web page, Claude reads it with its own tools. The plugin sends it nowhere else.
 - Sign-in is OAuth with your PostFast account. Read PostFast's [privacy policy](https://postfa.st/privacy).
